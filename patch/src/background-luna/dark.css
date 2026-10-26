@@ -1,0 +1,958 @@
+/*
+ * 背景图层 · 深色版（中秋月夜）
+ *
+ * 由 apply.ps1 -Background dark 读入；占位符在贴入时被替换为
+ * src/background/assets/moonlit-night.png 的 base64 data URI
+ * （形式：data:image/png;base64,<b64>）。图只进 renderer 树的深色主题文件；
+ * 浅色主题与 server 树都不含背景。
+ *
+ * 构图与 Hana 布局的对应（实测图内容，1920x1080）：
+ *   左侧 x 0-600    桂花枝 + 远山   -> 侧栏（细节区）
+ *   中央 x 700-1300 大片干净夜空    -> 聊天正文（留白落字）
+ *   右上 x 1390-1760 满月           -> 顶栏右侧
+ *   底部 x 900-1920 水面金色倒影（较亮）-> 输入区（需保护可读性）
+ *
+ * 为什么 scrim 不只是一层底部压暗（与工单给的初版草图的差异，实测依据）：
+ *   初版只写「y>=76% 才开始压暗」。但在 1440x900 视口、cover 缩放下，
+ *   正文/侧栏文字实际落在 y 5%-95% 全高范围，而真正亮的像素（满月 L=0.98、
+ *   左侧桂花枝高光）分别在 y 20%-35% 与 y 55%-80% —— 都在底部 scrim 覆盖
+ *   范围之外。按「文字矩形内取最亮像素」的实测口径，初版有 7/28 处文字
+ *   跌破 4.5:1（最差 2.91:1，侧栏 sidebar.empty）。
+ *
+ *   故本文件用两层 scrim：
+ *     1) 左侧纵向渐变：只压暗侧栏那一列（x<=34%），中央聊天区几乎不动
+ *        —— 保住「中央留白落字」的构图意图。
+ *     2) 底部纵向渐变：压暗输入区与底部水面倒影（沿用初版意图）。
+ *   两层叠加后的实测结果：28 处文字全部 >= 4.5:1，且与「不贴背景」的
+ *   基线（27/28，唯一失败项是既有的 3.62:1，与本票无关）持平。
+ *
+ * 已知冲突（记进注释，不在本票处理）：src/material/subtle.css 也往
+ * [data-chalkboard-root] 写 background-image（--mat-bg-image 渐变）。
+ * 当前 material=none 不冲突；将来 material 启用时，背景源的规则因排在
+ * 合成文本最后而覆盖它（apply.ps1 的合成顺序：配色源 -> 材质源 -> 背景源）。
+ */
+
+/* 工单 36-A：工作室「独立窗口」并进**同一条规则**的选择器列表。
+   现场：工作室窗口没有 [data-chalkboard-root]（真机 count=0，它只有
+   [data-chalkboard-canvas]），故原规则一条都不匹配 → 平底。
+
+   ⚠️ 为什么不另写一条带 url() 的规则 —— 两条硬约束（本项目已知的坑）：
+     ① scripts/apply.ps1 的 Expand-BackgroundTemplate 要求背景源里的 data URI
+        占位符**恰好命中 1 次**；写第二遍就是 2 次 → Stop-Fail（脚本显式拒绝，
+        因为那会把 data URI 灌成第二份 3.9MB 副本）。
+     ② 3.9MB 的 data URI 也不能走 CSS 自定义属性（值上限 1.5~2MB，静默丢弃）。
+   所以「与主窗口同源同一张图」在 CSS 里**只有**「同一条声明」这一种写法：
+   选择器列表加一项，下面的声明（3 层 + url()）一字未动 —— 主窗口的计算
+   backgroundImage 因此逐字节不变（回归对照：长度 3925410、头部
+   `linear-gradient(90deg, rgba(20, 19, 19, `）。
+   层序固定为 [1 左列 scrim][2 底部 scrim][3 照片]，下面工作室那两条候选规则
+   就靠**层序下标**去改第 2 层（不能重写 background-image —— 那要再写一次 url()）。 */
+:is([data-theme="hana-luna"]) [data-chalkboard-root],
+:is([data-theme="hana-luna"]) [data-studio-window-root] {
+    /* 层 1：左侧一列压暗（保护侧栏文字；x 34% 之后归零，中央聊天区不受影响）。
+       层 2：照片本体。background-image 里靠前的层画在上面。
+
+       2026-10-14（用户要求「把主窗口的压暗取消掉，看是否影响输入区」）：
+       原第 2 层是 180deg 的**底部压暗**（76% 起、94% 0.30 / 100% 0.48），
+       用来压住照片底部较亮的水面倒影、给输入区文字垫底。现整层删除 ——
+       输入区直接坐在照片上。
+       ⚠️ 删除时必须同步删掉下面工作室那条 `background-size: cover, 0px 0px, cover`
+       覆盖：那条靠「层 2」的下标定位，层数从 3 降到 2 之后它会把 `0px 0px`
+       落到照片层上，把图压成 0×0。这是本次改动唯一的耦合陷阱。 */
+    background-image:
+        linear-gradient(90deg,
+            rgba(20, 19, 19, 0.72) 0%,
+            rgba(20, 19, 19, 0.66) 16%,
+            rgba(20, 19, 19, 0.20) 34%,
+            rgba(20, 19, 19, 0.16) 100%),
+        url("__BG_DARK_DATA_URI__");
+    background-size: cover, cover;
+    background-position: center, center;
+    background-repeat: no-repeat, no-repeat;
+}
+
+/* ============================================================================
+ * 工单 36-A：工作室「独立窗口」铺壁纸（+ 两个 scrim 候选，待用户选定）
+ *
+ * 现场（真机 CDP，工作室 target title="工作室" url=about:blank）：
+ *   [data-studio-window-root]  count=1  rect 0,0,1920,1032  bg=transparent  ← 已由上面
+ *                                                                             共享规则铺图
+ *     └ [data-studio-window]  count=1  rect 0,0,1920,1032  bg=rgb(20, 19, 19) ← **不透明，盖死图**
+ *   [data-chalkboard-root]     count=0  ← 所以原规则一条都不匹配（平底的根因）
+ *
+ * ⚠️⚠️ 本票最容易踩的坑（实测，务必别退回）：
+ *   只把 [data-studio-window-root] 加进共享选择器列表 —— 计算样式确实绿了
+ *   （backgroundImage 长度 3925410、bgsize=cover,cover,cover），但**像素一个字都没变**：
+ *   截图与「什么都不做」逐字节相同（sha256 2CF870C4…，三张同哈希）。
+ *   因为不透明子层 [data-studio-window] 与 root 同 rect（0,0,1920,1032），
+ *   把 root 的图整片盖住。**判据必须落在像素，不能只验计算样式** ——
+ *   这正是 AGENTS.md「材质层挂点 / 验用户看到的东西」那两条的又一次复现。
+ *   故本票的改动是**三条**：① root 铺图（共享规则）② 子层置透明 ③ 去掉主窗口那层底部 scrim。
+ * ========================================================================== */
+
+/* ① 子层置透明 —— 让 root 的壁纸真正可见（本票的「可见性」关键一步）。
+   官方 `._root_4a78b { background: var(--bg) }`（= #141313，完全不透明）。
+   作用域收在 [data-studio-window-root] 之内：主窗口实测 count=0，
+   不会碰到主窗口任何元素。 */
+:is([data-theme="hana-luna"]) [data-studio-window-root] [data-studio-window] {
+    background-color: transparent;
+}
+
+/* ② 工作室「压掉共享规则里那层底部 scrim」这一步 —— 2026-10-14 起不再需要。
+   共享声明的底部压暗已整层删除（两个窗口都不再有），所以原先那条
+   `background-size: cover, 0px 0px, cover`（靠层下标把第 2 层压成 0×0）已无对象，
+   且层数降到 2 之后它必然错位（`0px 0px` 会落到照片层，把图压没）—— 整条删除。
+   留此注释是为了说明「它存在过、为什么不能照抄加回来」。
+   若以后要恢复任一侧的底部压暗：只在共享声明里加回那一层（并同步核对本文件
+   所有依赖层序的 background-size 值），不要靠外挂覆盖去压层。 */
+
+/* ③ 候选 ②（**已否决，未生效** —— 2026-10-14 用户定：主窗口与工作室**都不压底**）。
+   本段仅作留档，不要启用；下面是当时的设计为什么长这样。
+   设计依据（工作室自己的内容，不是照抄主窗口）：
+     * 工作室没有输入区，底部没有要保护的文字；唯一的底部文字是侧栏状态行
+       「设备 / 1 在线 · 0 离线」（y 992…1011，已在左列 scrim 0.72 之下，够暗）。
+     * 但壁纸最亮的一块（金色水面倒影）正好落在窗口底部 —— 不压一下，
+       底部就成了全窗口最亮处。
+   注意（2026-10-14 起）：主窗口那层底部压暗已删除，所以本候选**不再是**
+   「向主窗口看齐」，而是工作室**独有**的一层。要不要单独压这一角，纯看
+   你希望工作室底部安静一点还是保留壁纸自身的亮点。
+   取值比原主窗口那条（76% 起、94% 0.30 / 100% 0.48）**更浅、起得更低**：
+   80% 起、92% 0.20 / 100% 0.38。挂在子层 [data-studio-window] 上（它已铺满视口、
+   且带 overflow:hidden），**不用伪元素** —— 那需要给 root 加 position:relative，
+   会改变绝对定位后代的包含块，属于布局风险。
+   挂点是 [data-studio-window] 自己的 background-image（它的 background 简写
+   已把 image 置 none，这里直接覆盖即可）。
+   调档：想更弱改小两个 alpha；想与主窗口完全一致就**不启用**本候选。 */
+/*
+:is([data-theme="hana-luna"]) [data-studio-window-root] [data-studio-window] {
+    background-image: linear-gradient(180deg,
+        rgba(20, 19, 19, 0) 0%,
+        rgba(20, 19, 19, 0) 80%,
+        rgba(20, 19, 19, 0.20) 92%,
+        rgba(20, 19, 19, 0.38) 100%);
+}
+*/
+
+/* 侧栏原来是 --sidebar-bg 实色（不透明），会盖住照片；置透明让照片透出
+   —— 图的左侧细节（桂花枝、远山）正为侧栏而画。
+
+   真机探针（2026-10-11）发现：只置透明壳还不够。侧栏外壳是透了，但内部还有两层
+   实底在挡画：
+     - _surface_*（AppUiSurface，app 面板宿主）  background: var(--bg)      = #141313
+     - _sessionSearchBox_*（搜索框）             color-mix(--sidebar-bg 97%, --text 3%)
+   所以这里在**侧栏子树内**把 --bg / --sidebar-bg 一并换成半透明（不碰全局：
+   --bg 全树消费点极多，全局改会波及所有面板/弹窗/卡片）。
+   文字由 [data-chalkboard-root] 的左侧纵向 scrim 保护。
+
+   2026-10-11 追加：用户要求“压暗一些，参考右侧工作区”。侧栏只靠 token 压不够——
+   列表窗格本身没有底色，token 只能压到 _surface_ / 搜索框，压不到列表。所以在壳上
+   再叠一层 scrim（background-image 落在所有子层之下，整条侧栏不论内层有无底色都被一起压暗）。
+   alpha 只取 0.35 而非工作区的 0.70：侧栏那一列下面已经叠着 [data-chalkboard-root]
+   的左侧纵向 scrim（0.72→0.66），两层相加会直接压成近黑，所以这里减半。 */
+:is([data-theme="hana-luna"]) aside[data-titlebar-mode] {
+    --bg:         rgba(20, 19, 19, 0.55);
+    --sidebar-bg: rgba(20, 19, 19, 0.55);
+    background-color: transparent;
+    background-image: linear-gradient(rgba(20, 19, 19, 0.62), rgba(20, 19, 19, 0.62));
+}
+
+/* ── 侧栏里的浮层：把 --bg 的「半透明泄漏」补回来（2026-10-19，用户报「字叠在一起」）──
+   上面那条 token 覆盖挂在 aside 上，这不是只管「壳」的局部改动：`--bg` 一旦变成 0.28，
+   **侧栏子树里每一个用 var(--bg) 的元素**都跟着变透 —— 包括我们没想动的浮层。
+
+   现场（用户截图）：页面栏右侧「…」展开的页面面板 `_chalkboardPageGrid_*`，
+   官方写的是 `position:absolute; background:var(--bg)`，它正好挂在页面列表上方同一位置，
+   底一透，面板里的页面名就和底下的列表名叠在一起。
+   同族的页面栏 `[data-page-drop-palette]` 自己用 --panel-card-bg（0.85），所以顶栏看着没事，
+   只有下面这块 grid 漏。
+
+   修法：只给这块浮层补实底，**不动 aside 的 token** —— 那条已经调好的侧栏观感不再碰。
+   颜色取 --bg 同色（不是更亮的 --bg-card），因为上游的面阶是「面板=--bg / 悬停=--bg-card」：
+   保住这个差值，鼠标悬停才会亮一档；若把底色提亮到 --bg-card，hover 就再也看不出来了。
+   想调档只改这一个 alpha：0.96 ≈ 几乎不透；调到 0.90 还能看见一点壁纸的明暗。 */
+:is([data-theme="hana-luna"]) [class*="_chalkboardPageGrid_"] {
+    background-color: rgba(20, 19, 19, 0.96);
+}
+
+/* ============================================================================
+ * 工单 17（本轮）：把「透出背景图」从右侧工作区扩到另外两处
+ *
+ * 真机探针（2026-10-11，DevTools 子树扫描）定位到的实底（挡画的就这两处）：
+ *   输入框   _input-wrapper_*            background: var(--bg-card) = #223430
+ *            _attach-btn_* / _model-split-control_* 同样用 var(--bg-card)
+ *   设置弹窗 .settings-panel             background-color: var(--bg)
+ *            _card_5b61e（弹窗卡片，父层） background: var(--bg)
+ * 而**中间聊天区本身是空的**（壳 bg=transparent，子树里只有代码块 5% 白 wash 之类
+ * 的半透装饰）—— 照片早就透出来了；它看着"发平发暗"，是因为照片正中本就是大片
+ * 干净夜空（为落字而留白），不是被什么盖住。
+ *
+ * 手法沿用工作区那一套：只在目标组件的子树内覆盖 token，不碰全局。
+ * ========================================================================== */
+
+/* ── 输入框：.input-area 是 styles.css 的明文类（稳定钩子）──
+   在它子树内把 --bg-card 压成半透明，输入卡（_input-wrapper_）、附加按钮、
+   模型控件会一起透出。
+
+   2026-10-11 追加：用户要求“压暗一些，参考右侧工作区”。输入卡正落在照片底部
+   水面倒影（最亮的区域）上，原本 0.35 偏亮；现提到 0.70 —— 与工作区那条 scrim
+   同值（工作区是“0.25 填充 + 0.70 scrim”两层，合成后照片只剩 0.225；单层 alpha
+   取 0.775 与它数学等价，这里 0.70 略轻一档，保留一点透光）。
+   想完全对齐工作区：把 0.70 改成 0.775；想回轻一点：改回 0.35。 */
+:is([data-theme="hana-luna"]) .input-area {
+    --bg-card: rgba(20, 19, 19, 0.70);
+}
+
+/* ── 代码块：与输入框同一个观感 ──
+   消息里的代码块底是 .md-content pre { background: var(--overlay-subtle) }，
+   而 --overlay-subtle 在暗色主题下是 rgba(255,255,255,0.03) —— 一层微提亮的白 wash，
+   所以在照片上它是"被提亮"的，跟输入框那种"压暗的深色填充"不是一个路子。
+   改成与输入框同值 rgba(20, 19, 19,0.70)。
+   .md-content / pre 都是 styles.css 里的明文类（非构建哈希），锚点稳。
+   行内 code（.md-content code，用 --overlay-light）不动 —— 小面积深色块会显重。 */
+:is([data-theme="hana-luna"]) .md-content pre {
+    background: rgba(20, 19, 19, 0.70);
+}
+
+/* ── 文件卡（聊天里的资源卡 / interactive card）──
+   它底是 var(--panel-card-bg)（= var(--bg-card) = #223430 不透明）。
+   锚用明文 data 属性 data-chat-resource-card（JSX 里写死的，形如
+   <div data-chat-resource-card data-variant=panel>），不用 _card_cc83f
+   那类带构建哈希后缀的类名。
+   CSS 里这条卡没有按 data-variant 分叉底色，统一 var(--panel-card-bg)，
+   所以在该元素上覆盖 token 即可，子元素（图标/标题/副标题）不受影响。
+   值 = 与输入框同档 0.70。 */
+:is([data-theme="hana-luna"]) [data-chat-resource-card] {
+    --panel-card-bg: rgba(20, 19, 19, 0.70);
+}
+
+/* ── 文件卡 hover：悬停应该"变实"，而不是"变没" ──
+   官方给卡片上另一个类 _interactive_5554b 写了：
+     ._interactive_5554b:hover{ background: #00000003 }
+   —— #00000003 是 1% 的黑（几乎全透），且特异性 (0,2,0) 压过了卡片自己的
+   background: var(--panel-card-bg) ((0,1,0))，所以鼠标一上去底色就被抹掉了。
+   这是上游行为，不是皮肤造成的（未贴皮肤时也一样）。
+   本规则特异性 (0,3,0)（:is 取最高项 + [data-*] + :hover），稳压官方那条；
+   同时写 background 而不只写 token —— 因为官方那条直接改的是 background 简写，
+   只改 token 盖不住它。
+   值 0.92：比静置的 0.70 更实，但保留一丝透光（想要完全实心就改 1）。 */
+:is([data-theme="hana-luna"]) [data-chat-resource-card]:hover {
+    --panel-card-bg: rgba(20, 19, 19, 0.92);
+    background: rgba(20, 19, 19, 0.92);
+}
+
+/* ── 设置弹窗：内容面板 + 卡片两层都要动 ──
+   .settings-panel 是明文类；它外面还有一层弹窗卡片（_card_5b61e，哈希类名），
+   同样是 var(--bg)。用 :has() 反选到那层卡片 —— 它的直接子元素带
+   data-input-ctx-zone="settings"（JSX 里写死的稳定属性，JS 里 id/settingsPanel
+   与该属性同处一层）。
+   ✅ 已在真机验证（2026-10-11 探针）：:has() 支持 = true；
+      .settings-panel bg = rgba(20, 19, 19, 0.7)；卡片 _card_5b61e bg = rgba(20, 19, 19, 0.7)。
+      两条都命中，设置页两层都透了。
+   ⚠️ 保留：模态外那层全屏暗幕（_overlay_652af，哈希类名）去不掉，所以设置页透出来
+      的照片会比别处暗一档 —— 这符合模态"压暗背景"的语义，若嫌太暗只能放弃透明。
+   2026-10-11 追加：用户要求“压暗一些，参考右侧工作区”，0.30 -> 0.70（与工作区 scrim
+   同值）。叠上模态那层 0.26 暗幕后，照片透出量与工作区持平（≈0.22），观感一致。
+
+   为什么拆成两条独立规则：CSS 里选择器列表只要有一项非法，**整条规则都会作废**。
+   万一某天 Chromium 不认识 :has()，写在一个列表里会把 .settings-panel 也一起拖没。
+   拆开后最坏情况只丢卡片那一半，面板那半照常生效。 */
+:is([data-theme="hana-luna"]) .settings-panel {
+    background-color: rgba(20, 19, 19, 0.70);
+}
+:is([data-theme="hana-luna"]) :has(> [data-input-ctx-zone="settings"]) {
+    background-color: rgba(20, 19, 19, 0.70);
+}
+
+/* ── 设置面板：「应用图标」那四张卡的名字是纯黑的（2026-10-18 用户报）──
+   上游 ._icon-card_<hash>（button）只声明了 background / border / border-radius，
+   **没写 color**，于是落到 button 的 UA 规则 `color: buttontext`（= 纯黑）；
+   名字 span ._icon-card-name_<hash> 同样没写 color，继承下来就是黑的。
+   四张卡里只有选中项看着还行 —— 因为上游另有一条
+     ._icon-card._icon-card-active ._icon-card-name { color: var(--accent) }
+   把它单独染成金色。
+
+   修法：让面板内的 button 回到「继承」父级的文字色（= 由 --text 派生的浅色）。
+   特异性 (0,2,1)：:is() 取最高项 [data-theme] (0,1,0) + [data-input-ctx-zone] (0,1,0)
+   + button (0,0,1)；上游选中那条是 (0,3,0)，仍稳压我们 → 选中的金色不受影响。
+   放在 [data-input-ctx-zone="settings"] 里而不是全局 button：面板外的按钮
+   大多自带 color，不该被这条顺带改动。
+
+   ⚠️ 2026-10-19 再收窄一层（用户报「切皮肤后珊瑚卡的字看不见了」）：
+   原来这条盖住了面板里**所有** button，于是把「主题」里珊瑚卡的 UA 默认色也换掉了。
+   上游 SettingsModalShell 的规则里，13 个主题各有 name/mode 的 color，唯独 coral
+   只有注册表给的底色、**连 background 规则都没有** —— 它整张卡靠 UA 那对
+   `background-color: buttonface` + `color: buttontext`（浅灰面 + 纯黑字）撑着。
+   我们的 color: inherit 把字换成面板正文色（浅），浅字压浅底直接消失。
+   现在只认 class 里带 _icon-card_ 的按钮（前缀稳定，哈希会变），其余一律不碰。
+   真机实测（注入 color:buttontext 的受控实验）：回到 buttontext = rgb(0,0,0)，
+   与未贴皮肤时一致。 */
+:is([data-theme="hana-luna"]) [data-input-ctx-zone="settings"] button[class*="_icon-card_"] {
+    color: inherit;
+}
+
+/* ── 浮层面板：自动化 · 卡片中心 · 能力（+ 兜底 bridge）──
+   三个入口都带明文 data-side-panel-trigger（automation / card-center / capabilities）；
+   面板本体是同一个浮层组件（CapabilitiesPanel 那个 chunk），外壳带**稳定 id**：
+     #automationHubPanel / #chalkboardCardCenterPanel / #capabilitiesPanel
+
+   层次（真机探针实测，自动化面板）：
+     外壳  _floatingPanel_*（position:fixed，本身无底色，只有 id）
+       └ _floatingPanelInner_* + _tray_*     background: var(--bg)      ← 铺底这层
+           └ [data-side-panel-card]           background: var(--bg-card)  ← 里面那张卡
+   所以在**外壳**上覆盖两个 token，两层一起透（自定义属性沿子树继承）。
+   内层卡片另有明文 [data-side-panel-card] 兜底，能盖到不在名单里的面板（如 bridge）。
+   踩过的坑：一开始把 data-side-panel-stack / -lift / -drawer 当成这四个入口的外壳，
+   完全找不着（那套属性属于另一个功能）；真机上那三个入口渲染的是这个浮层。 */
+:is([data-theme="hana-luna"]) #automationHubPanel,
+:is([data-theme="hana-luna"]) #chalkboardCardCenterPanel,
+:is([data-theme="hana-luna"]) #capabilitiesPanel {
+    --bg:      rgba(20, 19, 19, 0.70);
+    --bg-card: rgba(20, 19, 19, 0.70);
+}
+:is([data-theme="hana-luna"]) [data-side-panel-card] {
+    --bg-card: rgba(20, 19, 19, 0.70);
+}
+
+/* ============================================================================
+ * 工单 26：对话消息族加「面」（填充部分）
+ *
+ * 本票在材质源（src/material/bold.css / subtle.css §6）给折叠块 / 助手正文 /
+ * 用户气泡 / 事件块加了 inset 描边；**填充（底色）按铁律归本文件**。
+ * 本票新增的全部填充都**收窄在 .chat-area 里**（对话滚动区，styles.css 的明文类）——
+ * 这几块的语义类名在别的树里也有同族用法（移动端 CSS、卡片内嵌子代理预览等），
+ * 不收窄会误伤。材质侧用的是同一套作用域，两边逐条对应。
+ *
+ * ⚠️ 工单 27 更新：原 C（助手正文的底）**已整条删除** —— 用户真机反馈「效果太丑了，
+ *   还是取消掉底和描边」，故这里只剩 B（折叠块）/ D（用户气泡）/ E（事件块）三块。
+ *   原先的「三个填充值只有两档深浅」随之变成：B 用 0.70（与输入框同值），
+ *   D / E 用 0.55（更淡一档）。
+ *
+ * ⚠️ alpha 0.55 的取法（不是拍的）：
+ *   * 输入框那条已是 0.70，工单明确要求「比输入框**更淡一档**，起始建议 0.55」；
+ *   * 0.70 是本主题在「底部水面倒影（照片最亮处）」上压得住文字的档（工单 17 实测结论）；
+ *     而消息族落在照片正中的大片干净夜空（为落字而留白，本文件文件头就写明），
+ *     底比输入区暗，压暗需求更低 —— 取 0.55 既不抢戏，也仍比官方的
+ *     「5% 白 wash / 4.3% 黑」实得多（官方那两层在照片上几乎看不出「面」）。
+ *
+ * ⚠️ 这几个锚点上**官方原本都有底**，本票是「覆盖」而不是「叠加」：
+ *   折叠块 _processFoldSurface_*      → 官方无底色（底在里面的 _summary_/_panel_ 上）
+ *   用户气泡 _messageUser_*           → 官方 background:#0000000b（4.3% 黑）
+ *   事件块 _conversationEventCard_*   → 官方 background:var(--tool-bg)（本主题 = 5% 白 wash）
+ *   两边都是「同一个元素」，不存在父子叠加导致 alpha 翻倍的问题（与工单 13 那条
+ *   「聊天区不单独上材质」的顾虑无关：那里说的是父子两层各写一份填充）。
+ * ========================================================================== */
+
+/* ── B. 折叠块：可见圆角面与输入框同值 ──────────────────────────────────────
+   用户要求「折叠块面板的底 → 与输入框一致」。锚点 = 可见圆角面本身
+   （classic 版 _processFoldSurface_*），理由与材质侧 §6.1 同：
+   圆角与 overflow:hidden 都在这一层，底只有挂在这层才**先铺底、后裁切**，
+   子内容不会露出面板外；挂在里面那层（_processFoldPanel_）圆角与裁切都够不到。
+
+   ⚠️⚠️ 工单 27 更正（真机反馈：折叠块被描成了方框）—— **撤掉挂在矩形包裹层上的那条规则**：
+   工单 26 曾按材质侧那条错误锚点，把底也一并铺到那个以 fold·Message 拼成语义名的矩形
+   包裹层上（本文件此后不再把它当描边/铺底锚点，工单 28 起只作父层收窄用）。实测官方 CSS 后确认它是**矩形包裹层**：
+   它自己的规则只有 width:var(--chat-turn-fold-width) —— 没有圆角、没有 overflow:hidden；
+   真正带圆角的可见面是它内部的 _surface_2653a（同形于 classic 的 _processFoldSurface_）。
+   底铺在矩形包裹层上，同样会在圆角组件外面多出一个方角底板。故只留可见圆角面这层。
+   serene 版式的圆角面是 _surface_2653a（真机那块折叠块正是它）：语义名 surface 是泛名
+   （全构建 39 个类名含它，多个同族兄弟就在 .chat-area 里），故**用父层 [class*="foldMessage"]
+   夹住**后一并挂上（工单 28），既覆盖 serene，又不误伤同族兄弟（README「锚点纪律」只用
+   组件级语义名）；**不写无父层约束的裸泛名**选择器。取舍详见 src/material/bold.css §6.1。
+
+   ⚠️ 用 [class*="语义名"]（工单 26 用户放行的写法）：这一层的类名是
+   「明文语义名 + 下划线 + 构建哈希」，哈希后缀跨构建即变。代价（README 记了）：
+   语义名被重构改名即静默失效。详见 src/material/bold.css §6 开头。
+   ⚠️ 官方底在**里面**那两层（--overlay-subtle 与它的 color-mix 62%），
+   本票只覆盖可见圆角面；里面那两层留原样（「只描外圈，里面不描」的对称做法：
+   外圈有面、里面保持官方层级，展开内容的层次不会糊成一片）。 */
+:is([data-theme="hana-luna"]) .chat-area [class*="processFoldSurface"],
+:is([data-theme="hana-luna"]) .chat-area [class*="foldMessage"] [class*="surface"] {
+    background-color: rgba(20, 19, 19, 0.70);
+}
+
+/* ── C.（工单 27 已整条删除）助手正文的底 ──────────────────────────────────
+   工单 26 曾在这里给助手正文容器（原三段式：对话范围 + 助手消息壳 + 正文容器）
+   铺 0.55 的底，与材质侧 §6.2 的描边配套。用户真机反馈「效果太丑了，还是取消掉底和
+   描边」，工单 27 据此**整条删除**：底（本条）与描边（src/material/bold.css /
+   subtle.css 原 §6.2）两边一起撤，本文件不再有助手正文的填充规则。
+   保留本标题只为让后来者知道「这里曾经有、以及为什么没有了」，不是占位规则。
+   ⚠️ 不要与上面工单 17 那条 .md-content pre（代码块的底 0.70）混淆：那条是**正文内部**
+   代码块自己的底，与本条撤掉的「正文容器本身的底」是两件事，仍然保留。 */
+
+/* ── D. 用户气泡：与助手正文同值（本票先统一）────────────────────────────────
+   加密文 data 属性锚（JSX 里写死，跨构建稳定），与材质侧 §6.3 同锚点、不同属性。
+   官方给气泡的底是 background:#0000000b（≈4.3% 黑，在照片上读作「微微压暗」）；
+   这里换成与助手正文同档的主题面板色 0.55。
+   ⚠️ 气泡**内部**的附件卡 / skills 徽章不碰：只改气泡本身的底。 */
+:is([data-theme="hana-luna"]) .chat-area [data-user-bubble] {
+    background-color: rgba(20, 19, 19, 0.55);
+}
+
+/* ── E. 事件块「来自 X 的消息」：底同 C ──────────────────────────────────────
+   锚点（源码实测）：通用事件卡组件渲染的 <section class="_conversationEventCard_<hash>
+   _conversationEventCard-compact_<hash> ...">。「来自 X 的消息」（AgentOriginCard）走
+   **同一个组件**，只是 cardClassName 另传 _agentOriginCard_<hash>，所以公共前缀
+   conversationEventCard 一个锚覆盖两种事件块（与材质侧 §6.4 同锚点）。
+   ⚠️ 工单正文记的 _agentOriginGrid_* 在本构建源码里**不存在**（全库 0 命中），
+   真机那串类名属另一个构建；本票以副本实测源码为准。
+   官方底 var(--tool-bg)（本主题 = rgba(255,255,255,0.03) 提亮白 wash）在照片上传成
+   「发亮的灰块」，这里换成与助手正文同档的深色填充，读作与消息一致的「面」。
+   ⚠️ 事件块**内部**的头像 / 名字 / 正文不碰。
+   ⚠️ 官方另有一条 _agentReviewMessageCard_*[data-event-status=failed|cancelled] 会把底
+   改成 color-mix(--tool-bg 92%, danger 8%)，特异性 (0,2,0) 高于本规则被 :is([data-theme])
+   + [class*] 抬起后的 (0,3,0)？—— 实测本规则合计 (0,3,0)（:is 取内层最高 (0,1,0) +
+   外层 [data-theme] (0,1,0) + [class*] (0,1,0)），官方那条是 (0,2,0)，本规则赢；
+   即「失败 / 取消」态的事件块也会是统一的面，状态语义改由文字承载（用户要的是统一）。 */
+:is([data-theme="hana-luna"]) .chat-area [class*="conversationEventCard"] {
+    background-color: rgba(20, 19, 19, 0.55);
+}
+
+/* ── 扩展（市场）模态：与设置同族 ──
+   市场内容是**宿主渲染的模态**（不是 App iframe），走通用模态组件 mi()。其渲染层次为：
+     [data-overlay] 暗幕（backdrop，哈希类名，去不掉）
+     [data-overlay][aria-modal]  ← contentProps 挂这层（含 data-testid="market-modal-overlay"）
+       └ div(_container_* + _card_4232d)  ← 真正铺底的卡，background: var(--bg)
+   组件源码里 `ne = [container, contained-container, container-animated, d || card]` 拼的就是这层。
+   所以锚用 :has() 反选**它的父元素**（= 那张卡）——与设置那条同一个路子。
+   卡片下面就是模态自己的 backdrop 暗幕，所以它仍会比别处暗一档。
+
+   ⚠️ 前车之鉴（2026-10-11）：第一版把锚写成 [data-testid="market-modal-overlay"]，
+   以为它在卡上；实际它在 aria-modal 那层壳上，规则打在没底色的元素上 → 毫无变化。
+   教训：data-* / testid 写在 JSX 的 contentProps 里，不等于它就在铺底那层元素上。 */
+:is([data-theme="hana-luna"]) :has(> [data-input-ctx-zone="market"]) {
+    background-color: rgba(20, 19, 19, 0.70);
+}
+
+/*
+ * 右侧工作区透出背景图（工单 15）。
+ *
+ * 右侧工作区不是普通面板，而是一张**布局卡片**。它的不透明背景来自两个 token，
+ * 分别落在两层上：
+ *   外壳      _tileCard_*（构建哈希）      -> var(--panel-card-bg)
+ *   内层空态  _emptyOverlay_*（构建哈希）  -> var(--bg-card)
+ * 而 --panel-card-bg 在 styles.css 里定义为 var(--bg-card, var(--bg))，
+ * 深色主题下 --bg-card = #223430（完全不透明）—— 所以照片被整块盖住。
+ *
+ * 为什么必须把作用域限定在这张卡片的子树里（不能全局覆盖这两个 token）：
+ *   --bg-card 在构建产物里被 **27 个 CSS 文件 / 264 处**消费（schedule-draft 53 处、
+ *   CardShell 37 处、设置弹窗 34 处、PlanModeButton 26 处……）。在 :root / [data-theme] 上改它，
+ *   会让整个界面所有卡片、面板、弹窗一起变半透明 —— 那是另一件事，
+ *   也超出本票范围。所以这里只在这张卡片的子树内覆盖，子树外的
+ *   --bg-card 仍是 #223430（设置弹窗 / 其他卡片 / Dock 不受影响）。
+ *
+ * 为什么用 data-card-definition-id 而不是哈希类名，也不是 data-layout-card-node-id：
+ *   _tileCard_1790b / _emptyOverlay_f920e 里的哈希后缀由构建决定，跨构建即变，
+ *   写死它们等于把皮肤钉死在 1.0.11 这一个构建上（下一次升级静默失效），先排除。
+ *
+ *   ⚠️ 2026-10-10 真机实测纠正（第二版，前一版写错过）：
+ *   本规则最初锚在 data-layout-card-node-id="node:home-workspace-card"。这个值是
+ *   **没有服务器连接时**的默认布局模板里的节点名（见 index-*.js 的 Cy()：
+ *   Zl="node:home-workspace-card"）。一旦连上服务器、加载**已持久化的真实布局**，
+ *   节点名变成 node:card:workspace-desk（= 'node:' + 卡片实例 id 'card:workspace-desk'）
+ *   —— 它是布局文档里的**工位号**，会随持久化布局/迁移而变。
+ *   后果：headless（无服务器）验「通过」，真机（有服务器）命中 0 个元素，规则形同虚设。
+ *   DevTools 实测真机 allLayoutNodeIds = ["node:home-chat-card","node:card:workspace-desk"]，
+ *   与模板名不同，即为此因。
+ *
+ *   故改锚在 data-card-definition-id="wb-tile-workspace-desk"：这是**卡片类型的身份证号**
+ *   （定义的 builtinId），工位怎么重排、布局怎么迁移都不变，跨构建也稳定。
+ *   实测命中 1 个元素，照片透出。
+ *   （data-layout-card-definition-id 与它同值，一并匹配以防某一层只挂其一。）
+ *
+ * 值 = v2 通透 + 压暗 scrim：
+ *   填充仍在 v2 档 rgba(20, 19, 19, 0.45)（半透明，照片透出）；
+ *   但右侧工作区恰好落在照片的满月/水面高光上，只靠这层填充压不住底 —— 实测
+ *   9 条文字有 7 条跌破 4.5:1（最差 1.64:1），与左侧聊天区（同口径 6/6 全过，
+ *   最低 5.76:1）观感并不一致。故在填充之上再叠一层平铺的暗色 scrim 把底压下去。
+ *   方案取舍（用户从三个方案中选定本方案）：不提高填充 alpha（0.85 才达标，
+ *   基本等于不透明，透出背景图就失去意义），改为「保持 0.25 通透 + scrim 0.70」。
+ *
+ *   scrim 0.70 实测把右侧工作区从 7/9 跌破降到 2/9 跌破（0.70 -> 4.54~8.04，
+ *   多数达标），但**尚未 9/9**。剩余两条不是 scrim 强度不够，而是卡片子树内有两个
+ *   自带浅色 wash 的元素盖在 scrim 之上，scrim 加到 1.00 也压不住它们：
+ *     - 活动页签滑块 _tabSlider_* 用 var(--tab-slider-bg) = var(--overlay-strong)
+ *       = rgba(255,255,255,0.15)（暗色主题下的白 wash）→ 最差 3.47:1
+ *     - 空态按钮 _emptyBtn_* 自带 var(--accent-light) 底 → 最差 4.10:1
+ *   实测若要 9/9：scrim 0.85 + 在本规则内把 --tab-slider-bg 也压暗，可达 0/9 跌破
+ *   （最低 5.09:1），代价是照片里的月亮几乎看不见。用户已知情，2026-10-10 选定
+ *   「维持 0.70」：保留背景图观感优先。
+ *
+ * 为什么 scrim 用 background-image 而不是另加一个 ::before/::after 伪元素：
+ *   官方 _tileCard 用的是 background 简写（background:var(--panel-card-bg)），
+ *   简写会把 background-image 重置为 none。本规则特异性更高且排在合成文本末尾，
+ *   直接写 background-image 即可覆盖那个 none，无需引入额外图层。
+ */
+:is([data-theme="hana-luna"]) [data-card-definition-id="wb-tile-workspace-desk"],
+:is([data-theme="hana-luna"]) [data-layout-card-definition-id="wb-tile-workspace-desk"],
+:is([data-theme="hana-luna"]) [data-layout-card-node-id="node:home-workspace-card"],
+/* 工单 36（续 3）：右侧工作区在 1.1.0 被拆成了一族瓦片（desk / core / todo / status…），
+   逐个列名字会一直漏（用户截图里那条 60px 宽的实心窄带就是这么漏的）。改用**前缀**匹配
+   整族；前缀 `wb-tile-` 不会伤到聊天瓦片（它叫 wb-home-chat-tile）。
+   wb-tile-session-files / sub-processes 是另一族的右列瓦片，照旧单独列。 */
+:is([data-theme="hana-luna"]) [data-card-definition-id^="wb-tile-workspace-"],
+:is([data-theme="hana-luna"]) [data-layout-card-definition-id^="wb-tile-workspace-"],
+:is([data-theme="hana-luna"]) [data-card-definition-id="wb-tile-session-files"],
+:is([data-theme="hana-luna"]) [data-layout-card-definition-id="wb-tile-session-files"],
+:is([data-theme="hana-luna"]) [data-card-definition-id="sub-processes"],
+:is([data-theme="hana-luna"]) [data-layout-card-definition-id="sub-processes"],
+
+/* 工单 36（续 7）：整族收口 —— 平台自己发的 `data-card-body-form`（由卡片的 cardForm 推出）
+   就是那一族，官方 CSS 自己也在用这个属性（见下面规则里那条 (0,5,0)）。
+   真机实测（CDP 读真实 DOM）：结构族瓦片 = structural，聊天瓦片 = framed（自动排除）。
+   一条属性选择器就盖住 desk / core / todo / status / session-files / sub-processes，
+   以及原先漏在名单外的 subagent-preview 与 wb-tile-channel-chat。
+   上面那串 id / 前缀选择器保留作**后备**（万一这个属性改版或改名）。 */
+:is([data-theme="hana-luna"]) [data-card-body-form="structural"],
+
+/* 工单 39（2026-10-14）：画布上「既不是 structural、又真有一张面」的那一支 —— framed + surface=card。
+   现场（真机实测，脚本与读数见 .scratch/t36h-evidence/pc-*.mjs）：卡片中心加一张「平行聊天」，
+   点「放回画布」停靠后是一块**不透光的硬板**：壳 `_tileShell_ _tileCard_`，`--panel-card-bg` 仍是
+   #223430（本规则上面那条只锚 structural，框不到它），像素实测瓦片内部 88.9% 恰好是 rgb(20, 19, 19)
+   （真正盖住那块的是内层 `_tileContent_`，把壳自己那层 --chalkboard-card-shell-bg 也埋了）。
+   ⚠️ 不能只写 `[data-card-body-form="framed"]`：主聊天瓦片也是 framed（真机读数），
+   但它的 surface 是 **bare** → 外壳是 `_tileBare_`，官方 CSS 自己给它 `background-color: transparent`，
+   **它根本没有面**；补填充等于往主对话区糊一块板。加 `[data-surface="card"]` 就把 bare 那支排除了。
+   ⚠️ `:not([data-detached-card-shell])` 同样不能省：卡片**脱离成独立窗口**时，那个
+   `section._detachedShell_` 身上也带 framed + surface=card（真机实测），不排就会把脱离窗
+   一起撒成 0.25 —— 用户 2026-10-14 明确「只补画布那支，脱离窗另说」。
+   这一支顺带把同属性的其它卡片一起收进来（平行预览 / 工作室的 folders·library / 终端卡片 /
+   插件里声明 framed 的），取值与本文件工作区族完全相同。 */
+:is([data-theme="hana-luna"]) [data-card-body-form="framed"][data-surface="card"]:not([data-detached-card-shell]),
+
+/* 工单 36（续 7）：播室预览瓦片（wb-home-preview-tile）是 framed，不在上面那一族里，
+   按用户要求单独点名（材质档早就挂了它，这里补上透明）。取值与工作区族完全相同。 */
+:is([data-theme="hana-luna"]) [data-card-definition-id="wb-home-preview-tile"],
+:is([data-theme="hana-luna"]) [data-layout-card-definition-id="wb-home-preview-tile"] {
+    --panel-card-bg: rgba(20, 19, 19, 0.45);
+    --bg-card:       rgba(20, 19, 19, 0.45);
+    /* 第二重保险：卡片若是 framed / self-framed（而非 structural），官方有两条特异性更高
+       的规则（._tileShell_[data-card-body-form=framed][data-surface=card]._tileCard_ 等，
+       特异性 (0,5,0)）会把 background 简写重置成 var(--chalkboard-card-shell-bg)、
+       把 background-image 清成 none，从而盖掉本规则的 scrim。真机当前该卡是 structural
+       （不受影响），但换布局/换 App/版本升级后可能变，故一并把该 token 也在子树内压成半透明，
+       并给 background-image 加 !important，保证任何 body-form 下照片都透得出来。 */
+    --chalkboard-card-shell-bg: rgba(20, 19, 19, 0.45);
+    /* 压暗 scrim：右侧工作区落在照片的满月/水面高光上，0.25 填充压不住（实测 9 条文字有 7 条
+       跌破 4.5:1，最差 1.64:1）。叠一层平铺的暗色渐变作为 scrim，把底压下去但不遮没照片。
+       alpha 0.70：实测降到 7/9 达标（余 2 项临界：tabs.workspace 3.47 属基线既有、
+       goToSettings 4.10 为本票新引入）。用户已知情并选定此档：保留背景图观感优先，
+       不接受提到 0.85（月亮会被压到几乎看不见）。若要 9/9，需 0.85 + 同时压暗 --tab-slider-bg。 */
+    background-image: linear-gradient(rgba(20, 19, 19, 0.70), rgba(20, 19, 19, 0.70)) !important;
+}
+
+/* ============================================================================
+ * 工单 36（续 2）：补两处「面」的填充（真机截图后）
+ *
+ * 【① 后台任务瓦片 —— 真机确认它压根不在已覆盖名单里】
+ * 用户第一轮反馈「后台任务没有透明度」，截图里的面板整块是 #223430（= --bg-card，完全不透明）
+ * 且带官方 1px 边框。查源码后确认：**后台任务是一个独立瓦片**，定义 id 不是 wb-* 那三个，
+ * 而是 `sub-processes`（index-*.js：`Jo = "sub-processes"`；CardShell 的瓦片表里
+ * [BM] = {titleKey:"chalkboard.tile.subProcesses", surface:"card", cardForm:"structural"}）。
+ * 所以已覆盖的 wb-home-preview-tile / wb-tile-workspace-desk / wb-tile-session-files 三条
+ * 一条都没命中它 —— 透明与描边都漏了。本票把它并进上面那条工作区规则 / 材质源 §1 同一份名单，
+ * 取值完全相同（用户要的就是「效果等同右侧工作区」）。
+ *
+ * ⚠️ 同族的其它 cardForm:"structural" 瓦片（subagent-preview / channels / parallel-chat /
+ * plugin-* 等）**已于工单 36（续 7）铺开**：用户点名「structural 那批瓦片整族处理」。要一起铺开：做法不是逐个加名字，而是锚**平台自己发的** `data-card-body-form`（官方 CSS 自己也在用这个属性）
+ * 真机逐个核过：structural = 工作区族 / sub-processes / subagent-preview / wb-tile-channel-chat；
+ * framed = 聊天瓦片 wb-home-chat-tile（自动排除）、parallel-chat（它也是 framed，不属于这一族，
+ * 本票不动 —— 交接文档把它列成同族是记错了）。插件卡片若声明 cardForm:"structural" 也会被自动覆盖。
+ *
+ * 【② show_card 卡片（对话里的交互卡）—— 真机要透明度】
+ * 用户先说「透明度暂时不加」，看过真机后改口：「选择卡片没有透明度」。所以本票补填充。
+ * 官方底：外层框 _transition_<hash> 与内层卡 _interactiveCard_<hash> 都用
+ *   `background: var(--bg-card, var(--bg))`（本主题 = 不透明 #223430）。
+ * 取值 0.70 = 本皮肤「小块面」统一档（输入卡 / 文件卡 / 折叠块 / 后台任务行同值）。
+ *
+ * ⚠️ 2026-10-16（工单 42）真机更正 —— 原「(a)(b) 两条互斥」的写法**已失效**，本段换掉：
+ *
+ *   现场（带调试端口的真机 CDP，逐条实测）：
+ *     ① 对话里那张卡的**可见卡面**是 `_transition_<hash>[data-chat-card-height-transition]`，
+ *        官方底 `background: var(--bg-card, var(--bg))` → 本主题 = **不透明 #223430**。
+ *        它就在对话流里占位，是用户真正看见的那块面。
+ *     ② 卡片真身 `_interactiveCard_<hash>` 现在走 **portal** 渲染到 presentation layer
+ *        （`_wrapper_/data-card-presentation-wrapper` → `_layer_` → `_host_` → .chat-area），
+ *        它**不再是 `_transition_` 的后代**。真机复算：
+ *          t.matches('[data-chat-card-height-transition]:has([class*="interactiveCard"])') === false
+ *        于是旧 (a) 条一条都不命中；旧 (b) 条命中了卡片真身、拿到了 0.70，
+ *        但真身压在**实心**的 `_transition_` 上面 → 合成仍是 #223430，看着完全不通。
+ *        用户截图里 83.72% 的 (20, 19, 19) 就是这个：精确保留、一点没被稀释。
+ *
+ *   受控证据（同一区域内采样，藏掉卡片真身、只动 `_transition_`）：
+ *     · 露出 `_transition_` 真身        → lum std **0.00**、只有 1 种颜色（纯平实心板）
+ *     · `_transition_` 置透明           → lum std **18.21**、13398 种颜色（壁纸出现）
+ *     · `_transition_` 给 0.70 薄垫      → lum std 5.44、1130 种颜色（壁纸可见但压暗）
+ *   即：**壁纸就在 `_transition_` 底下**，它一直是挡光的那一层。
+ *
+ *   故现写法（正是用户选定的「打通两层但留一层薄垫」）：
+ *     (a) 卡面框 `[data-chat-card-height-transition]` —— **无条件**给它 0.70 薄垫；
+ *     (b) 卡片真身 `[class*="_interactiveCard_"]` —— 置透明，避免在垫子上再叠一层。
+ *   两者合成 = 0.70 垫 over 壁纸 —— 卡片仍见壁纸，面上的字仍有底色托着。
+ *   ⚠️ 用 `[class*="_interactiveCard_"]` 而非 `[class*="interactiveCard"]`：后者会连
+ *     同族的 `_interactiveCardActions_<hash>`（右上角动作条）一起选中，多一个下划线
+ *     才能精确只贴卡片真身。
+ *   ⚠️ 删掉旧那条 `:has(...)` 收口是**必须**的，不是可选优化：它在真机上恒为 false，
+ *     留着只会让人误以为「规则写过了」。
+ * ========================================================================== */
+:is([data-theme="hana-luna"])
+    .chat-area [data-chat-card-height-transition] {
+    background-color: rgba(20, 19, 19, 0.70);
+}
+
+:is([data-theme="hana-luna"])
+    .chat-area [class*="_interactiveCard_"] {
+    background-color: transparent;
+}
+
+/* ============================================================================
+ * 卡片「透出主窗口壁纸」（2026-10-16）：摘掉卡片画布框那层不透明的底
+ * ---------------------------------------------------------------------------
+ * 用户要求：对话里的 show_card 卡片要能透出主页面的背景图。
+ *
+ * 现场（构建源码 + 用户截图逐像素，两侧互证）：
+ *   对话框里那张卡有**两层**在挡光，两层都在卡片 iframe 之外 —— 卡片自己的
+ *   CSS 够不着，只能在皮肤里改：
+ *     (a) 外层卡面  ._transition_<hash>[data-chat-card-height-transition]
+ *                   background: var(--bg-card, var(--bg))
+ *                   → 本皮肤已覆盖成 0.70 半透垫（上面那条，工单 36 真机确认）
+ *     (b) 画布框    ._interactiveArtifactFrame_<hash>[data-interactive-artifact-frame]
+ *                   background: var(--bg-card, var(--bg))
+ *                   → **不透明 #223430，把整个卡面盖死**
+ *
+ *   证据：用户截图 743x475，出现最多的颜色 (20, 19, 19) 占 60.62% / 81.45%，
+ *   是**精确保留**的 #223430 —— 它底下若是一层半透垫 + 照片，绝不可能一点都
+ *   不被稀释。而卡片自己文档的 html/body 实测 rgba(0,0,0,0)（诊断卡读数），
+ *   说明「卡片内部」本来就是通的，白的不是内部。
+ *
+ * 本规则只摘 (b)，**保留** (a) 那层 0.70 的垫 —— 用户选定「打通两层但留一层
+ *   薄垫」：卡片仍见壁纸，面上的字仍有底色托着。
+ *   ⚠️ 值是活的旋钮：想更透就把 (a) 那条 0.70 调小（同一个 alpha 也是工作区 /
+ *   输入卡 / 折叠块的档位），想完全恢复原状删掉本规则即可（官方那层不透明的
+ *   画布底会自己回来）。
+ *
+ * 锚点：data-interactive-artifact-frame 是 JSX 里写死的**字面量**属性
+ *   （ChatTranscript-*.js：`"data-interactive-artifact-frame":!0`），跨构建稳定；
+ *   不用 _interactiveArtifactFrame_14ec7 那种带构建哈希后缀的类名。
+ *
+ * 作用域收在 .chat-area（对话滚动区，与上面各条同一套）：卡片中心面板 /
+ *   独立预览窗（chalkboard 变体）不属于「主页面」，本票不动。
+ *
+ * 特异性：:is([data-theme]) (0,1,0) + .chat-area (0,1,0) +
+ *   [data-interactive-artifact-frame] (0,1,0) → (0,3,0)，高于官方 (0,1,0)。
+ *   ⚠️ 官方是用 `background` 简写声明的；这里只覆盖 background-color，
+ *   因为那条简写里的 background-image 本来就是 none，不必重写（重写会丢掉
+ *   将来上游可能加的图，属于「只加不改」的反面）。
+ * ========================================================================== */
+:is([data-theme="hana-luna"])
+    .chat-area [data-interactive-artifact-frame] {
+    background-color: transparent;
+}
+
+/* ============================================================================
+ * 工单 42-续：--bg-card 改半透后的「补位面」（当前**已停用**，保留作记录）
+ * ---------------------------------------------------------------------------
+ * 历史：2026-10-17 一度把主题 --bg-card 设为 transparent，官方模板卡的纸底因此变透。
+ * 但那是全局 token，真机确认至少 72 个元素本来该有底、全都没了（设置页下拉框
+ * ._popup_7f252 就在内），用户截图报「所有选项框的底都没了」。
+ *
+ * 现在改为**中间档**：--bg-card = rgba(20, 19, 19,0.85)（详见
+ * src/hana-luna.css 同名列）。半透档下 _fileOutputActions_ 自己已经
+ * 有 85% 的底，不需要再垫一层 0.70，否则两层叠起来会把它压向不透明，
+ * 反而偏离「中间档」。故本段整条注释掉。
+ *
+ * ⚠️ 若以后又要把 --bg-card 改回 fully transparent，把下面这行重新启用即可。
+ * ========================================================================== */
+/*
+:is([data-theme="hana-luna"]) .chat-area [class*="_fileOutputActions_"] {
+    background-color: rgba(20, 19, 19, 0.70);
+}
+*/
+
+/* ============================================================================
+ * 工单 36：后台任务行项加「面」（填充部分）
+ *
+ * 用户要求：「改后台任务，加透明度和描边，效果等同右侧工作区」。
+ * 描边（inset 顶光 + 1px 边线）已在材质源 §4.3 挂了，本票只补填充。
+ *
+ * 挂点：[data-background-task]（写在 JSX 里的明文 data 属性，跨构建稳定）——
+ *   CardShell 的 subProcesses 行项组件：
+ *     <div class="_item_<hash>" data-background-task=taskId>        ← 本规则的挂点
+ *       └ <div class="_terminalRow_<hash>" data-status=…>            ← 里面的行（不碰）
+ *   官方给行项写的是 background: transparent（只有一条 1px var(--overlay-light) 边框 +
+ *   圆角 + overflow:hidden），所以本规则是**纯增量**：只把「没底」补成一块半透明的面。
+ *   行项内部的子元素（图标按钮 / 标题 / 状态 / 进度 / 中止按钮）一律不碰：只给外圈铺底。
+ *
+ * ⚠️ 官方还有一条 ._terminalRow_<hash>:hover{ background: var(--overlay-subtle) }
+ *   —— 悬停在**内层行**上加一层 3% 白 wash。它画在本规则的填充之上（父子不同层，
+ *   不互相覆盖），只让悬停时比静置略亮一点，观感正常，故不写悬停变体。
+ *
+ * 取值 0.70 = 本皮肤「小块面」的统一档（输入卡 / 文件卡 / 折叠块 / 悬浮面板内层卡同值）。
+ *   想严格对齐右侧工作区**自己**的填充档（0.25 + 0.70 scrim），把 0.70 改成 0.25；
+ *   想更淡一档（消息族），改成 0.55。行项是小块，两处都是一行改动。
+ * ========================================================================== */
+:is([data-theme="hana-luna"]) [data-background-task] {
+    background-color: rgba(20, 19, 19, 0.70);
+}
+
+/* ============================================================================
+ * 工单 36（续）：三处「面」的填充
+ *
+ * 用户逐条确认了三处认层：
+ *   ① 扩展 → 管理来源 → 官方源的「选项框」= **区域下拉框**（不是下拉选项列表，也不是源条目）
+ *   ② 快捷回复弹窗的「模糊度」= **只做半透明**（不真加 backdrop-filter）
+ *   ③ 经典视图的「Hana 翻完了…」= **每条工具状态行本身**（不是外层框、也不是折叠块）
+ * 三条的描边写在材质源 §9；本文件只负责「透出多少」。
+ * ========================================================================== */
+
+/* ── ① 区域下拉框（官方源那组里选 Global / 中国大陆 的那个框）────────────────
+   锚点：[class*="region-row"] 下的 [class*="trigger"]。
+     MarketModalShell 渲染 <div class="_region-row_<hash>"><div><strong>区域</strong></div>
+       <Select trigger class="_trigger_<hash>">…</div>
+   为什么要夹着 region-row：Select 是全局共用组件，设置页里到处都是 _trigger_<hash>；
+   不夹就会把设置里所有下拉框一起改掉。region-row 全构建只此一处（市场来源页）。
+   官方：._trigger_<hash>{ background-color: var(--bg-card) }（= 不透明 #223430）
+         :hover:not(:disabled){ background-color: var(--overlay-subtle) }（悬停变「几乎全透」）
+   → 静置是实心块、悬停反而变没，与「正文里的文件卡」（静置 0.70 / 悬停 0.92）正好相反。
+   本规则把两个态都换成文件卡那一套值（用户：「显示效果等同正文中文件的显示效果
+   （包括鼠标移上去和鼠标未移上去）」）。
+   特异性：:is([data-theme])(0,1,0) + [class*](0,1,0) + [class*](0,1,0) [+:hover] = (0,3,0)/(0,4,0)
+   > 官方 (0,1,0)/(0,3,0)，且本文件排在合成文本末尾 → 必赢。 */
+:is([data-theme="hana-luna"]) [class*="region-row"] [class*="trigger"] {
+    background-color: rgba(20, 19, 19, 0.70);
+}
+:is([data-theme="hana-luna"]) [class*="region-row"] [class*="trigger"]:hover {
+    background-color: rgba(20, 19, 19, 0.92);
+}
+/* 下拉展开时触发器上会多一个 data-open（Select 组件写死的属性），官方把它和 :hover
+   并列成同一条规则。不补这一条的话，点开下拉、框子会突然变「几乎全透」。 */
+:is([data-theme="hana-luna"]) [class*="region-row"] [class*="trigger"][data-open] {
+    background-color: rgba(20, 19, 19, 0.92);
+}
+
+/* ── ② 快捷回复弹窗（answer-choice 的输入面板）───────────────────────────────
+   锚点：[data-testid="app-input-panel-stack"] 下的 [data-panel-id] ——
+     CardShell 渲染 <div data-testid="app-input-panel-stack">
+                    <section class="_panel_<hash>" data-panel-id=… data-expanded=…>
+   官方给这个 section 写的规则只有 min-width:0（等于没底色、没圆角、没描边）；
+   App（answer-choice）自己也声明了 html,body{background:transparent}，所以整个弹窗
+   以前是「浮在输入框上方、没有面」的一组选项。
+   取值与输入卡完全一致（用户：「效果等同输入框」）：
+     填充 rgba(20, 19, 19,0.70)（= 本文件给输入卡 --bg-card 的值，见工单 17 那条）
+     圆角 calc(var(--radius-chat-surface, 16px) * var(--corner-radius-scale, 1))
+       —— 就是输入卡 _input-wrapper_<hash> 自己用的那个半径 token。
+   ⚠️ border-radius 是「面」的形状，官方没写，也不属于材质源（那里只写 box-shadow），
+   所以跟着填充放在一起。它不占布局、不触发重排。
+   ⚠️ 不加 padding：App 自己的 .ac 容器已有 14px 16px 12px 的内边距，再加会双重留白。
+   ⚠️ 用户已明确「只做半透明」→ 本文件与材质源都不写 backdrop-filter。 */
+:is([data-theme="hana-luna"]) [data-testid="app-input-panel-stack"] [data-panel-id] {
+    background-color: rgba(20, 19, 19, 0.70);
+    border-radius: calc(var(--radius-chat-surface, 16px) * var(--corner-radius-scale, 1));
+    /* 工单 36（续 4）：我们给了半径，**形状**也得跟官方的圆角语言对齐 ——
+       官方一律写 corner-shape: squircle（超椭圆，工单 37），不补就会变成正圆角。 */
+    corner-shape: squircle;
+}
+
+/* ── ③ 经典视图：工具组 = 一块面（挂在**组容器**上，行本身不画）──────────────
+   锚点：.chat-area [class*="_toolGroup_"] —— 工具组的**容器**。
+   为什么用这种类名写法：官方 CSS-module 里同族七个类名（toolGroup / toolGroupSummary /
+   toolGroupSummaryClickable / toolGroupTitle / toolGroupArrow / toolGroupContent / toolGroupSingle），
+   其中只有容器自己的类名形如 `_toolGroup_<hash>`（语义名后**紧跟下划线**），另外六个都在
+   "toolGroup" 后面直接接大写字母。所以 `[class*="_toolGroup_"]` 精确命中容器、排掉标题行 /
+   内容区 / 箭头等同族兄弟。真机实测：命中 24 个，全部是容器（21 个单工具组 + 3 个多工具组），
+   全 `.chat-area` 里含 "toolGroup" 的类名一共就那七个，无一误伤。
+
+   结构（源码实测 ChatTranscript-CLxbpBJm.js，xK 组件）：
+
+     <div class="_toolGroup_<hash>[ _toolGroupSingle_<hash>]">
+       [工具数 > 1 才渲染] <div class="_toolGroupSummary_<hash>[ …Clickable_<hash>]">
+                             <span class="_toolGroupTitle_<hash>">N 个工具</span>
+                             <span class="_toolGroupArrow_<hash>">›/‹</span>   ← 可点折叠组内容
+                           </div>
+       <div class="_toolGroupContent_<hash>"> _toolIndicator_ × N </div>
+     </div>
+
+   官方底：容器自带 `background: var(--tool-bg)`（本主题 3% 白）+ `border-radius:
+   calc(--radius-sm × --corner-radius-scale)` + `corner-shape: squircle` + `overflow: hidden`
+   —— 圆角与裁切都现成。所以本档只**覆盖填充**（0.70）、不重复声明半径 / 形状
+   （真机实测容器 = 348 宽 / radius 14.7272px / squircle，与我们的取值本来就一致）。
+
+   ⚠️ 工单 36 续 5 → 续 6 的**层级修正**：续 5 把面挂在**行**上（`_toolIndicator_` 与
+   `_toolGroupSummary_` 两个锚点）。用户 2026-10-13 真机反馈「工具展开能不能只描边最外圈」
+   —— 展开态下组里三块面（标题行 + 两条行）各画一圈，像三个盒子叠在一起。
+   面的归属应该是**组**：一组一块面，组内的行与标题行一律不画。故续 6 把填充整体上移到
+   容器，行 / 标题行那两条规则撤掉。
+   ⚠️ 单工具组（`_toolGroupSingle_`，不渲染标题行）不受影响：容器的盒 = 那一条行的盒，
+   外观与续 4 / 续 5 完全一致。
+   ⚠️ 标题行的可点悬停：容器拿填充后，标题行仍是**透明子元素**，官方那条
+   `._toolGroupSummaryClickable_:hover { background: var(--overlay-subtle) }` 照常生效
+   —— 续 5 为「填充挂在自己身上、把官方悬停整个压掉」而补的 `:hover` 变体因此一并撤掉。 */
+:is([data-theme="hana-luna"]) .chat-area [class*="_toolGroup_"] {
+    background-color: rgba(20, 19, 19, 0.70);
+}
+
+/* ── ④ 折叠框右侧那条暗带：把折叠框内层两处 92% 的壳都放开到满宽（工单 36 续 4 + 续 6）────────────
+   现场是**两个** 92% 的壳（续 4 修了壳、续 6 才补上面板）：
+     _processFoldSurface_<hash>                              宽 790，bg rgba(20, 19, 19,0.7)（我们的底）
+       └ _message_ _messageAssistant _processFoldMessage_    宽 **727**（._message_0adda 的 max-width:92%）
+           └ button._processFoldSummary_<hash>               宽 790，bg rgba(255,255,255,0.03)
+   两条差 63px（790×8%），而我们的底铺在 790 上、官方的 3% 白洗色只铺在 727 上 →
+   右边那 63px 是「纯我们的底、没有白洗色」，比面板区暗约 4.5 阶（用户截图逐像素实测：
+   列 739→801 中位亮度 49.0 → 44.7，两条边界换算回页面正好是面板右缘 1275 / 外框右缘 1338）。
+   修：把折叠框**里面**这层壳放开到 100%（只影响 fold 内的壳，不动普通消息壳的 92%）。
+
+   ⚠️⚠️ 续 6（2026-10-13 用户又报「思考框右侧还是有色块」）：续 4 只放开了**壳**，漏了**面板**。
+   真机实测（经典视图、展开态）：
+     _processFoldCollapse_<hash>
+       └ _message_ _messageAssistant_ _processFoldPanel_    L=548 R=1275 宽 727  maxW=**92%**
+   源码实测（xK 组件）面板的 class 是 `${_.message} ${_.messageAssistant} ${_.processFoldPanel}`
+   —— 它**同样带着通用消息类** `_message_0adda`，于是分到 `._message_0adda { max-width: 92% }`。
+   官方自己只写了 `._processFoldPanel_ ._message_0adda { max-width:100% }`：那管到了面板**里面**的
+   消息，管不到面板**自身** —— 官方的一处漏网，一旦我们给外框铺满宽底就显影。
+   CSS.getMatchedStylesForNode 实测：面板上的 max-width:92% 确实只来自 `._message_0adda` 这一条。
+   （折叠态不渲染 panel，所以它只在展开态显影；续 4 当时用户看的是折叠态，故而漏过。）
+   续 6 修：把面板一并放开。两个类名都是折叠框专属（普通消息没有这两个类），故不再夹
+   `processFoldSurface` 祖先限定，`.chat-area` 就是足够的作用域（顺带覆盖其它折叠包裹变体）。 */
+:is([data-theme="hana-luna"]) .chat-area [class*="processFoldMessage"],
+:is([data-theme="hana-luna"]) .chat-area [class*="processFoldPanel"] {
+    max-width: 100%;
+}
+
+/* ── ⑤ 卡片内容与外框的圆角对齐（工单 36 续 4）───────────────────────────────
+   真机实测（CDP，1.1.0-beta）：
+     外框 _transition_<hash>                角半径 calc(--panel-card-radius × scale) = 12.8863px，squircle
+       └ 内容视口 _interactiveArtifactViewport_<hash>   border-radius: inherit，overflow: hidden
+           └ iframe                                       border-radius: inherit → 实测只有 11.0454px
+   官方在内容侧留了 1.25×scale（≈1.84px）的内缩，于是**内容自己的圆弧**和**外框的弧**在
+   圆角处分家，中间裂出约 1.8px 的缝（缝里是我们的 0.7 底）。我们又把描边加在外框内缘，
+   正好把外圆弧点亮 —— 两条弧就都看得见了，就是用户说的「圆角有两层」。
+   修：把内容侧（视口 + iframe）的角半径对齐到外框的**内侧**半径（外框半径 − 边框宽），
+   两条弧重合，只剩我们那条 1px 边线。
+   ⚠️ 形状不用管：官方在这两层都写了 corner-shape: inherit，超椭园会自己传下去。 */
+:is([data-theme="hana-luna"]) .chat-area [data-chat-card-height-transition] [class*="interactiveArtifactViewport"],
+:is([data-theme="hana-luna"]) .chat-area [data-chat-card-height-transition] iframe {
+    border-radius: calc(var(--panel-card-radius) * var(--corner-radius-scale, 1) - var(--chat-card-frame-border-width));
+}
+
+/* ============================================================================
+ * 内置浏览器窗口 · 地址栏「药丸」（2026-10-14）
+ *
+ * 上游 browser-viewer.html 的**内联样式**把地址栏底色写死了：
+ *   .browser-address-form              { background: #fff; }   (html L198)
+ *   .browser-address-form:focus-within { background: #fff; }   (html L209)
+ * 同一条规则里其它属性（border / color / box-shadow）都老老实实用 token，
+ * 只有底色假设了浅色主题 —— 于是本主题下那个窗口里唯一亮得刺眼的就是这颗白药丸。
+ * （工单 36-B 把主题接进那个窗口后，真机扫描「背景亮度 > 0.55」的元素恰好只有它 1 个。）
+ *
+ * 这里不动上游文件，只在本主题作用域内覆盖底色：取标题栏同一族的面色
+ * （--panel-card-bg，与该规则自己的 inset box-shadow 同源），0.86 让它略透出窗口底，
+ * 与主窗口标题栏 / 输入区是同一套「薄玻璃」语言。
+ * 只覆盖 background；border / radius / corner-shape 全走上游原值。
+ *
+ * 两条选择器缺一不可：上游 :focus-within 会重新声明 background:#fff，
+ * 只写一条常态规则会在聚焦时弹回白底。
+ *
+ * 注：html L260 还有一处 background:#fff，是 <webview> 宿主的底衬
+ *     （网页加载中的白底），属于「网页内容」而非「窗口 chrome」，本票不动。
+ * ========================================================================== */
+:is([data-theme="hana-luna"]) .browser-address-form,
+:is([data-theme="hana-luna"]) .browser-address-form:focus-within {
+    background: color-mix(in srgb, var(--panel-card-bg) 86%, transparent);
+}
+
+/* ============================================================================
+ * 输入卡上方的报错 / 通知条（工单 38，2026-10-14）
+ *
+ * 现场：模型请求失败（例：上游 401）时，输入卡正上方弹出一条「操作没能完成」的框，
+ * 带一个 `×` 与「详情 / 收起」开关，展开后是红色 mono 的报错正文。
+ *
+ * 结构（真机 CDP 实测 + 构建源码定位）：
+ *   .input-area > ._input-surface_<hash>              ← 输入区外壳（position:relative）
+ *     ├ div._slash-error-bar_<hash>._notice_<hash>    ← **可见面：就是这一条**
+ *     │    role="status"；background: var(--panel-card-bg)；
+ *     │    border: var(--panel-card-border) = 1px solid rgba(0,0,0,0.08)；box-shadow: none；
+ *     │    radius 12.8863px（squircle）、padding 6px 12px、color #c08080
+ *     │   ├ div._content_<hash>._slash-error-bar-stacked_<hash>   ← 内层内容盒，无底色
+ *     │   └ button._close_<hash>                                  ← ×（32×32）
+ *     └ div._input-stack_<hash> > div[data-input-card]._input-wrapper_<hash>  ← 输入卡（0.70）
+ *   源码：renderer/assets/SettingsForm.module-*.js 的 NoticeShell（function SR，
+ *         `qo={notice,content,close}`）+ CardShell-*.js 的输入状态区（同一个组件三处引用
+ *         `se["slash-error-bar"]`）；CSS module 两条规则在 PlanModeButton-*.css。
+ *         类名是构建哈希，故用 [class*="语义名"] 绕开（工单 26 起用户放行；
+ *         `slash-error-bar` 全构建只此一处组件 —— 3 处 JS 引用 / 2 条 CSS 规则）。
+ *
+ * 病：填充完全不透明 + 那条 1px 边框是**黑 8%**（深色面上等于看不见）
+ *     → 一块没边、不透光的硬板，与周围一圈薄玻璃都不搭。
+ *
+ * ⚠️ 为什么上面那条 `.input-area { --bg-card: 0.70 }` 救不了它（本文件最容易踩的坑）：
+ *   --panel-card-bg 在 styles.css 的 :root 上定义为 `var(--bg-card, var(--bg))`，
+ *   **这个 var() 在 :root 上就完成替换、算出的 #223430 直接继承下去**；
+ *   子树里再改 --bg-card 不会回溯改它。同一个 .input-area 上的真机读数：
+ *     --bg-card = rgba(20, 19, 19, 0.70)      --panel-card-bg = #223430
+ *   所以本条必须**直接覆盖 --panel-card-bg**（与文件上面那张文件卡同一种写法）。
+ *
+ * 取值 rgba(20, 19, 19, 0.80)（= --bg 底色 @0.80），而不是 --bg-card @0.70 —— 量出来的：
+ *   这一条压着上游写死的红字 #c08080 与 --text-muted 的 mono 正文，
+ *   同一个底（照片水面带，实测 backdrop ≈ rgb(94,109,110)）上逐档实测：
+ *     填充                      实测内部色      反解 alpha  红字对比   mono 正文对比
+ *     不透明 #223430（改前）     rgb(20, 19, 19)   1.000      4.15:1    5.90:1
+ *     --bg-card @0.70           rgb(48,66,65)   0.695      3.35:1    4.77:1  ← 同档太透，红字掉档
+ *     --bg-card @0.80           rgb(43,62,59)   0.800      3.58:1    5.09:1
+ *     --bg      @0.80（本条）   rgb(34,51,51)   0.800      4.18:1    5.94:1  ← 透 20%，字对比与改前持平
+ *     --bg      @0.86           rgb(31,47,47)   0.857      4.41:1    6.27:1
+ *   即：拿更暗的 --bg 换出 20% 的透光，屏幕上那一块的面色与改前几乎逐值相同（Δ≈1/1/3），
+ *   但照片真的透进来；直接用 --bg-card 是「面色变浅 + 字变糊」两头亏。
+ *   想更透 / 更实只改这一个数（往 0.70 走更透、红字同步变糊；往 0.86 走更实）。
+ *   实测脚本与对照图：.scratch/t36h-evidence/bar-variants.mjs、bar-variants-compare.png。
+ * ========================================================================== */
+:is([data-theme="hana-luna"]) [class*="slash-error-bar"]:not([class*="slash-error-bar-stacked"]) {
+    --panel-card-bg: rgba(20, 19, 19, 0.80);
+}
+
+/* 折叠块右侧色差（2026-10-20，与 DeepSeek 蓝同修）
+ * ---------------------------------------------------------------------------
+ * 用户报「思考的右侧有色差」—— 这不是颜色问题，是宽度：
+ *   面板面 ._processFoldSurface_ width:100%（790）
+ *   里面的头行 / 正文行都是 ._message_，被上游的 max-width:92% 卡在 727
+ *   墨色 tint 挂在行上 → 右侧 63px 没被 tint，透出壁纸，比左边白一截。
+ * 上游只给 ._processFoldPanel_ 写了 max-width:100%，没管 _processFoldCollapse_ 这条路径。
+ * 与主题无关，三个主题都要这一句。 */
+:is([data-theme="hana-luna"]) .chat-area [class*="processFoldSurface"] > [class*="_message_"],
+:is([data-theme="hana-luna"])
+    .chat-area [class*="processFoldSurface"] > [class*="processFoldCollapse"] > [class*="_message_"] {
+    max-width: 100%;
+}
+
+/* ── 思考框（折叠块）的底：换成侧栏那层玻璃（2026-10-24，与另两个主题同修）──────
+   侧栏 aside[data-titlebar-mode] 是 linear-gradient(rgba(20, 19, 19, 0.62))，这里同值。
+   不收 `processFoldSurface [class*="surface"]`（内部工具气泡，自己已有 --tool-bg）。 */
+:is([data-theme="hana-luna"]) .chat-area [class*="processFoldSurface"],
+:is([data-theme="hana-luna"]) .chat-area [class*="foldMessage"] [class*="surface"] {
+    background-color: transparent;
+    background-image: linear-gradient(rgba(20, 19, 19, 0.62), rgba(20, 19, 19, 0.62));
+}
+
+/* ── 市场 ·「确认安装」审查对话框：毛玻璃（2026-10-23，与 DeepSeek 蓝同修）─────────
+   见 src/background-deepseek/dark.css 同名段：这个 dialog 只吃 --bg-card（本主题
+   rgba(20, 19, 19,0.85)），背后市场卡片的文字原样穿进面板，与面板内字段逐行叠字。
+   锚点与理由同上（[class*="_overlayContent_"] 全构建只此一组件）。
+
+   深色底上填充调到 0.80（2026-10-23 用户选定）：原先的 0.88 把背后吞得太干净，
+   字是糊没了，但玻璃那层「后面有东西」也没了，看着像一块实心板。
+   0.80 + blur 26px 能把卡片轮廓留在柔光里，字仍不可读。
+   saturate 用 125% —— 深色主题里 140% 会把背后那片冷绿拉艳，反而不像玻璃。 */
+:is([data-theme="hana-luna"]) [class*="_overlayContent_"] > [role="dialog"] {
+    background-color: rgba(20, 19, 19, 0.80);
+    -webkit-backdrop-filter: blur(var(--mat-blur, 26px)) saturate(125%);
+    backdrop-filter: blur(var(--mat-blur, 26px)) saturate(125%);
+}
+
+/* ── 通用确认框（alertdialog）：毛玻璃（2026-10-23，与「确认安装」同族）───────────────
+   见 src/background-deepseek/dark.css 同名段：面板是 [role="alertdialog"]
+   的直接子元素（._dialog_ecdc0），底色同为 --bg-card（本主题 rgba(20, 19, 19,0.85)），
+   背后聊天正文直接穿进面板。填充不用变量原值：它与三主题的安装审查对话框
+   统一为 0.80 + blur 26px。 */
+:is([data-theme="hana-luna"]) [role="alertdialog"] > [class*="_dialog_"] {
+    background-color: rgba(20, 19, 19, 0.80);
+    -webkit-backdrop-filter: blur(var(--mat-blur, 26px)) saturate(125%);
+    backdrop-filter: blur(var(--mat-blur, 26px)) saturate(125%);
+}

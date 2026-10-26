@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>衣橱 · 皮肤库</title>
+  <link rel="stylesheet" href="./assets/panel.css">
+</head>
+<body>
+  <main class="wardrobe">
+    <header class="bar">
+      <div class="bar-left">
+        <h1>衣橱 · 皮肤库</h1>
+        <p id="startup-status" role="status">Loading App...</p>
+      </div>
+      <div class="bar-right">
+        <div id="new-btn"></div>
+        <div id="import-btn"></div>
+        <input id="pack-file" type="file" accept=".json,application/json" hidden>
+      </div>
+    </header>
+
+    <section class="wall-wrap">
+      <div id="wall" class="wall"></div>
+    </section>
+
+    <section id="detail" class="detail" aria-live="polite"></section>
+
+    <section id="editor" class="editor" hidden></section>
+
+    <footer class="legend">
+      <span class="badge badge-vars">衣橱</span> 走官方用户主题，可预览可回退
+      <span class="badge badge-patch">针线房</span> 需打补丁，碰安装目录
+      <span class="badge badge-host">已装</span> 宿主里已有的用户主题
+      <span id="build-tag" class="build-tag"></span>
+    </footer>
+  </main>
+  <script>
+    window.addEventListener('error', () => {
+      var el = document.getElementById('startup-status');
+      if (el) el.textContent = 'App failed to start. Check its resources and run the App validator.';
+    }, true);
+  </script>
+  <script type="module" src="./assets/panel.js"></script>
+</body>
+</html>

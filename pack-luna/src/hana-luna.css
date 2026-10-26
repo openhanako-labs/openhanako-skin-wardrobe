@@ -1,0 +1,71 @@
+/*
+ * Hana Theme: Luna 龙娘 · 玫瑰月影
+ * ---------------------------------------------------------------------------
+ * 配色源。变量取自 hana-luna-theme 的 DEFINITION（61 项，原样，未增删）。
+ * 作用域 id: hana-luna
+ * 由 hana-skin 补丁管线贴入（配色源 -> 材质源 -> 背景源 合成）。
+ */
+
+[data-theme="hana-luna"] {
+    --bg                      #141313;
+    --bg-card                 #1E1D1E;
+    --bg-glass                #1E1D1EEB;
+    --sidebar-bg              #191719;
+    --accent                  #CD5B85;
+    --accent-hover            #DA84A4;
+    --accent-light            #CD5B8526;
+    --link                    #E4A3C3;
+    --link-hover              #F0C1D7;
+    --text                    #F0EFF0;
+    --text-light              #D0CAD1;
+    --text-muted              #AAA2AD;
+    --hana-text               #F0EFF0;
+    --border                  #B896C138;
+    --shadow                  #00000070;
+    --green                   #9DCCAC;
+    --coral                   #DFB0A1;
+    --danger                  #F09AAB;
+    --jian-note-bg            #262127;
+    --jian-note-border        #B896C140;
+    --mood-bg                 #B896C112;
+    --mood-text               #C8ACD1;
+    --mood-border             #B896C133;
+    --tool-bg                 #B896C10D;
+    --tool-text               #C5BDC9;
+    --user-bg                 #CD5B851F;
+    --drop-overlay-bg         #141313E8;
+    --attach-bg               #FFFFFF0D;
+    --overlay-subtle          #FFFFFF06;
+    --overlay-light           #FFFFFF0D;
+    --overlay-medium          #FFFFFF17;
+    --overlay-strong          #B896C133;
+    --tab-slider-bg           #B896C125;
+    --term-bg                 #191719;
+    --term-fg                 #E5DFE7;
+    --term-cursor             #DA84A4;
+    --term-cursor-accent      #141313;
+    --term-selection-bg       #CD5B8540;
+    --term-ansi-black         #353039;
+    --term-ansi-red           #E78FA4;
+    --term-ansi-green         #9DCCAC;
+    --term-ansi-yellow        #DBC295;
+    --term-ansi-blue          #A6B9E2;
+    --term-ansi-magenta       #C1A0D4;
+    --term-ansi-cyan          #9CCAD0;
+    --term-ansi-white         #D0CAD1;
+    --term-ansi-bright-black  #AAA2AD;
+    --term-ansi-bright-red    #F7B0C0;
+    --term-ansi-bright-green  #BAE2C8;
+    --term-ansi-bright-yellow #EED9B2;
+    --term-ansi-bright-blue   #C2D0F2;
+    --term-ansi-bright-magenta#DAC0EA;
+    --term-ansi-bright-cyan   #BCE4E9;
+    --term-ansi-bright-white  #F5F0F6;
+    --radius-input            18px;
+    --radius-card             18px;
+    --radius-chat-card        16px;
+    --radius-chat-surface     20px;
+    --font-ui                 Segoe UI, Microsoft YaHei UI, Microsoft YaHei, sans-serif;
+    --font-serif              Noto Serif SC, Source Han Serif SC, serif;
+    --font-mono               Cascadia Code, Consolas, monospace;
+}

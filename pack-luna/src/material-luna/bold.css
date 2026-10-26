@@ -1,0 +1,1006 @@
+/*
+ * Hana Material Source: 中秋 · 月满庭 —— 材质层「明显（bold）」档
+ * ---------------------------------------------------------------------------
+ * 本文件是**材质源**，不是主题源：
+ *   * 由 scripts/apply.ps1 -Material bold 读入，贴在**配色源之后**，合成 renderer 树
+ *     themes/hana-luna.css（= 配色源 + 换行 + 本文件）。
+ *   * 若背景档同时启用，背景源再排在本文件之后
+ *     （合成顺序：配色源 -> 材质源 -> 背景源，见 scripts/apply.ps1）。
+ *   * server 树（App 面）不贴本文件 —— 见 .scratch/hana-mid-autumn-skin/spec-material.md。
+ *   * 皮肤自工单 21 起是**单主题**（只剩 hana-luna，浅色版已整体删除），
+ *     故本文件只需要一套 [data-theme="hana-luna"] 作用域。
+ *
+ * ⚠️ 与「克制（subtle）」档的关系：**只差参数**，覆盖范围与材质语言完全一致。
+ *   明显档 = 边线更实、顶边内侧高光更亮（深色面 0.26，见 spec-material.md）。
+ *
+ * ⚠️ 材质语言（决策 D17，2026-10-10）：**薄玻璃（无模糊）** = 1px 内边线 + 内侧高光。
+ *   全文件**不含背景模糊滤镜**（含 -webkit- 前缀）。理由与证据见 material-recon.md §11：
+ *   DSH 上最成熟的皮肤 whale-fantasy 全套一个模糊滤镜都没有 —— 它早期用过磨砂玻璃，
+ *   量化测得背景相关性从 0.997 掉到 0.87（「背景看起来是糊的」），于是把模糊删掉。
+ *
+ * ⚠️ 铁律一（本票的硬骨头）：本文件**只写 box-shadow**，不写任何填充属性
+ *   （不写 background / background-color / background-image，也不定义渐变变量）。
+ *   各挂点面的半透明填充归**背景源**（背景档的源文件，合成顺序排在本文件之后），
+ *   由它在侧栏上给出「透明壳 + 0.28 填充 token + 0.35 scrim」的底。
+ *   材质若也写填充，会盖掉照片：背景源只为 aside[data-titlebar-mode] 写了透明规则，
+ *   **对瓦片本体一个字都没写**（瓦片本来就是官方面板色，靠的是"没人碰"）。
+ *   材质一旦写填充，这些锚点没有任何更高优先级的规则来救 ——
+ *   瓦片（照片透出来的地方）会直接变成实色。
+ *
+ *   ⚠️ 更正（2026-10-11，headless Edge 实测，与工单 20 正文的措辞不同）：
+ *   工单说"材质特异性 (0,3,1) 会压过背景源侧栏那条 (0,2,1)"。实测两者**同为 (0,2,1)**
+ *   —— :is() 取参数中最高特异性，不累加：外层（现在是 [data-theme="…"]）恒为 (0,1,0)，
+ *   内层 :is(..., aside[data-titlebar-mode], ...) = (0,1,1)，合计 (0,2,1)；
+ *   背景源 :is([data-theme="…"]) aside[data-titlebar-mode] 也是 (0,1,0)+(0,1,1) = (0,2,1)。
+ *   同特异性下由**合成顺序**决定：背景源排在本文件之后，所以侧栏那条其实**仍会赢**。
+ *   真正致命的是上面那条——瓦片根本没有背景源规则可依靠。
+ *   结论不变（材质绝不写填充），但理由要按实测的来：不是"压得过"，是"无人兜底"。
+ *
+ *   另外，即使某个锚点侥幸被背景源救回来，也是两个源争同一件事、观感随合成顺序漂移。
+ *   材质只负责「面本身有边、有高光」，不负责「透出多少」。
+ *
+ * ⚠️ 铁律二：不在应用根上写任何规则，也不定义分区渐变变量。
+ *   应用根上已挂着背景源的真照片 + 两层压暗 scrim，再叠一层分区渐变只会争抢且已无意义。
+ *
+ * ⚠️ 挂点（工单 23 + 工单 24，全部是**运行时实测存在的锚点**）：
+ *     瓦片本体（外圈）  [data-card-definition-id] / [data-layout-card-definition-id]
+ *                       取值见 §1（预览瓦片 / 右侧工作栏瓦片 / 会话文件瓦片）
+ *     aside[data-titlebar-mode]                 侧栏         真机 count=1  position:relative
+ *     [data-jian-drawer]                        笺面板根      工单 24，见 §4.1
+ *     :has(> [data-input-ctx-zone="settings"])  设置模态卡    工单 24，见 §4.2
+ *     [data-background-task]                    后台任务行项  工单 24，见 §4.3
+ *     [data-input-card]                         输入卡外圈    工单 24，见 §4.4
+ *     [data-chat-resource-card]                  聊天文件卡    工单 25，见 §5
+ *     折叠块可见圆角面（classic 版式）            工单 26，见 §6.1（[class*="语义名"]）
+ *     [data-user-bubble]                        用户气泡      工单 26，见 §6.3
+ *     [class*="conversationEventCard"]           事件块        工单 26，见 §6.4
+ *
+ *   工单 23 之前还挂过「瓦片**内部**的标题条」那个元素 —— 那条规则已整体删除，
+ *   三条标题条都不再描边，见 §1 的说明。
+ *   第一期「稳定钩子清单」里的窗口壳 / 侧栏 / 标题栏那三个明文类，自 1.0.11 起运行时
+ *   命中均为 0（规则还在 styles.css 里，但没有元素带这些 class），一律不用。
+ *   工单 24 更正了一处旧结论：**输入框**原先按「输入区是瓦片内容的子节点、不单独上材质」
+ *   处理，本票按用户要求给它加上外圈描边 —— 挂的是可见圆角输入卡的稳定 data 锚点，
+ *   不是那个透明的明文布局容器（取舍与实测见 §4.4）。聊天区 / 对话瓦片仍**不单独上材质**
+ *   （父层已有面；子层再叠一层填充会不透明度翻倍并在边界留接缝，理由见 issues/13）——
+ *   本票给输入卡只加 box-shadow，不涉及填充。
+ *
+ * ⚠️ 不写构建哈希类名（形如「明文名 + 下划线 + 构建哈希」的类名跨构建即变），不引入任何动画 / 过渡 /
+ *   位置属性（只写 box-shadow 与 text-shadow，不碰布局、不触发重排）。
+ *   **唯一例外（工单 26 起，用户放行）：[class*="语义名"]** —— 见 §6 开头，
+ *   以及 README「锚点纪律」里同步记下的风险（语义名被重构改名即静默失效）。
+ *   **唯一例外（工单 26 起，用户放行）：[class*="语义名"]** —— 见 §6 开头，
+ *   以及 README「锚点纪律」里同步记下的风险（语义名被重构改名即静默失效）。
+ *
+ * ---------------------------------------------------------------------------
+ * 基线探针（2026-10-11，CDP + headless Edge 加载真实 renderer 副本，注入贴入前的
+ * 合成 CSS 后取计算样式）—— 各锚点**改前**都没有会被本档覆盖的阴影；只有侧栏带
+ * 一条官方软投影，已按下面的方式共存：
+ *
+ *   | 锚点                          | 改前 box-shadow                                | 改前 border                              |
+ *   |-------------------------------|------------------------------------------------|------------------------------------------|
+ *   | 瓦片本体 [data-card-definition-id] | none（瓦片本体改前无 box-shadow）           | 1px solid var(--card-border-color)（官方）|
+ *   | aside[data-titlebar-mode]     | rgba(0,0,0,0.05) 0px 4px 32px 0px（官方软投影）  | 1px solid rgba(0,0,0,0.08)               |
+ *   | 瓦片内部的标题条（工单 23 已退役） | none                                        | 0px none（无）                           |
+ *
+ *   * 侧栏那条官方软投影（来自侧栏本体的构建哈希类，即 aside[data-titlebar-mode]，
+ *     特异性 (0,1,0)）会被本档 (0,2,1) 的规则覆盖。本档**有意保留它**：把它原样写进
+ *     侧栏的 box-shadow 列表末位（外层投影与 inset 内投影互不干扰，二者可共存），
+ *     这样本档只**加**线条、不**减**官方既有层次。它不是本档引入的材质手段，
+ *     单纯是「不悄悄拿掉上游的东西」；若将来想走纯 crisp 路线，删掉列表里那一项即可。
+ *   * 官方 border 不归 box-shadow 管，本档不写 border 属性 → 原样保留，与本档的 inset
+ *     边线**并存**（border 画在边框盒上、inset box-shadow 画在其内侧，二者相邻不重叠）。
+ *     本档不删除它，也不试图合并。侧栏与瓦片本体两处都是这种「官方 border + 本档 inset
+ *     边线」的相邻双线，观感一致。
+ *   * 瓦片本体改前既无阴影也无边框（阴影维度），本档是纯增量的第一次描边。
+ *
+ * ---------------------------------------------------------------------------
+ * 变量命名空间 --mat-*：本档只有三个（单主题，一套值）。
+ *
+ *   --mat-edge   1px 头发丝边线色。
+ *               深色面用亮线（白 22%）。暗面用亮线，线才看得见。
+ *   --mat-rim    顶边内侧高光的强度（0..1）。spec-material.md「明显档」：深 0.26。
+ *               侧栏取它的**半强度**（calc(var(--mat-rim) * 0.5)）：侧栏读作「沉一档」，
+ *               瓦片本体取满强度，读作「浮起」—— 层次靠这个差值拉开。
+ *   --mat-glow   文字柔光的底色，= 本主题背景底色 --bg 的 rgb 分量
+ *               （深 #172725 -> 23,39,37）。
+ *               只喂 text-shadow，不参与任何面。
+ *
+ * 三道 box-shadow 结构：
+ *   顶光    inset 0 1px 0 rgba(255,255,255, <rim>)           —— 贴顶边的 1px 亮线
+ *   边线    inset 0 0 0 1px var(--mat-edge)                  —— 四周内描边
+ *   分隔线  inset -1px 0 0 var(--mat-edge)                   —— 仅侧栏：右缘竖直分隔线
+ * 全部是 1px crisp 线，不含软阴影 / 扩散阴影：软阴影不属于薄玻璃的词汇表，
+ * 瓦片与侧栏之间的层次一律用硬线重建。
+ *
+ * 为什么用 inset box-shadow 而不是 border：
+ *   border 会占布局（盒子尺寸 +2px），挤动官方布局并触发重排；inset box-shadow 画在
+ *   元素内侧、**不占布局、不改变尺寸**，视觉上等价于一条内描边，且自动跟随圆角。
+ *   另外 box-shadow 不参与 background 的绘制层，因此半透明填充不会被它冲淡。
+ */
+
+[data-theme="hana-luna"] {
+    /* 1px 边线：白 22%（深色面上暗线看不见，必须改用亮线） */
+    --mat-edge: rgba(255, 255, 255, 0.22);
+    /* 顶边内侧高光强度（明显档；暗面上取低一档，否则边缘发白） */
+    --mat-rim: 0.26;
+    /* 文字柔光底色 = 本主题 --bg #172725 = rgb(23,39,37) */
+    --mat-glow: 23, 39, 37;
+}
+
+/* ===========================================================================
+ * 1. 瓦片本体（外圈）：满强度顶光 + 1px 内边线
+ * ---------------------------------------------------------------------------
+ * 工单 23：描边锚点从「瓦片**内部**的标题条」改挂到「瓦片**本体**（外圈）」。
+ *
+ * 改前的错在哪（真机实测 2026-10-11，工单 23 正文的探针表）：
+ *   主区是若干**瓦片**，每个瓦片内部各有一条 36px 高的标题条（392×36 @9,7 之类）。
+ *   旧规则把 inset 边线 + 顶光描在这条标题条上，用户看到的就是
+ *   「主内容上方的标题被描了一圈」。而瓦片本体在真机上 bd=1px（官方），
+ *   本档却一个字都没写 —— 描错了层。
+ *   本次把那条标题条规则**整体移除**：三个瓦片里的三条标题条都不再描边。
+ *
+ * 挂点（卡片「身份证号」，跨构建稳定；**不用** data-layout-card-node-id）：
+ *   [data-card-definition-id="..."] 与 [data-layout-card-definition-id="..."] 两种属性
+ *   都覆盖 —— 它们在同一个 <section> 上同值出现（assets/CardShell-*.js 里相邻写死），
+ *   覆盖两种只为防某一层只挂其一。
+ *   值取卡片定义的 builtinId（真机实测所在的那三个）：
+ *     * wb-home-preview-tile     预览瓦片       真机 820×1020 @408,6   bd=1px
+ *     * wb-tile-workspace-desk   右侧工作栏瓦片 真机 284×1020 @1234,6  bd=1px
+ *     * wb-tile-session-files    会话文件瓦片   同族瓦片，本档同样只描外圈
+ *   **不用** data-layout-card-node-id：那是布局文档里的「工位号」
+ *   （node:home-workspace-card / node:card:workspace-desk），会随持久化布局与迁移变化
+ *   —— 工单 15 的真机实测已经踩过一次这个坑，详见背景源 src/background/dark.css 的同名注释。
+ *
+ * 结构：inset 0 0 0 1px var(--mat-edge) + 满强度顶光 —— 与侧栏（§2）同一结构，
+ *   差别只在顶光取满强度（瓦片读作「浮起」，侧栏读作「沉一档」）。
+ *   顶光写在逗号列表**最前面**：列表里靠前的层画在上面，否则顶边那一行会被后面的
+ *   1px 边线环盖掉，看上去只是一条普通描边。
+ *   用 :is() 包一层保留 [data-theme="hana-luna"] 作用域：外层 (0,1,0) +
+ *   内层取参数中最高者 (0,1,0) = (0,2,0)，高于官方 ._tileCard_xxx 类名的 (0,1,0)；
+ *   且本文件排在合成文本末尾，顺序上也必赢（工单 15 的透出规则同理）。
+ *
+ * ⚠️ 真机会出现「双线」：瓦片本体已有官方 bd=1px
+ *   （._tileCard_xxx { border: var(--card-border-width, 1px) solid ... }），
+ *   本档的 inset 边线画在它**内侧**，二者相邻不重叠 —— 与侧栏「官方 border + 本档
+ *   inset 边线」完全同一种观感。用户已知情，先按完整结构实现。
+ *   若真机看着偏厚，最小改动是**只保留瓦片顶光、去掉边线环**（删掉列表第二项），
+ *   或调 --mat-edge 深浅；留作真机调整项。
+ *
+ * ⚠️ 刻意**不给对话瓦片**（主内容区里那个聊天瓦片）描边：用户要的就是
+ *   「主内容区上方的标题不描边」，那条标题条正是被描错的那一条；给对话瓦片本体再加
+ *   一圈，与「不要」的意图相反，故本档不挂它。主内容区 / 聊天区 / 输入区同样不挂
+ *   （理由见文件头：子层再叠面会不透明度翻倍并在边界留接缝）。
+ *   真机现状：对话瓦片本体官方 bd=1px、我们材质 none —— 即这一块**保持官方原样**。
+ * =========================================================================== */
+
+[data-theme="hana-luna"]
+    :is(
+        [data-card-definition-id="wb-home-preview-tile"],
+        [data-layout-card-definition-id="wb-home-preview-tile"],
+        /* 工单 36（续 3）：右侧工作区在 1.1.0 拆成了一族瓦片（desk / core / todo / status…），
+           逐个列名字会一直漏。改用前缀匹配整族；`wb-tile-` 不包含聊天瓦片（wb-home-chat-tile）。 */
+        [data-card-definition-id^="wb-tile-workspace-"],
+        [data-layout-card-definition-id^="wb-tile-workspace-"],
+        [data-card-definition-id="wb-tile-session-files"],
+        [data-layout-card-definition-id="wb-tile-session-files"],
+        [data-card-definition-id="sub-processes"],
+        [data-layout-card-definition-id="sub-processes"],
+        /* 工单 36（续 7）：整族收口 —— 平台自己发的属性 `data-card-body-form`（由 cardForm 推出），
+           真机实测：结构族瓦片 = structural，聊天瓦片 = framed（自动排除）。一条盖住整族，
+           含原先漏掉的 subagent-preview / wb-tile-channel-chat。上面那串 id 保留作后备。 */
+        [data-card-body-form="structural"],
+        /* 工单 39：画布上 framed + surface=card 那一支（平行聊天 / 平行预览 / 工作室卡片 / 终端卡片…）
+           同样要 1px 边线 + 顶光。为什么必须带 surface=card 与 :not(脱离壳)，
+           见 src/background/dark.css 同族那段注释（真机读数：主聊天瓦片是 bare、脱离壳带 framed）。 */
+        [data-card-body-form="framed"][data-surface="card"]:not([data-detached-card-shell])
+    ) {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, var(--mat-rim)),
+        inset 0 0 0 1px var(--mat-edge);
+}
+
+/* ===========================================================================
+ * 2. 侧栏：半强度顶光 + 右缘竖直分隔线（本票不动）
+ * ---------------------------------------------------------------------------
+ * 侧栏与主内容之间原本靠「侧栏 --sidebar-bg 沉一档」区分，第三期把侧栏置透明后
+ * 这层区分没了。本档用两条 crisp 线把它拉回来：
+ *   * 右缘竖直分隔线 inset -1px 0 0 var(--mat-edge)：侧栏与主内容之间一条明确的边界。
+ *     只额外画右缘，左 / 上 / 下三边交给常规边线环。
+ *   * 顶光取半强度：侧栏连着主内容，若也用满强度，两块会读成同一层「浮起」，
+ *     竖直分隔线就成了孤立的一条线；压低一档后侧栏读作「沉一档」，层次才成立。
+ *
+ * 列表末位那条 0 4px 32px rgba(0,0,0,0.05) 是**官方既有**的软投影（侧栏本体构建
+ * 哈希类上的 0 4px 32px #0000000d），不是本档引入的。原因：本规则特异性 (0,2,1)
+ * 高于官方类选择器的 (0,1,0)，若不写进来就会把它静默覆盖掉；本档只加不改，
+ * 故原样保留。外层投影与 inset 内投影互不冲突，可安全共存。
+ * =========================================================================== */
+
+[data-theme="hana-luna"]
+    aside[data-titlebar-mode] {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, calc(var(--mat-rim) * 0.5)),
+        inset 0 0 0 1px var(--mat-edge),
+        inset -1px 0 0 var(--mat-edge),
+        0 4px 32px rgba(0, 0, 0, 0.05);
+}
+
+/* ===========================================================================
+ * 3. 文字可读性：单向柔光托底（搬自 DSH，material-recon.md §11.2 第 3 条）
+ * ---------------------------------------------------------------------------
+ * 半透明面之下的文字直接压在照片与 scrim 的合成底上。给正文与侧栏文字补一圈
+ * **单向柔光**（不是四向硬描边）：暗底上把字托起来，亮底上也不至于糊。
+ * 两层同色、只差 alpha 与半径 —— 近处一层收紧字缘，远处一层铺开柔光。
+ * 用 --mat-glow（= 本主题 --bg 的 rgb 分量）而不是写死颜色。
+ *
+ * 只给正文与侧栏加，不给整棵树加：text-shadow 会被继承，
+ * 挂在瓦片根 / 应用根上会波及按钮、图标等不该有柔光的元素。
+ * 工单 23：瓦片内部那条标题条**不再是本档任何一条规则的挂点**（边线、顶光、柔光
+ * 三者都撤了）—— 用户要的是「标题上不要再有我们材质画的东西」。标题文字压在瓦片
+ * 自己的面板底色上，不依赖本档柔光；若真机觉得标题发糊，再把柔光挂点加回去即可
+ * （一行，见工单 23 的说明），属真机调整项。
+ * =========================================================================== */
+
+[data-theme="hana-luna"]
+    :is(.md-content, aside[data-titlebar-mode]) {
+    text-shadow:
+        0 0 10px rgba(var(--mat-glow), 0.90),
+        0 0 22px rgba(var(--mat-glow), 0.60);
+}
+
+/* ===========================================================================
+ * 4. 浮层面板与输入框（外圈）：满强度顶光 + 1px 内边线（工单 24）
+ * ---------------------------------------------------------------------------
+ * 用户要求：「给**后台任务、笺、设置页面、输入框**也加上描边」，规则与瓦片一致
+ * —— **只在外圈，里面不加**（内部子元素一个都不描；标题条那三条也仍然不描）。
+ * 四类面各自的结构、实测数值与取舍写在 §4.1 ~ §4.4。
+ *
+ * 结构与 §1 瓦片本体**完全一致**（满强度顶光 + 1px 边线环），层顺序也一致：
+ * 顶光写在逗号列表**最前面**，否则顶边那一行会被后面的 1px 边线环盖掉，
+ * 看上去只是一条普通描边。
+ * 顶光取**满强度**而不是 §2 侧栏的半强度：这四类面都是「浮起来的东西」
+ * （抽屉 / 模态卡 / 输入卡 / 列表行），读作「浮起」；侧栏连着主内容，读作「沉一档」。
+ *
+ * 为什么每条都用属性/伪类外层包一层 [data-theme] 作用域、以及为什么官方既有
+ * 阴影要原样抄进列表末位 —— 与 §1 / §2 同理由，见文件头与 §2 的说明：
+ *   * 外层 [data-theme="…"] (0,1,0) + 内层取参数中最高者，合计 (0,2,0)，
+ *     高于官方构建哈希类名的 (0,1,0)；
+ *   * 特异性一旦压过官方，官方那条 box-shadow 就会被静默覆盖 —— 本档只加不改，
+ *     故把官方值原样写在列表末位（外层投影与 inset 内投影互不干扰，可安全共存）。
+ *
+ * ⚠️ 运行时**样式表顺序**（本票新查实，与工单 23 的语境不同，值得记一笔）：
+ *   head 里 themes/<主题>.css 是第 2 张样式表，官方组件 CSS（assets/*.css）
+ *   排在第 8 张之后。因此**同特异性时官方赢**（后出现者胜）。
+ *   工单 23 的瓦片规则靠 (0,2,0) > (0,1,0) 取胜，不受影响；
+ *   但 §4.4 输入卡有一条官方悬停规则与本草特异性相同，故那里额外写了一条
+ *   悬停变体（(0,3,0)）把边线钉住 —— 详见 §4.4。
+ *
+ * ⚠️ 双线风险（与瓦片同一种，用户已知情）：笺 / 设置模态卡 / 输入卡本体都带官方
+ *   1px 边框，本档的 inset 边线画在它**内侧**，二者相邻不重叠成两条线。
+ *   若真机看着偏厚，最小改动是各处只保留顶光（删掉列表第二项）或调 --mat-edge
+ *   深浅 —— 留作真机调整项，先按完整结构实现。
+ * =========================================================================== */
+
+/* -- 4.1 笺面板 [data-jian-drawer] ------------------------------------------
+ * 实测锚点（2026-10-11，CDP + headless Edge 加载 renderer 副本）：
+ *   <section class=_jianDrawer_57159 data-jian-drawer data-open="false" role="region">
+ *   探针 count=1   421x40 @1142,955   bd=1px   radius=14.73px
+ *   改前 box-shadow：rgba(0,0,0,0.06) 0px 2px 8px 0px（官方软投影，原样保留在末位）
+ *   data-open="false" 是 40px 高的收起态；展开后高度由官方
+ *   --right-workspace-jian-open-height 决定 —— 两种态都描同一圈外圈边。
+ * 官方源：assets/CardShell-*.css 的 ._jianDrawer_<hash>（构建哈希类名，不写进本档）。
+ * 它是**笺面板根**（region），外圈就是它；内部 .jianHeader / .jianBody 都不描。 */
+[data-theme="hana-luna"]
+    [data-jian-drawer] {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, var(--mat-rim)),
+        inset 0 0 0 1px var(--mat-edge),
+        0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* -- 4.2 设置模态卡 :has(> [data-input-ctx-zone="settings"]) ------------------
+ * 层次（实测，探针点开设置后读 DOM）：
+ *   div._card_<hash>._open data-state=open role=dialog aria-modal=true   ← 外圈＝这张模态卡
+ *     └ div._root_<hash> data-input-ctx-zone="settings"                  ← 无底色、958x838
+ *         └ div.settings-panel#settingsPanel                             ← 内层面板，不加
+ * 所以锚用 :has() **反选到父层那张卡**（与背景源 src/background/dark.css 同一条思路）。
+ * 实测模态卡：960x840 @308,84   bd=1px   radius=22.09px
+ *   改前 box-shadow：rgba(20,18,14,0.18) 0px 26px 70px, rgba(20,18,14,0.12) 0px 8px 24px
+ *   （官方两层软投影，原样保留在列表末位 —— 不静默拿掉上游层次）
+ * 官方源：assets/SettingsModalShell-*.css 的 ._card_<hash>（哈希类名，不写进本档）。
+ *
+ * ⚠️ 本规则**单独成条**，不与任何别的选择器共用一个列表：选择器列表里只要有一项
+ *   非法整条规则作废，:has() 万一不被支持，不能把它拖着的别的选择器一起拖没
+ *   （背景源 dark.css 里那条同族规则就是这么拆的）。
+ * ⚠️ 内层面板（明文 settingsPanel / 表单卡）**不描**：那是「里面」。
+ *
+ * 【工单 35】描边（顶光 + 1px 边线）从这张卡**自身**的 box-shadow 挪到它的 ::after。
+ *   病因：卡上面挂着一个 z-index:-1 的 ::before 取景框（不透明壁纸，工单 31）。
+ *   按层叠上下文的绘制顺序，负 z-index 的伪元素画在**元素自身背景与 inset 阴影之上**，
+ *   于是本档画在卡自身的 inset 描边被那张不透明的图整片盖住 —— 规则在、视觉没有。
+ *   修法：inset 描边放到 ::after（同样 z-index:-1）。::before 与 ::after 同层级时按
+ *   树顺序绘制，::after 在后 → 落在取景框之上、内容之下，正是要的位置。
+ *   外部软投影（会溢出元素边界）留在卡自身（::after 若带 overflow 裁剪会把它切掉）。
+ *   受控实验 .scratch/t35-edge-vs-frame/：同一张面 + 不透明 ::before，
+ *   描边挂自身时边线像素**整片消失**（全是对片色），挂 ::after 时边线清晰可见。
+ *   ⚠️ ::after 是**空面**（inset:0，不带背景），只画描边；不要给它加填充。
+ *   ⚠️ position/z-index 在这里重述（与面板取景框源同值）：保证无取景框时 ::after
+ *   也有包含块，描边在两种配置下都能画出来。
+ *
+ * 【工单 37】补 `corner-shape: inherit`。
+ *   官方圆角写的是 `corner-shape: squircle`（Chromium 计算值 superellipse(2)，超椭圆），
+ *   而 **corner-shape 不是可继承属性**：::after 只写 `border-radius: inherit` 时，
+ *   半径跟上了、形状却停在默认的 superellipse(1)（正圆）。
+ *   后果（副本逐像素实测，脚本在 .scratch/t35-edge-vs-frame/）：
+ *     直边上环与面板轮廓重合，一进圆角就分家 —— 左上角距顶 1px 处轮廓在 x≈13.8、
+ *     环在 x≈25（差 11px），距顶 11px 处 1.8 vs 8.0（差 6.2px），沿左边往下收敛到 0。
+ *   这正是用户 2026-10-12 报的「圆角有两层」：面板自己的超椭圆轮廓 + 我们画在它内侧的正圆环。
+ *   修法就是这一行。不支持的浏览器会忽略该声明退回现状，无副作用。 */
+[data-theme="hana-luna"]
+    :has(> [data-input-ctx-zone="settings"]) {
+    position: relative;
+    z-index: 0;
+    box-shadow:
+        0 26px 70px rgba(20, 18, 14, 0.18),
+        0 8px 24px rgba(20, 18, 14, 0.12);
+}
+
+[data-theme="hana-luna"]
+    :has(> [data-input-ctx-zone="settings"])::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    border-radius: inherit;
+    corner-shape: inherit;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, var(--mat-rim)),
+        inset 0 0 0 1px var(--mat-edge);
+}
+
+/* -- 4.3 后台任务行项 [data-background-task] ---------------------------------
+ * 实测锚点（JSX，assets/CardShell-*.js）：
+ *   <div class="item _item_<hash>" data-background-task=taskId>   ← 后台任务**行项**
+ * 官方规则 ._item_<hash>{ border:1px solid var(--overlay-light); border-radius:…;
+ *                         overflow:hidden } —— **没有任何官方 box-shadow**，
+ * 所以本档在这里是纯增量：不会覆盖上游任何层次，也就不需要在列表末位抄官方值。
+ * 行项在 chalkboard 的子流程列表里，只有真有后台任务时才渲染（headless 无数据 → count=0，
+ * 按项目已知前提不伪造 DOM，用属性改写匹配测试证明规则对该属性生效，见探针日志）。
+ * 行项是**小块**：若真机看着太重，最小改动是只留顶光（删掉列表第二项），
+ * 或改挂它的容器 —— 留作真机调整项，先按完整结构实现（工单已知情）。 */
+[data-theme="hana-luna"]
+    [data-background-task] {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, var(--mat-rim)),
+        inset 0 0 0 1px var(--mat-edge);
+}
+
+/* -- 4.4 输入框：可见的圆角输入卡 [data-input-card] ---------------------------
+ * 工单给的默认锚是明文 .input-area（输入区容器），并要求在副本上探针确认：
+ * 「可见的圆角输入卡是不是它内部另一个**稳定**元素，若是就优先挂那个（更贴合可见
+ * 外圈），两者择一，不要同挂」。本档**选了 [data-input-card]**，理由如下（实测）：
+ *
+ *   元素                                               尺寸/位置            圆角      改前 box-shadow
+ *   .input-area（明文容器，本档一个规则都没写）         889x177 @246,438     0px       none
+ *     └ ._input-surface_<hash>                          640x153 @370,438     0px       none
+ *         └ ._input-stack_<hash>                        640x101 @370,490     0px       none
+ *             └ [data-input-card] ._input-wrapper_<hash> 640x101 @370,490    29.45px   0 1px 3px rgba(0,0,0,0.04)
+ *
+ *   * .input-area 是**透明的明文布局容器**（styles.css 里 background: transparent;
+ *     padding: 0 24px 24px; 子元素 pointer-events:auto），既无底色也无圆角；
+ *     它的盒子比可见输入卡宽 249px、高 76px，描它描出来的是一圈**不贴形的方框**，
+ *     不是用户说的「输入框」。
+ *   * [data-input-card] 才是那张可见的圆角输入卡（radius 29.45px、bd=1px、
+ *     官方软投影），描它才贴合可见外圈 —— 正是工单说的「更贴合就优先它」。
+ *   * 另外一个理由：背景源 src/background/dark.css 已经在 **.input-area** 上
+ *     覆盖 --bg-card 做透出。工单要求「两者择一，不要同挂」；若描边也压在同一个
+ *     节点上，同一个面就同时承载「填充归属」与「材质归属」两件事，正是要避免的。
+ *   * .input-area 这个字面量在正文注释里出现，只是为了让验收脚本能看出本档**有意**
+ *     没用它做挂点 —— 选择器里一个 .input-area 都没有。
+ *
+ * 官方源：assets/PlanModeButton-*.css 的 ._input-wrapper_<hash>。它有一条悬停规则
+ * 会把 box-shadow 整个换掉：
+ *     ._input-wrapper_<hash>:hover{ border-color:#00000024; box-shadow:0 1px 2px #00000008 }
+ * 而 head 里**官方组件 CSS 排在主题 CSS 之后**（见 §4 的说明），所以静置时凭
+ * (0,2,0) > (0,1,0) 取胜的本档，一旦鼠标移上去就会被官方悬停规则的 (0,2,0) 覆盖，
+ * 边线会**在悬停时消失**。故补一条悬停变体 (0,3,0) 把边线钉住，
+ * 并把官方悬停那条软投影原样保留在末位（只加不改，理由同 §2）。
+ * 这条悬停变体是本票为「不闪断」额外加的，工单没点名 —— 已在回报里列为偏离项。
+ * 输入卡**内部**的子元素（按钮、附件按钮、模型控件、tiptap 编辑区）一律不描。 */
+[data-theme="hana-luna"]
+    [data-input-card] {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, var(--mat-rim)),
+        inset 0 0 0 1px var(--mat-edge),
+        0 1px 3px rgba(0, 0, 0, 0.04);
+}
+[data-theme="hana-luna"]
+    [data-input-card]:hover {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, var(--mat-rim)),
+        inset 0 0 0 1px var(--mat-edge),
+        0 1px 2px rgba(0, 0, 0, 0.03);
+}
+/* ===========================================================================
+ * 5. 聊天文件卡（资源卡）[data-chat-resource-card]：满强度顶光 + 1px 内边线（工单 25）
+ * ---------------------------------------------------------------------------
+ * 用户要求：给聊天里的**文件 / 资源卡**加上与瓦片同款的 inset 边线 + 顶光。
+ * 结构与 §1 瓦片本体 / §4 四条**完全一致**（满强度顶光 + 1px 边线环），层顺序也一致：
+ * 顶光写在逗号列表**最前面**，否则顶边那一行会被后面的 1px 边线环盖掉，看上去只剩描边。
+ * 顶光取**满强度**而不是 §2 侧栏的半强度：文件卡是浮在聊天正文上的小块，读作「浮起」；
+ * 侧栏连着主内容，读作「沉一档」。
+ *
+ * 挂点（明文 data 属性，跨构建稳定）：[data-chat-resource-card]
+ *   官方 JSX（assets/ChatTranscript-*.js 的资源卡组件，工单 25 源码定位）：
+ *     <div className={...} data-chat-resource-card="" data-variant="panel">
+ *   与背景源 src/background/dark.css 用的是**同一个锚点**（那里只覆盖 --panel-card-bg）。
+ *   不用「明文名 + 下划线 + 构建哈希」的类名（跨构建即变，本项目红线）。
+ *   实测（工单 25 的真机探针，见工单正文）：命中 5 张，348x59，bs=none，
+ *   bg=rgba(34,52,48,0.7) —— 半透明填充已由背景源给出，材质这边此前一个字都没写，
+ *   本档在这里是**纯增量**的第一次描边。
+ *
+ * ⚠️ 官方在这张卡上**没有**会改 box-shadow 的 :hover（工单 25 逐条查实，不是想当然）：
+ *   * 官方卡基类规则（构建哈希类）为 box-shadow: var(--panel-card-shadow)，
+ *     而 --panel-card-shadow 在 styles.css 里定义为 **none**，且全构建只有这一处定义
+ *     → 静置态官方阴影 = none，本档不覆盖上游任何层次，故**不需要**在列表末位抄官方值
+ *     （对比 §4.2 / §4.4：那两处官方有实体软投影，才要原样保留）。
+ *   * 官方给这张卡写的唯一悬停规则是「._interactive_<hash>:hover { background:#00000003 }」
+ *     —— 只改 background，**不碰 box-shadow**（那条底色问题背景源已用
+ *     [data-chat-resource-card]:hover 压住，与本档无关）。
+ *   * 全 51 个官方 CSS 文件里「含 :hover 且声明 box-shadow」的规则共 23 条，
+ *     **没有一条**的选择器能匹配到这张卡（逐条比对见工单 25 回报的候选表）。
+ *   → 与输入卡（§4.4：官方悬停会把 box-shadow 整个换掉，故补了 :hover 变体）**不同**，
+ *     本锚点**不需要**悬停变体；鼠标移上去边线不会闪断。
+ *
+ * ⚠️ 与背景源同锚点这件事：背景源在本卡上做的是「覆盖 --panel-card-bg 变量」+「:hover 的
+ *   background 声明」，本档写的是 box-shadow —— 两者是不同的 CSS 属性，不会互相覆盖，
+ *   特异性/合成顺序在这两个属性上都不参与竞争。工单 25 明确指定本卡挂这个锚点。
+ *
+ * ⚠️ 双线风险（与瓦片同一种，用户已知情）：本卡自带官方 1px 边框
+ *   （--panel-card-border: 1px solid rgba(0,0,0,0.08)），本档的 inset 边线画在它**内侧**，
+ *   二者相邻不重叠成两条线。若真机看着偏厚，最小改动是只保留顶光（删掉列表第二项）
+ *   或调 --mat-edge 深浅 —— 留作真机调整项，先按完整结构实现。
+ * ⚠️ 本卡**内部**的子元素（图标 / 标题 / 副标题 / 页脚 / 动作按钮）一律不描：只描外圈。
+ *
+ * ⚠️ 折叠块（process fold / 工具组）本档**在工单 25 里没有挂点**：工单 25 的红线是
+ *   「不许任何哈希类名」，在那条红线下折叠块确实无块级稳定锚点（候选与逐条否决理由
+ *   见工单 25 的回报：块本身没有 id / data-*；类名全是构建哈希；虚拟列表 run key 只进
+ *   JS 不落 DOM；面板 id 是 React useId() 的随机值；data-turn-fold-icon 属于另一个组件）。
+ *   **工单 26 放行 [class*="语义名"] 后该结论作废** —— 折叠块现已按语义名挂上，见 §6.1；
+ *   工单 25 的「无挂点」是**旧红线下的结论**。
+ * =========================================================================== */
+
+[data-theme="hana-luna"]
+    [data-chat-resource-card] {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, var(--mat-rim)),
+        inset 0 0 0 1px var(--mat-edge);
+}
+/* ===========================================================================
+ * 6. 对话消息族的面（工单 26；工单 27 撤掉助手正文那条）：折叠块 / 用户气泡 / 事件块
+ * ---------------------------------------------------------------------------
+ * 工单 26：本项目**第一次用 [class*="语义名"] 当锚**（用户 2026-10-11 放行）。
+ *   为什么放行：这几块的外框类名全是「明文语义名 + 下划线 + 构建哈希」
+ *   （如 _processFoldSurface_54c48 / _conversationEventCard_39065），哈希后缀跨构建即变；
+ *   而**语义名部分**在开发者重构前是稳的。[class*="语义名"] 匹配的是「类名里含这段子串」，
+ *   既绕开哈希后缀，又不必写死任何一个完整哈希类名（本文件里仍**没有任何**完整哈希类名）。
+ *   代价（README「锚点纪律」同步记了）：语义名是开发者选的，重构改名即**静默失效** ——
+ *   不像 data-* / ARIA 那样属于对外契约。真机升级后若某块不再描边，先回来核对语义名还在不在。
+ *
+ *   本票用到的语义名只有两个，都是**组件级**（不是 card / header / main 这种泛名）：
+ *     processFoldSurface               —— 折叠块的可见圆角面（§6.1）
+ *     conversationEventCard            —— 事件块卡（§6.4）
+ *   （工单 26 还用过「折叠块矩形包裹层」与「助手消息壳」两个语义名；工单 27 已随之撤销，
+ *     见 §6.1 / §6.2 的说明。）
+ *
+ *   ⚠️ 全部**收窄在 .chat-area 里**（对话滚动区，styles.css 的明文类）：这些语义名在别的树里
+ *   也有同族用法（移动端 CSS、卡片内嵌子代理预览 _subagentPreviewTranscript_* 等），
+ *   不收窄会误伤。.chat-area 是「对话正文」这个范围在 DOM 上的明文落点
+ *   （实测层次：main-content > .chat-area > 消息组）。它**不是**消息专属，
+ *   所以不单独拿它当锚，只当作用域。
+ * =========================================================================== */
+
+/* -- 6.1 折叠块：可见圆角面（process fold）----------------------------------
+ * 用户要求：折叠块（工具组 / 思考过程那一坨可展开块）加材质描边，**只描外圈，里面不描**。
+ *
+ * 为什么锚用语义名，而不是工单 25 结论里的「无稳定锚点」：
+ *   工单 25 的红线是「不许任何哈希类名」，那条红线下折叠块确实无可挂之处；工单 26 放行
+ *   [class*="语义名"] 后它变得可锚。结论以**源码实测**为准（renderer 的
+ *   ChatTranscript-*.js 与 ChatTranscript-*.css，在副本上逐字读过）：
+ *   * classic（process fold，用户截图里那块）
+ *       <div class="_messageGroup _messageGroupAssistant">
+ *         └ <div class="_processFoldSurface_54c48">       ← **可见圆角面**（圆角 + overflow:hidden）
+ *             ├ <div class="_message _messageAssistant _processFoldMessage_c4ae2">
+ *             │    └ <button class="_processFoldSummary_b25a6" aria-expanded aria-controls>
+ *             └ <div class="_processFoldPanel_fb710">     ← 展开内容（「里面」，不描）
+ *
+ * ⚠️⚠️ 工单 27 更正（真机反馈：折叠块被描成了方框）—— **整条撤销 serene 版那条规则**：
+ *   工单 26 曾把「serene 版式的可见外框」当成那个以 fold·Message 两段拼成语义名的包裹层
+ *   （类名形如 _…fold·Message…_<hash>，工单 28 起只作父层收窄用、不再当描边锚点），于是又挂了一条规则。实测官方 CSS 后
+ *   确认那是**挂错了层**：
+ *     ._processFoldSurface_54c48  { width:100%; margin:…; border-radius:…; overflow:hidden }  ← 圆角 + 裁切
+ *     那个 fold·Message 包裹层          { width:var(--chat-turn-fold-width) }                  ← **只有宽度**
+ *   即它是**没有任何圆角、没有任何裁切的矩形包裹层**，其内部还有一层真正带圆角的可见面
+ *   （serene 的 _surface_2653a { width:100%; margin:…; border-radius:…; overflow:hidden }，
+ *   与 _processFoldSurface_ 同形）。把 inset 边线挂在外层矩形包裹上，描出来的自然是一条
+ *   **包住圆角组件的方框** —— 这正是用户看到的「组件是圆角的，外面加了一个矩形描边」。
+ *   inset 边线本身**会自跟圆角**（画在元素内侧、随 border-radius 弯曲），所以线挂到圆角
+ *   那层就自动是圆角框；挂错层才是方框。
+ *   → 本档**只挂可见的圆角面这一层**：classic 的语义名是 processFoldSurface，serene 见下。
+ *
+ * ⚠️ serene 版式的圆角面是 _surface_2653a（与 _processFoldSurface_ 同形），语义名 surface
+ *   是泛名：全构建里有 39 个类名含 "surface"（_pageSurface_* / _mediaSurface_* /
+ *   _welcomeCardSurface_* / SettingsForm 的 _surface* 等，分属多个组件），只按泛名匹配会
+ *   大面积误伤 —— README「锚点纪律」明令只用组件级语义名、不用 surface / card / header
+ *   这种泛名；收窄在 .chat-area 里也挡不住（实测命中面里 _pageSurface_* / _mediaSurface_* /
+ *   _terminalSurface_* 等四五个同族兄弟就在同一棵对话树里）。
+ *   → 故**用父层 [class*="foldMessage"] 夹住**泛名 surface 后**一并挂上**（工单 28）：
+ *     _…foldMessage_<hash> 是 serene 折叠块消息壳独有的组件级语义名，夹住后既覆盖 serene
+ *     的圆角面，又不误伤同族兄弟。**不写无父层约束的裸泛名**选择器。
+ *
+ * 为什么**不用** ARIA 反选（工单给的退路）：
+ *   aria-expanded / aria-controls 在这两个版式里都**挂在里面的那个按钮上**，要反选到可见
+ *   圆角面至少得 :has(>div>button[aria-expanded][aria-controls]) 这种结构链；而全构建里
+ *   aria-expanded 共 11 处、分属 7 个不同组件（音频卡、interlude 行、文件输出菜单、
+ *   资源卡…），它**不标识**「这是折叠块」。语义名直接挂在可见圆角面上，一步到位、
+ *   不需要结构猜测 —— 故本票**优先语义名**；ARIA 只作为该语义名在真机失灵时的退路记在这里。
+ *
+ * 官方底：none（实测逐条查过全 51 个官方 CSS 文件：这一层没有 box-shadow 规则；
+ *   唯一相关的 :hover 规则是 ._processFoldSummary_<hash>:hover{background:var(--overlay-light)}，
+ *   挂在**里面那个按钮**上、只改 background）→ 本档是**纯增量**，列表末位无须抄官方值。
+ * 本块的底由背景源给（圆角与 overflow:hidden 都在这一层，底也挂这一层，见 dark.css §B）。 */
+[data-theme="hana-luna"]
+    .chat-area [class*="processFoldSurface"],
+[data-theme="hana-luna"]
+    .chat-area [class*="foldMessage"] [class*="surface"] {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, var(--mat-rim)),
+        inset 0 0 0 1px var(--mat-edge);
+}
+
+/* -- 6.2（工单 27 已整条删除）助手正文的面 --------------------------------
+ * 工单 26 曾在这里给助手正文容器（原三段式：对话范围 + 助手消息壳 + 正文容器）描边。
+ * 用户真机反馈：「效果太丑了，还是取消掉底和描边。」工单 27 据此**整条删除** ——
+ * 描边（本文件）与底（背景源 dark.css 原 §C，α 0.55）两边一起撤，本文档不再保留该规则。
+ * 保留本标题只为让后来者知道「这里曾经有、以及为什么没有了」，不是占位规则。 */
+
+/* -- 6.3 用户气泡：[data-user-bubble] -----------------------------------------
+ * 用户要求：用户消息加面，与助手正文**同值**（本票先统一，不区分两者）。
+ * 锚点：明文 data 属性（JSX 源码实测：<div class="_message _messageUser_<hash>"
+ *   data-user-bubble="">）—— 跨构建稳定，比语义名那套更硬（data 属性是对外契约）。
+ *   与背景源 src/background/dark.css 用的是**同一个锚点**：那边只改填充、这边只改描边，
+ *   属性不同，不互相覆盖。
+ * 官方底：none（实测：_messageUser_<hash> 的规则只有 background:#0000000b + padding / 圆角
+ *   / 字色，**没有** box-shadow；全库「含 :hover 且声明 box-shadow」的 17 条规则里，
+ *   没有一条能匹配到它）→ 纯增量，列表末位无须抄官方值。
+ *   ⚠️ 官方给气泡的底是一层很淡的黑（#0000000b ≈ 4.3% 黑），在照片上读作「微微压暗」；
+ *   背景源把它换成主题面板色 0.55（与助手正文同档）。
+ * ⚠️ 气泡**内部**的文字 / 附件 / skills 徽章一律不描：只描外圈。 */
+[data-theme="hana-luna"]
+    .chat-area [data-user-bubble] {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, var(--mat-rim)),
+        inset 0 0 0 1px var(--mat-edge);
+}
+
+/* -- 6.4 事件块「来自 X 的消息」：[class*="conversationEventCard"] -------------
+ * 用户要求：事件块加面。
+ * 锚点实测（源码，renderer 的 ChatTranscript-*.js 里的通用事件卡组件 cu()）：
+ *   <div class="_conversationEventRow_<hash> ...">
+ *     └ <section class="_conversationEventCard_<hash> _conversationEventCard-compact_<hash> ...">
+ *   可见的圆角盒子就是那个 <section>（官方 ._conversationEventCard_<hash> 声明
+ *   background:var(--tool-bg) + border-radius）→ 锚它。
+ * ⚠️ 工单正文里记的 _agentOriginGrid_* **在本构建的源码里不存在**（全库 0 命中）——
+ *   真机上看到的那串类名属另一个构建 / 版本。本票以**本副本实测的源码**为准：同一个
+ *   <section> 上挂的语义名是 conversationEventCard；「来自 X 的消息」（AgentOriginCard，
+ *   由 c.jsxs(cu,{cardClassName:_.agentOriginCard,...}) 渲染）走的是**同一个通用组件**，
+ *   所以公共前缀仍是 conversationEventCard —— 一个锚覆盖两种事件块。
+ * 为什么用 class*= 而不是 ARIA：这块**连 ARIA 都没有** —— 不可聚焦时不带 role / aria-*
+ *   （只有可点击态才补 role="link" + aria-label），无 data-*，无 id；类名全哈希。
+ *   语义名是它唯一的可锚之处。
+ * 官方底：var(--tool-bg)（本主题 = rgba(255,255,255,0.03) 的**提亮白 wash**，在照片上
+ *   读作「比周围亮一点」）；背景源把它换成与助手正文同档的深色填充（见 dark.css §E）。
+ * box-shadow：实测该元素没有官方阴影（_agentOriginCard_ / _conversationEventCard_ 的规则里
+ *   都没有 box-shadow）→ 纯增量。
+ * ⚠️ 事件块**内部**的头像 / 名字 / 正文 / 展开按钮一律不描：只描外圈。 */
+[data-theme="hana-luna"]
+    .chat-area [class*="conversationEventCard"] {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, var(--mat-rim)),
+        inset 0 0 0 1px var(--mat-edge);
+}
+
+/* -- 6.5 思考指示花：花瓣填充置空（2026-10-19 用户报「内部怎么变黑了」） -------
+ * 现象：聊天区的「思考标识」是一朵五瓣花（上游 plum / sakura 等花形轮换），描边是
+ *   currentColor（= 本主题 --accent 米金），花瓣内部却是**一坨实心深绿**。
+ * 根因（上游源码，renderer assets/AnimationPrimitives-*.js 的花渲染函数，全库唯一）：
+ *   <path d={petalPath} fill="var(--bg)" stroke="currentColor" strokeWidth={...} />
+ *   花瓣的 fill 被**写死成 var(--bg)**。本主题 --bg = #172725。
+ *   用户截图逐像素核对：花瓣内部 = rgb(23,39,37) = #172725，与 --bg 完全一致。
+ *   在暖纸主题下 --bg = 纸白、又与页面底色同色，所以看着像「镂空 / 透明」；
+ *   换到本主题 + 壁纸背景后，页面真正的底是照片而不是纯 --bg，那块深绿就显形了。
+ *   不是皮肤覆盖出来的：全皮肤无任何 fill 规则（grep 只命中选择箭头的 SVG 内联字面量）。
+ * 修法：把这条 presentation attribute 覆盖掉（属性特异性 0，任何 CSS 规则都赢）。
+ *   只认属性值字面量 var(--bg)：全库仅此一处拿它当 fill，不会误伤别的图标。
+ * 副作用（可接受）：花瓣之间的互相遮挡随之消失（原来后画的花瓣用背景色盖住前面的描边）。
+ *   在照片底上「透明」才是要的观感；若哪天觉得线交叉太乱，可改成
+ *   fill: color-mix(in srgb, var(--bg) 55%, transparent) 之类重新造一层淡底。 */
+[data-theme="hana-luna"] path[fill="var(--bg)"] {
+    fill: none;
+}
+
+/* ===========================================================================
+ * 7. 浮层面板（卡片中心 / 能力 / 自动化）：满强度顶光 + 1px 内边线（工单 29）
+ * ---------------------------------------------------------------------------
+ * 结构与 §1 瓦片本体 / §4 / §5 / §6 **完全一致**（满强度顶光 + 1px 边线环），层顺序也一致：
+ * 顶光写在逗号列表**最前面**，否则顶边那一行会被后面的 1px 边线环盖掉，看上去只剩描边。
+ * 顶光取**满强度**而不是 §2 侧栏的半强度：浮层面板是浮在内容之上的整块面，读作「浮起」；
+ * 侧栏连着主内容，读作「沉一档」。
+ *
+ * 挂点（2026-10-11 真机探针实测，见 .scratch/t29-evidence/RECON.md）：
+ *   <div id="chalkboardCardCenterPanel" class="_floatingPanel_70a6b">       ← 外壳：r=0 / bg=透明 / 无投影
+ *     └ <div class="_floatingPanelInner_41f19 _tray_8a862">                 ← **可见圆角外圈**（r=22.09px，
+ *                                                                              overflow:hidden，有官方投影）
+ *         └ <div class="_card_6a18e" data-side-panel-card>                  ← 里面的卡（距外圈 6px），不描
+ *   三个面板（#chalkboardCardCenterPanel / #capabilitiesPanel / #automationHubPanel）同属一个组件，
+ *   层次逐值相同（自动化是 stage 变体，多一条官方 1px 边框，圆角与投影相同）。
+ *   **不挂外壳 id**：它无圆角无底色，挂了就是一圈不贴形的方框（工单 27 折叠块的教训）。
+ *   **不挂 [data-side-panel-card]**：那是「里面」。
+ *   可见圆角外圈只有构建哈希类名，故用 [class*="floatingPanelInner"] 绕哈希；
+ *   语义名独特度已实测（全构建只此一处组件），且用明文 id 父层夹住收窄。
+ *
+ * ⚠️ 官方底：._floatingPanelInner_<hash> / ._tray_<hash> 各有一条
+ *   box-shadow: 0 8px 32px var(--shadow), 0 2px 8px #0000000a（同为 (0,1,0)）。
+ *   本档 (1,2,0) 会覆盖它 —— 按本档铁律「只加不改」，把官方值原样抄进列表末位。
+ *   末位保留 var(--shadow)（跟随主题），第二层按本仓库风格写成 rgba(0,0,0,0.04)。
+ *   官方在这一层**没有**会改 box-shadow 的 :hover → 不需要悬停变体。
+ *
+ * ⚠️ 双线风险（与瓦片同一种，用户已知情）：自动化面板（stage 变体）的外圈自带官方 1px 边框，
+ *   本档 inset 边线画在它**内侧**，二者相邻不重叠成两条线。若真机看着偏厚，最小改动是
+ *   只保留顶光（删掉列表第二项）或调 --mat-edge 深浅 —— 留作真机调整项。
+ * ⚠️ 面板**内部**的子元素（header / 标签页 / 内层卡 / 列表项）一律不描：只描外圈。
+ *
+ * 【工单 35】描边（顶光 + 1px 边线）从**可见圆角外圈自身**挪到它的 ::after。
+ *   病因与本档 §4.2 同源：外圈上挂着 z-index:-1 的 ::before 取景框（不透明壁纸），
+ *   负 z-index 的伪元素画在元素自身背景与 inset 阴影之上 → 本档的 inset 描边被图盖住。
+ *   （工单 29 先描边、工单 30/31 后加取景框；此后所有探针都在验「背景对齐」，
+ *     没人回头验「描边还在不在」，于是这个「后加的伪元素吃掉先加的 inset 描边」
+ *     一直漏到用户 2026-10-12 用眼睛发现。教训已记进 AGENTS.md 已知坑列表。）
+ *   修法：inset 描边挂 ::after（z-index:-1，树顺序在 ::before 之后 → 图之上、内容之下）；
+ *   官方那两层外投影留在外圈自身（不加 overflow，也不会被裁）。
+ *   ⚠️ ::after 是**空面**（inset:0，不带背景），只画描边。
+ *   ⚠️ position/z-index 重述（与面板取景框源同值），无取景框时 ::after 也有包含块。
+ *
+ * 【工单 37】补 `corner-shape: inherit`（三个面板同款那一行）。
+ *   官方圆角是 `corner-shape: squircle`（超椭圆），而 corner-shape **不继承**：
+ *   只写 `border-radius: inherit` 的环会停在默认的正圆，与面板轮廓在角上分家。
+ *   实测（副本，判据 = 环的像素支撑区落在哪一行）：补上后环逐行落到超椭圆上 ——
+ *     轮廓/修前环/修后环（距面板顶 px）：1 → 13.8 / 22~32 / 11~21；3 → 8.3 / 18~21 / 7~10；
+ *     8 → 3.2 / 10~13 / 3~4；14 → 1.0 / 5~7 / 1~1；20 → 0.2 / 2~3 / 0~1。
+ *   卡片中心 / 能力 / 自动化三个面板都验过。见 .scratch/t35-edge-vs-frame/r11_*.png。
+ * =========================================================================== */
+
+[data-theme="hana-luna"]
+    :is(#chalkboardCardCenterPanel, #capabilitiesPanel, #automationHubPanel)
+    > [class*="floatingPanelInner"] {
+    position: relative;
+    z-index: 0;
+    box-shadow:
+        0 8px 32px var(--shadow),
+        0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="hana-luna"]
+    :is(#chalkboardCardCenterPanel, #capabilitiesPanel, #automationHubPanel)
+    > [class*="floatingPanelInner"]::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    border-radius: inherit;
+    corner-shape: inherit;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, var(--mat-rim)),
+        inset 0 0 0 1px var(--mat-edge);
+}
+
+/* ===========================================================================
+ * 8. show_card 卡片（对话里的交互卡）：满强度顶光 + 1px 内边线（工单 36）
+ * ---------------------------------------------------------------------------
+ * 用户要求：「showcard 卡片增加描边，透明度暂时不加」。
+ *
+ * 挂点（1.1.0-beta 源码实测，ChatTranscript）：对话里那张卡片的**可见外框**有两层候选，
+ * 本档按「谁真的画了底」选，并两条互相排斥，避免双线：
+ *
+ *   div[data-chat-card-row-frame]                          ← 行框（官方无任何样式，官方只给 ref）
+ *     └ div._transition_<hash>[data-chat-card-height-transition]   ← **可见卡面**：
+ *          background: var(--bg-card)、border: .5px solid var(--border)、
+ *          box-shadow: var(--shadow-sm-soft)、overflow: hidden
+ *         └ div[data-chat-card-height-transition-content]
+ *             └ div._interactiveCard_<hash>            ← 卡包装组件 eg() 渲染的外壳
+ *                  ├ div._interactiveCardActions_<hash>（右上角动作条，悬浮才显形）
+ *                  └ 高度过渡 + 卡宿主 iframe
+ *
+ *   佐证「可见面在外层」：官方另有一条 `[data-chat-card-height-transition-content]
+ *   ._interactiveCard_`，把内层卡面重置成 background:transparent / border:0 / box-shadow:none。
+ *   也就是说内层那张面**官方自己已经摘掉了**（面由外层框给），故把描边挂在内层等于
+ *   给一个没有底色的盒子画线。
+ *
+ *   但「内层一定被外层包着」这件事本档**不能只靠源码断言**（headless 无会话，取不到
+ *   真卡 DOM），所以两条规则都写、且用 :not() 互斥：
+ *     (a) 外层框：只在它**确实包着**一张交互卡时上描边（:has）—— 不误伤别的卡块；
+ *     (b) 内层卡：只在**不在**高度过渡内容里时上描边（:not(… *)）—— 兜住「没被包」的情形。
+ *   两条不会同时命中同一个面，因此不会出现双线。真机若发现某一种形态没上描边，
+ *   把命中不到的那条删掉即可（另一条已在同一文件里备好）。
+ *
+ *   收窄在 .chat-area（对话滚动区，明文类）里 —— 与 §6 同一套作用域，理由同 §6 开头。
+ *   `interactiveCard` 是**组件级语义名**（不是 surface / card 这类泛名），用法与 §7 的
+ *   floatingPanelInner 同源：绕开构建哈希后缀。
+ *
+ * 官方底：内层有 background var(--bg-card)、border .5px、box-shadow var(--shadow-sm-soft)；
+ *   外层框同样有 background var(--bg-card)、border .5px、box-shadow var(--shadow-sm-soft)。
+ *   本档**只加 box-shadow 列表里的两道 inset 线**，不动 background / border
+ *   （用户明确「透明度暂时不加」→ 填充一律不碰）。
+ *   ⚠️ 写 box-shadow 会整条覆盖官方那条 var(--shadow-sm-soft) → 按铁律「只加不改」，
+ *   把官方值原样抄进列表末位。
+ *
+ * 结构与 §1 / §4 / §5 / §6 / §7 完全一致（满强度顶光 + 1px 边线环），层顺序也一致：
+ * 顶光写在逗号列表**最前面**，否则顶边那一行会被后面的 1px 边线环盖掉。
+ * ⚠️ 卡**内部**（标题、动作条、宿主 iframe）一律不描：只描外圈。
+ *
+ * ⚠️ 2026-10-16（工单 42）真机更正 —— 与背景源同题，旧两条已失效，换成新两条：
+ *   旧 (a) 靠 `:has([class*="interactiveCard"])` 收口，真机复算 **false**：
+ *   卡片真身现在 portal 渲染到 presentation layer，不再是 `_transition_` 的后代，
+ *   所以旧 (a) 一条都不命中；只靠旧 (b) 把描边挂在了卡片真身上。
+ *   而用户看到的卡面是 `_transition_` —— 描边与填充必须挂在**同一层**，
+ *   否则就会出现「底在这层、线在那层」，圆角与尺寸又对不齐。
+ *   新写法：描边挂在 `_transition_`（可见卡面）上，并把卡片真身那层让出去（不描）。
+ *   证据同一块：真机 `_transition_` 的 bg = 不透明 rgb(34,52,48)、后置仅一层，
+ *   即它是唯一可见卡面（详见背景源同标签号的受控三态读数）。
+ * ========================================================================== */
+
+[data-theme="hana-luna"]
+    .chat-area [data-chat-card-height-transition] {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, var(--mat-rim)),
+        inset 0 0 0 1px var(--mat-edge),
+        var(--shadow-sm-soft);
+}
+
+/* ===========================================================================
+ * 9. 工单 36（续）：区域下拉框 / 快捷回复弹窗 / 工具状态行的描边
+ * ---------------------------------------------------------------------------
+ * 三条都用同一套结构（满强度顶光 + 1px 边线环），层顺序也一致：顶光写在最前面，
+ * 否则顶边那一行会被后面的 1px 边线环盖掉。
+ * 各自的**填充**（透出多少）按本仓库分工写在背景源 src/background/dark.css
+ * 的同一标签号下（工单 36 续），这里只负责边线。
+ *
+ * -- 9.1 区域下拉框（扩展 → 管理来源 → 官方源）----------------------------------
+ *  锚点：[class*="region-row"] 下的 [class*="trigger"]。
+ *  ⚠️ 必须夹着 region-row：Select 是全局共用组件，设置页里遍地都是 _trigger_<hash>，
+ *  不夹就会把所有下拉框一起改掉。region-row 全构建只此一处（市场来源页）。
+ *  官方底：._trigger_<hash>{ background-color: var(--bg-card); border: 1px solid …;
+ *  transition: background-color … } —— **没有 box-shadow**，且官方那条
+ *  :hover:not(:disabled){background-color: var(--overlay-subtle)} **只改背景、不碰
+ *  box-shadow** → 鼠标移上去边线不会闪断，**不需要悬停变体**（与 §4.4 输入卡不同，
+ *  那里官方悬停会把 box-shadow 整个换掉）。
+ *  官方自带 1px 边框，本档 inset 边线画在它**内侧** → 相邻双线，与瓦片 / 输入卡
+ *  同一种（用户已知情）。看着偏厚就删掉列表第二项（只留顶光）。
+ *
+ * -- 9.2 快捷回复弹窗（App 输入面板）-------------------------------------------
+ *  锚点：[data-testid="app-input-panel-stack"] 下的 [data-panel-id] ——
+ *  CardShell 渲染 <div data-testid="app-input-panel-stack"><section data-panel-id=…>；
+ *  两者全构建各只此一处。
+ *  官方底：none（该 section 只有 min-width:0）→ 本档是纯增量。
+ *  圆角由背景源给（与输入卡同一个 token），故这里 1px 边线会自动跟着圆角走。
+ *  用户明确「模糊这一项只做半透明」→ 本档**不写 backdrop-filter**（材质源铁律：只写 box-shadow）。
+ *
+ * -- 9.3 经典视图的工具组：只描最外那一圈 ------------------------------------
+ *  锚点：.chat-area [class*="_toolGroup_"] —— 工具组的**容器**（类名写法与众兄弟的区分办法、
+ *  真机命中数、以及「为什么面归组不归行」的完整推演，写在背景源 §③ 同名注释里）。
+ *  官方底：容器自带 `border-radius` + `corner-shape: squircle` + `overflow: hidden`
+ *  （半径与形状现成），但**无描边**（只有一条 3% 白的 background）→ 本档是纯增量的 inset 描边。
+ *  收窄在 .chat-area 里 —— 与 §6 同一套作用域，理由同 §6 开头。
+ *  ⚠️ 工单 36 续 5 曾把描边挂在 `toolIndicator` / `toolGroupSummary` 两行上；用户 2026-10-13
+ *  真机反馈展开态「三个盒子叠在一起」，续 6 整体上移到容器。单工具组外观不变（容器 = 那一行的盒）。
+ *  ⚠️ 行内的图标 / 描述文字 / 状态符号一律不描：面挂容器、里面什么也不画。
+ * =========================================================================== */
+
+[data-theme="hana-luna"]
+    [class*="region-row"] [class*="trigger"] {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, var(--mat-rim)),
+        inset 0 0 0 1px var(--mat-edge);
+}
+
+[data-theme="hana-luna"]
+    [data-testid="app-input-panel-stack"] [data-panel-id] {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, var(--mat-rim)),
+        inset 0 0 0 1px var(--mat-edge);
+}
+
+[data-theme="hana-luna"]
+    .chat-area [class*="_toolGroup_"] {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, var(--mat-rim)),
+        inset 0 0 0 1px var(--mat-edge);
+}
+
+/* ===========================================================================
+ * 10. 输入卡上方的报错 / 通知条（工单 38）
+ * ---------------------------------------------------------------------------
+ * 锚点：[class*="slash-error-bar"]（绕构建哈希的语义名，工单 26 起用户放行）。
+ *   ⚠️ `:not([class*="slash-error-bar-stacked"])` 不能省：内层内容盒的类名里
+ *   也含 "slash-error-bar" 子串（_content_<hash> _slash-error-bar-stacked_<hash>），
+ *   不排就会在同一块面上画第二圈。
+ *   语义名独特性已实测：全构建只此一处组件（3 处 JS 引用 / 2 条 CSS 规则）。
+ *
+ * 官方底（真机实测）：background: var(--panel-card-bg)，border: var(--panel-card-border)
+ *   = 1px solid rgba(0,0,0,0.08)（深色面上等于看不见），**box-shadow: none**
+ *   → 本档是纯增量的第一次描边。
+ *   ⚠️ 与 §4.3 / §4.4 不同，这条**不需要**在列表末位抄官方值（官方本来没有阴影）。
+ *   ⚠️ 官方那条 1px 边框在深色面上不可见，本档 inset 环画在它内侧（相邻不重叠），
+ *   实际只看到一条白 22% 的线，不存在可见的双线。
+ *
+ * 填充（透出多少）按本仓库分工写在背景源 src/background/dark.css 的同名标签下：
+ *   rgba(23, 39, 37, 0.80) —— 取这个值的实测依据（红字与 mono 正文的对比度不掉档）
+ *   全写在那里，这里不重复。
+ *
+ * 实测判据（真机 CDP，副本上先插一条同结构的探针再量）：
+ *   * 左缘剖面（条中部高度，左侧 14px 是 padding，无字）：
+ *     外侧 rgb(94,109,110) → 第 0 列 rgb(39,55,52)（官方黑 8% 边框）
+ *     → 第 1 列 rgb(90,103,100)（本档 1px 边线环，白 22% 压填充）→ 第 2 列起是填充。
+ *     即：边线真的落在 1px 上，不是“按规范应该有”。
+ *   * 顶缘：第 1 行 rgb(132,141,139)（环 0.22 + 顶光 0.26 叠加），与 §1/§4/§5 同一种观感。
+ *   * 反解 alpha：改前 1.000（= 不透明），改后 0.800。
+ *   脚本：.scratch/t36h-evidence/bar-variants.mjs + bar-analyze.mjs。
+ * =========================================================================== */
+
+[data-theme="hana-luna"]
+    [class*="slash-error-bar"]:not([class*="slash-error-bar-stacked"]) {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, var(--mat-rim)),
+        inset 0 0 0 1px var(--mat-edge);
+}
+
+/* ===========================================================================
+ * 11. 侧栏页面栏「…」展开的页面面板（2026-10-19）
+ * ---------------------------------------------------------------------------
+ * 锚点：[class*="_chalkboardPageGrid_"]（构建哈希类名，用语义名子串绕开）。
+ *   上游：ChatTranscript-*.css 的 ._chalkboardPageGrid_<hash>
+ *     { position:absolute; top:calc(100% + 4px); left:0; right:0;
+ *       background: var(--bg); border: var(--panel-card-border);
+ *       box-shadow: 0 8px 28px #00000014 }
+ *   内容 ._chalkboardPageGridCells_<hash> 是 CSS grid
+ *   （grid-template-columns:repeat(auto-fill,minmax(84px,1fr))）——
+ *   就是用户截图里那个两列页面网格。
+ *
+ * 为什么它原来既没底也没边：
+ *   * 底：var(--bg) 在侧栏子树里被背景源改成 rgba(23,39,37,0.28)（见背景源同名标签），
+ *     半透明底压在页面列表上 → 两层文字叠在一起。填充归背景源修，本档不写填充（铁律一）。
+ *   * 边：官方 border 是 --panel-card-border = 1px solid rgba(0,0,0,0.08)，
+ *     深色面上等于看不见 —— 与 §10 报错条同一种病。
+ *
+ * ⚠️ 这条**必须**在列表末位抄官方外层投影 `0 8px 28px #00000014`：
+ *   官方阴影挂在 ._chalkboardPageGrid_<hash> (0,1,0) 上，本规则 (0,3,0) 会把它静默覆盖。
+ *   （§10 不需要抄，因为它官方本来没有阴影；§4.3 / §4.4 与本条同类。）
+ *
+ * ⚠️ 页面栏本体 [data-page-drop-palette] 一并描边，不要只描下面那半：
+ *   面板展开时两者上下相邻（间隔 4px），读作**一块**下拉；只描 grid 会显得断头。
+ *   它有官方外层投影 `0 8px 24px #00000012`，同样抄在末位；
+ *   官方那条是 (0,2,0)，本规则 (0,3,0) 稳赢。
+ * =========================================================================== */
+
+[data-theme="hana-luna"]
+    [class*="_chalkboardPageGrid_"] {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, var(--mat-rim)),
+        inset 0 0 0 1px var(--mat-edge),
+        0 8px 28px #00000014;
+}
+
+[data-theme="hana-luna"]
+    [class*="_chalkboardPageBar_"][data-page-drop-palette] {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, var(--mat-rim)),
+        inset 0 0 0 1px var(--mat-edge),
+        0 8px 24px #00000012;
+}
+
+/* -- 12 圆角基线：聊天四件的圆角钉成皮肤的值（2026-10-24）-----------------------
+ * 用户问「头像 / 聊天气泡 / 思考框 / 输入框能不能改圆角」。选定方案是把主页那套
+ * **现值钉成基线**：不改变观感，只防上游改默认值或改结构时被动漂移。
+ *
+ * 四条规则用与上游**完全相同**的表达式（token × --corner-radius-scale），
+ * 所以计算值与贴皮肤前逐字相等，观感零差异；差别只在「这四件从此由皮肤声明」。
+ * 现值（--radius-* 由配色源给）：输入卡 --radius-chat-surface 24px、
+ * 气泡 --radius-chat-card 12px（右下角 --radius-chat-card-inner = 10px）、
+ * 思考框 --radius-sm 8px、头像 50%（正圆）。
+ *
+ * 为什么特异性要 (0,3,0)：官方组件 CSS 排在主题 CSS **之后**（见 §4），
+ *   同特异性的规则官方赢。官方这四件本身都是单类名 (0,1,0)；
+ *   而官方的**变体**都是 (0,2,0)（移动端输入卡 min(…,14px)、promote-cta 999px、
+ *   思考框展开态内层 0 圆角），本段不碰它们，变体行为原样保留。
+ *
+ * ⚠️ corner-shape **不可继承**（工单 37 实测差 11px）：四件官方都是 squircle，
+ *   必须逐条写；只写 border-radius 会退回正圆，与描边环在角上分家。
+ * ⚠️ 气泡第四角是 --radius-chat-card-inner，**不能**四角同值，否则右下角那条
+ *   「尾巴」会变圆。
+ * ⚠️ 头像的 50% 会被浏览器按比例 clamp，乘 scale 仍恒为正圆；
+ *   想改形状只能重写这里的半径，调 scale 无效。
+ * =========================================================================== */
+
+[data-theme="hana-luna"]
+    .chat-area [data-avatar-role] {
+    border-radius: calc(50% * var(--corner-radius-scale, 1));
+    corner-shape: round;
+}
+
+[data-theme="hana-luna"]
+    .chat-area [data-user-bubble] {
+    border-radius:
+        calc(var(--radius-chat-card) * var(--corner-radius-scale, 1))
+        calc(var(--radius-chat-card) * var(--corner-radius-scale, 1))
+        calc(max(2px, calc(var(--radius-chat-card) - 2px)) * var(--corner-radius-scale, 1))
+        calc(var(--radius-chat-card) * var(--corner-radius-scale, 1));
+    corner-shape: squircle;
+}
+
+[data-theme="hana-luna"]
+    .chat-area [class*="processFoldSurface"] {
+    border-radius: calc(var(--radius-sm) * var(--corner-radius-scale, 1));
+    corner-shape: squircle;
+}
+
+[data-theme="hana-luna"]
+    [data-input-card] {
+    border-radius: calc(var(--radius-chat-surface) * var(--corner-radius-scale, 1));
+    corner-shape: squircle;
+}
+
+/* -- 12b 二修：把主页那套 token 搬回 card:code-chat（2026-10-24）--------------
+ * 一修那组固定 px（12/8/24/12）没乘 --corner-radius-scale（主页实测 = 1.8408964152537137），
+ * 与主页实际渲染不符。二修改为直接恢复 token 与 scale，气泡/思考框/代码块/
+ * 输入卡/发送按钮/chip 全部自动回到主页量级。
+ * =========================================================================== */
+
+:root[data-theme="hana-luna"]
+    [data-card-instance-id="card:code-chat"] {
+    --corner-radius-scale: 1.8408964152537137;
+    --radius-xs: 3px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 18px;
+    --radius-input: 9px;
+    --radius-card: 12px;
+    --radius-chat-card: 12px;
+    --radius-chat-card-inner: max(2px, calc(12px - 2px));
+    --radius-chat-surface: 24px;
+}
+
+/* 官方在这些元素**自身**又把 token 清了一遗（真机：._input-wrapper_ 上
+ * chat-surface=0、scale=0；头像因此算出 0% 变方），继承传不进去，逐个复述。 */
+:root[data-theme="hana-luna"]
+    [data-card-instance-id="card:code-chat"] [data-avatar-role],
+:root[data-theme="hana-luna"]
+    [data-card-instance-id="card:code-chat"] [data-user-bubble],
+:root[data-theme="hana-luna"]
+    [data-card-instance-id="card:code-chat"] [class*="foldMessage"] [class*="surface"],
+:root[data-theme="hana-luna"]
+    [data-card-instance-id="card:code-chat"] [class*="processFoldSurface"],
+:root[data-theme="hana-luna"]
+    [data-card-instance-id="card:code-chat"] .md-content pre,
+:root[data-theme="hana-luna"]
+    [data-card-instance-id="card:code-chat"] [data-input-card] {
+    --corner-radius-scale: 1.8408964152537137;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-input: 9px;
+    --radius-chat-card: 12px;
+    --radius-chat-card-inner: max(2px, calc(12px - 2px));
+    --radius-chat-surface: 24px;
+}
+

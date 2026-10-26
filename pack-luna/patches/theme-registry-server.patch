@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "patchId": "theme-registry-server",
+  "description": "向 server bundle 的主题注册表插入 hana-moonlit-court / hana-violet-dusk / hana-deepsleep 四项（第三个为浅色 DeepSeek 蓝）。（第四项 hana-luna 由本地追加）",
+  "target": "server/bundle/index.js",
+  "targetPathHint": "<serverVersionDir>/bundle/index.js",
+  "targetGlob": null,
+  "locateStrategy": "content-anchor",
+  "locateNotes": "server 版本目录与 renderer 分开，须从 desktop-target.json 的 current.server.versionDir 取。该文件为 minified 但保留空格的格式化输出（单行超长），无行号可用；用唯一内容子串定位，命中次数必须恰好为 1，否则报错中止（不静默跳过）。",
+  "styleProfile": "spaced-formatted",
+  "contentFeatures": [
+    "theme-registry: theme",
+    "legacyThemeAliases: ",
+    "themes: "
+  ],
+  "contentFeaturesNote": "paperTextureBlockedThemeIds 在 1.1.24-beta 已被上游整段删除（全树零命中），已从特征表移除；其余三条仍唯一命中该文件。",
+  "anchor": "coral: { cssPath: \"themes/coral.css\", backgroundColor: \"#FDF6EC\", appearance: \"light\", i18nName: \"settings.appearance.coral\", i18nMode: \"settings.appearance.coralMode\" }",
+  "anchorOccurrencesExpected": 1,
+  "anchorContext": {
+    "before": "css\", backgroundColor: \"#26343D\", appearance: \"dark\", i18nName: \"settings.appearance.midnightContrast\", i18nMode: \"settings.appearance.midnightContrastMode\" }, ",
+    "after": " },（1.0.11 实测：锚点末尾之后先是一个空格，然后是注册表对象自己的闭合 }，再是 ', Xgr = {'。'Xgr' 是压缩器变量名，跨构建即变，故**不作断言**；断言只依赖 followedByStructure）"
+  },
+  "insertionPoint": "after-anchor",
+  "insertionPointDescription": "在 anchor 的末尾字符（coral 项的 }，其前有一空格）之后、注册表对象闭合 } 之前插入。锚点是注册表最后一项，故锚点末尾之后（允许空白）遇到的第一个 } 就是 themes 对象的闭合括号。插入文本须保持本文件的空格风格（键值冒号后一个空格、项间 ', ' 分隔）。",
+  "insertBefore": "}",
+  "followedBy": null,
+  "followedByStructure": "closing-braces",
+  "followedByStructureNotes": "结构校验（不含任何压缩器变量名）：锚点末尾之后只允许出现空白与 '}'，直到遇到第一个其它字符为止；这一段里至少要有 '}'；并且注册表对象的闭合括号（由 apply.ps1 的花括号配对给出位置）必须落在这段内，锚点与它之间只能有空白。等价含义：锚点确实是注册表最后一项、插入点之后紧跟对象闭合 '}'。",
+  "followedByExample": " }, Xgr = {（1.0.11 实测原文；仅作人工核对参考，apply.ps1 不断言此串）",
+  "insertAfter": {
+    "ref": "anchor",
+    "offset": "end"
+  },
+  "insertText": ", \"hana-moonlit-court\": { cssPath: \"themes/hana-moonlit-court.css\", backgroundColor: \"#172725\", appearance: \"dark\", i18nName: \"settings.appearance.moonlitCourt\", i18nMode: \"settings.appearance.moonlitCourtMode\" }, \"hana-violet-dusk\": { cssPath: \"themes/hana-violet-dusk.css\", backgroundColor: \"#3C354A\", appearance: \"dark\", i18nName: \"settings.appearance.violetDusk\", i18nMode: \"settings.appearance.violetDuskMode\" }, \"hana-deepsleep\": { cssPath: \"themes/hana-deepsleep.css\", backgroundColor: \"#F6F7FB\", appearance: \"light\", i18nName: \"settings.appearance.deepseekBlue\", i18nMode: \"settings.appearance.deepseekBlueMode\" },\"hana-luna\":{cssPath:\"themes/hana-luna.css\",backgroundColor:\"#141313\",appearance:\"dark\",i18nName:\"settings.appearance.lunaDragon\",i18nMode:\"settings.appearance.lunaDragonMode\"}",
+  "legacyInsertTexts": [
+    ", \"hana-moonlit-court\": { cssPath: \"themes/hana-moonlit-court.css\", backgroundColor: \"#172725\", appearance: \"dark\", i18nName: \"settings.appearance.moonlitCourt\", i18nMode: \"settings.appearance.moonlitCourtMode\" }",
+    ", \"hana-moonlit-court\": { cssPath: \"themes/hana-moonlit-court.css\", backgroundColor: \"#172725\", appearance: \"dark\", i18nName: \"settings.appearance.moonlitCourt\", i18nMode: \"settings.appearance.moonlitCourtMode\" }, \"hana-violet-dusk\": { cssPath: \"themes/hana-violet-dusk.css\", backgroundColor: \"#3C354A\", appearance: \"dark\", i18nName: \"settings.appearance.violetDusk\", i18nMode: \"settings.appearance.violetDuskMode\" }"
+  ],
+  "countBaseline": 11,
+  "expectedCountAfter": 15,
+  "newThemeIds": [
+    "hana-moonlit-court",
+    "hana-violet-dusk",
+    "hana-deepsleep",
+    "hana-luna"
+  ],
+  "untouched": [
+    "assertThemeEntry",
+    "defaultTheme",
+    "autoLightDefault",
+    "autoDarkDefault"
+  ],
+  "onAnchorMissing": "error",
+  "onAnchorNotUnique": "error"
+}

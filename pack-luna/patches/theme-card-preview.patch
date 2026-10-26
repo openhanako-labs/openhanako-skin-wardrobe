@@ -1,0 +1,87 @@
+{
+  "schema": 1,
+  "patchId": "theme-card-preview",
+  "description": "向主题预览卡片的配色 CSS 追加 hana-moonlit-court / hana-violet-dusk / hana-deepsleep 三个主题的卡片配色（每主题三条：卡片底色=--bg、主题名=--text、模式标签=--accent）。",
+  "locateStrategy": "content-anchor",
+  "insertionPoint": "after-anchor",
+  "insertionPointDescription": "在 midnight-contrast 的 mode 规则之后、auto 的规则之前插入。这个主题的卡片规则块要插入在此位置。",
+  "anchorOccurrencesExpected": 1,
+  "onAnchorMissing": "error",
+  "onAnchorNotUnique": "error",
+  "newThemeIds": [
+    "hana-moonlit-court",
+    "hana-violet-dusk",
+    "hana-deepsleep"
+  ],
+  "expectedNewRulesPerTheme": 3,
+  "colorMapping": {
+    "note": "卡片配色取值规则（已从 9 个官方主题实测归纳）：card-bg = 主题 --bg；name-color = 主题 --text；mode-color = 主题 --accent。色值用小写 hex（与文件内既有规则一致）。byThemeId 是机器可读的权威取值，dark 是同一份数据的可读镜像。",
+    "byThemeId": {
+      "hana-moonlit-court": {
+        "appearance": "dark",
+        "bg": "#172725",
+        "name": "#eeece1",
+        "mode": "#d9b77c"
+      },
+      "hana-violet-dusk": {
+        "appearance": "dark",
+        "bg": "#3c354a",
+        "name": "#e5e4e7",
+        "mode": "#7662ba"
+      },
+      "hana-deepsleep": {
+        "appearance": "light",
+        "bg": "#f6f7fb",
+        "name": "#152443",
+        "mode": "#4d6bfe"
+      }
+    },
+    "dark": {
+      "bg": "#172725",
+      "name": "#eeece1",
+      "mode": "#d9b77c"
+    }
+  },
+  "targets": [
+    {
+      "tree": "renderer",
+      "target": "renderer/assets/SettingsModalShell-*.css",
+      "targetGlob": "renderer/assets/SettingsModalShell-*.css",
+      "locateNotes": "文件名带构建哈希（本机当前为 SettingsModalShell-s7sCRJVJ.css，1.0.11-beta 实测未变）。用通配 + 内容特征定位。类名 card/name/mode 在 1.0.11-beta 实测与 patch 记录值一致。",
+      "contentFeatures": [
+        "_theme-card_",
+        "[data-theme=midnight-contrast]",
+        "[data-theme=auto]"
+      ],
+      "classNames": {
+        "card": "_theme-card_a8612",
+        "name": "_theme-card-name_78e65",
+        "mode": "_theme-card-mode_9e8d4"
+      },
+      "anchor": "._theme-card_a8612[data-theme=midnight-contrast] ._theme-card-mode_9e8d4{color:#e6b1c4}",
+      "followedBy": "._theme-card_a8612[data-theme=auto]{background:#f8f4ed}",
+      "insertText": "._theme-card_a8612[data-theme=hana-moonlit-court]{background:#172725}._theme-card_a8612[data-theme=hana-moonlit-court] ._theme-card-name_78e65{color:#eeece1}._theme-card_a8612[data-theme=hana-moonlit-court] ._theme-card-mode_9e8d4{color:#d9b77c}._theme-card_a8612[data-theme=hana-violet-dusk]{background:#3c354a}._theme-card_a8612[data-theme=hana-violet-dusk] ._theme-card-name_78e65{color:#e5e4e7}._theme-card_a8612[data-theme=hana-violet-dusk] ._theme-card-mode_9e8d4{color:#7662ba}._theme-card_a8612[data-theme=hana-deepsleep]{background:#f6f7fb}._theme-card_a8612[data-theme=hana-deepsleep] ._theme-card-name_78e65{color:#152443}._theme-card_a8612[data-theme=hana-deepsleep] ._theme-card-mode_9e8d4{color:#4d6bfe}",
+      "legacyInsertText": "._theme-card_a8612[data-theme=hana-moonlit-court]{background:#172725}._theme-card_a8612[data-theme=hana-moonlit-court] ._theme-card-name_78e65{color:#eeece1}._theme-card_a8612[data-theme=hana-moonlit-court] ._theme-card-mode_9e8d4{color:#d9b77c}._theme-card_a8612[data-theme=hana-violet-dusk]{background:#3c354a}._theme-card_a8612[data-theme=hana-violet-dusk] ._theme-card-name_78e65{color:#e5e4e7}._theme-card_a8612[data-theme=hana-violet-dusk] ._theme-card-mode_9e8d4{color:#7662ba}"
+    },
+    {
+      "tree": "server",
+      "target": "server/desktop/dist-renderer/assets/SettingsModalShell-*.css",
+      "targetGlob": "server/desktop/dist-renderer/assets/SettingsModalShell-*.css",
+      "locateNotes": "与 renderer 树是两份独立构建产物，类名哈希不同（本机当前 card=_theme-card_e4f5c），必须单独定位、单独生成 insertText。1.0.11-beta 实测：文件名由 1.0.6 的 SettingsModalShell-*.css 变为 SettingsModalShell-Dg4bPhOn.css，但三个类名哈希（e4f5c / ee200 / a2e7e）与 anchor / followedBy 均未变，patch 无需改动。",
+      "contentFeatures": [
+        "_theme-card_",
+        "[data-theme=midnight-contrast]",
+        "[data-theme=auto]"
+      ],
+      "classNames": {
+        "card": "_theme-card_e4f5c",
+        "name": "_theme-card-name_ee200",
+        "mode": "_theme-card-mode_a2e7e"
+      },
+      "anchor": "._theme-card_e4f5c[data-theme=midnight-contrast] ._theme-card-mode_a2e7e{color:#e6b1c4}",
+      "followedBy": "._theme-card_e4f5c[data-theme=auto]{background:#f8f4ed}",
+      "insertText": "._theme-card_e4f5c[data-theme=hana-moonlit-court]{background:#172725}._theme-card_e4f5c[data-theme=hana-moonlit-court] ._theme-card-name_ee200{color:#eeece1}._theme-card_e4f5c[data-theme=hana-moonlit-court] ._theme-card-mode_a2e7e{color:#d9b77c}._theme-card_e4f5c[data-theme=hana-violet-dusk]{background:#3c354a}._theme-card_e4f5c[data-theme=hana-violet-dusk] ._theme-card-name_ee200{color:#e5e4e7}._theme-card_e4f5c[data-theme=hana-violet-dusk] ._theme-card-mode_a2e7e{color:#7662ba}._theme-card_e4f5c[data-theme=hana-deepsleep]{background:#f6f7fb}._theme-card_e4f5c[data-theme=hana-deepsleep] ._theme-card-name_ee200{color:#152443}._theme-card_e4f5c[data-theme=hana-deepsleep] ._theme-card-mode_a2e7e{color:#4d6bfe}",
+      "legacyInsertText": "._theme-card_e4f5c[data-theme=hana-moonlit-court]{background:#172725}._theme-card_e4f5c[data-theme=hana-moonlit-court] ._theme-card-name_ee200{color:#eeece1}._theme-card_e4f5c[data-theme=hana-moonlit-court] ._theme-card-mode_a2e7e{color:#d9b77c}._theme-card_e4f5c[data-theme=hana-violet-dusk]{background:#3c354a}._theme-card_e4f5c[data-theme=hana-violet-dusk] ._theme-card-name_ee200{color:#e5e4e7}._theme-card_e4f5c[data-theme=hana-violet-dusk] ._theme-card-mode_a2e7e{color:#7662ba}"
+    }
+  ]
+}

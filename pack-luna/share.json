@@ -1,0 +1,64 @@
+{
+ "schema": 1,
+ "version": "0.1.4",
+ "releasedAt": "2026-10-24",
+ "name": "hana-skin",
+ "displayName": "hana-skin（月满庭 · 极光 · Deepsleep）",
+ "themeIds": [
+  "hana-moonlit-court",
+  "hana-violet-dusk",
+  "hana-deepsleep"
+ ],
+ "themes": [
+  {
+   "id": "hana-moonlit-court",
+   "label": "月满庭",
+   "mode": "夜阑",
+   "appearance": "dark",
+   "bg": "#172725",
+   "accent": "#D9B77C"
+  },
+  {
+   "id": "hana-violet-dusk",
+   "label": "极光",
+   "mode": "夜穹",
+   "appearance": "dark",
+   "bg": "#3C354A",
+   "accent": "#7662BA"
+  },
+  {
+   "id": "hana-deepsleep",
+   "label": "Deepsleep",
+   "mode": "Zzz饭..Zzz大白饭..Zzz",
+   "appearance": "light",
+   "bg": "#f6f7fb",
+   "accent": "#5D79FF"
+  }
+ ],
+ "skinVersion": "198723f23ea95b23",
+ "versionPolicy": "verified-or-assert",
+ "versionPolicyNote": "已验证版本直接贴；其它版本先跑全量断言（锚点 + 计数 + node 真求值），全中就贴，失配则写盘前中止，按 REPAIR.md 修锚点后重跑。",
+ "verifiedHanaVersions": [
+  "1.1.111-beta"
+ ],
+ "verifiedAt": "2026-10-24",
+ "platform": "win32-x64",
+ "material": "bold",
+ "background": "dark",
+ "requires": {
+  "powershell": "7.0",
+  "node": "18"
+ },
+ "touchesHanaInstall": true,
+ "changedFiles": 16,
+ "notes": [
+  "改的是 Hana 安装目录（renderer 树 + server 树），不是官方主题包格式。",
+  "三个主题相互独立：各自一套配色 / 材质 / 背景 / 取景框源，不共用文件、互不引用。",
+  "两个深色主题（月满庭 · 极光）+ 一个浅色主题（Deepsleep）。浅色主题的材质参数是反向的（描边用墨水色、overlay 用压深而非提亮），源文件头有详细说明。",
+  "所有被改文件先备份到 backups/<versionDir>-<timestamp>/，restore.ps1 可整体回滚。",
+  "注册表补丁按具体构建的锚点定位；Hana 换构建后需重新贴入（旧贴入随版本目录一起失效）。",
+  "皮肤 CSS 加载 URL 带版本参数 ?v=<skinVersion>；该值 = 三个主题合成 CSS 的合取摘要前 16 位（与 lib/theme.js 里的 HANA_SKIN_CSS_V 同源）。",
+  "卡片调色板（server bundle 的 MGr 表）已为三个主题各补一项，folio 幻灯片可直接传 theme=<本皮肤 id>；同表既有 11 项逐键逐值未变。",
+  "版本闸门是提醒而非拦截（2026-10-21）：未验证版本照跑全量断言，锚点全中就贴、失配就中止不写盘，修法见包内 REPAIR.md。"
+ ]
+}

@@ -1,0 +1,219 @@
+{
+  "schema": 1,
+  "versionLabel": "1.1.111-beta-win32-x64-5e32f043d3fa785f-g7d193c7687742516",
+  "createdAt": "2026-10-25T11:45:31.928Z",
+  "createdAtLocal": "2026-10-25 19:45:31",
+  "tool": "scripts/apply.ps1",
+  "rendererVersionDir": "C:\\Users\\Administrator\\.hanako\\artifacts\\renderer\\1.1.111-beta-win32-x64-5e32f043d3fa785f-g7d193c7687742516",
+  "serverVersionDir": "C:\\Users\\Administrator\\.hanako\\artifacts\\server\\1.1.111-beta-win32-x64-e6e1a3ba2e474a4e-gb250832c679aeb8d",
+  "pristineBackupDir": "W:\\Games\\Hanako\\Work\\projects\\hana-skin-app\\pack-luna5\\hana-skin-v0.1.5\\backups\\1.1.111-beta-win32-x64-5e32f043d3fa785f-g7d193c7687742516-20261025-194531",
+  "entries": [
+    {
+      "tree": "renderer",
+      "relPath": "lib/theme.js",
+      "kind": "registry",
+      "existed": true,
+      "backupRelPath": "files/renderer/lib/theme.js",
+      "sha256Before": "1c093816e74e0189c7329edce3cde60a687e04e897fa7645387adc1c4d09a7cb",
+      "bytesBefore": 19916
+    },
+    {
+      "tree": "renderer",
+      "relPath": "assets/theme-registry-BTJmVriA.js",
+      "kind": "registry",
+      "existed": true,
+      "backupRelPath": "files/renderer/assets/theme-registry-BTJmVriA.js",
+      "sha256Before": "07c5ce3c449c4c69f443bfd89a98caa62484e01141ccf2212e131057d5b3c560",
+      "bytesBefore": 7493
+    },
+    {
+      "tree": "server",
+      "relPath": "bundle/index.js",
+      "kind": "registry",
+      "existed": true,
+      "backupRelPath": "files/server/bundle/index.js",
+      "sha256Before": "3196ddd7f841f0551be4f4b61f9dc7b7b79932665992bc2ad9e2595df5f93bb8",
+      "bytesBefore": 13781646
+    },
+    {
+      "tree": "renderer",
+      "relPath": "locales/zh.json",
+      "kind": "locale",
+      "existed": true,
+      "backupRelPath": "files/renderer/locales/zh.json",
+      "sha256Before": "037b4be5424767736485cae5f1352856b07a678c4e4035becb69115d6b01a291",
+      "bytesBefore": 308571
+    },
+    {
+      "tree": "renderer",
+      "relPath": "locales/zh-TW.json",
+      "kind": "locale",
+      "existed": true,
+      "backupRelPath": "files/renderer/locales/zh-TW.json",
+      "sha256Before": "307a03e494831b282d616fa9d98421fae1916b4fe86a5b8b3395d0949e099eb8",
+      "bytesBefore": 310229
+    },
+    {
+      "tree": "renderer",
+      "relPath": "locales/en.json",
+      "kind": "locale",
+      "existed": true,
+      "backupRelPath": "files/renderer/locales/en.json",
+      "sha256Before": "e0153d86579fb3b4e0277f6d7094fb6aff2f75a23efdad8ac5ca5c7c7b6c3988",
+      "bytesBefore": 321509
+    },
+    {
+      "tree": "renderer",
+      "relPath": "locales/ja.json",
+      "kind": "locale",
+      "existed": true,
+      "backupRelPath": "files/renderer/locales/ja.json",
+      "sha256Before": "270e2e8ff644be5b4aff90f36ad9a2c5a7c1a937f53113194008871b52c740cd",
+      "bytesBefore": 404270
+    },
+    {
+      "tree": "renderer",
+      "relPath": "locales/ko.json",
+      "kind": "locale",
+      "existed": true,
+      "backupRelPath": "files/renderer/locales/ko.json",
+      "sha256Before": "eb6299b576f62f31246723dbdbbe6baa90e6c56e854caa6e8eafa9253cc7ade3",
+      "bytesBefore": 366338
+    },
+    {
+      "tree": "renderer",
+      "relPath": "themes/hana-moonlit-court.css",
+      "kind": "theme-css",
+      "existed": false,
+      "backupRelPath": null,
+      "sha256Before": null,
+      "bytesBefore": null
+    },
+    {
+      "tree": "server",
+      "relPath": "desktop/dist-renderer/themes/hana-moonlit-court.css",
+      "kind": "theme-css",
+      "existed": false,
+      "backupRelPath": null,
+      "sha256Before": null,
+      "bytesBefore": null
+    },
+    {
+      "tree": "renderer",
+      "relPath": "themes/hana-violet-dusk.css",
+      "kind": "theme-css",
+      "existed": false,
+      "backupRelPath": null,
+      "sha256Before": null,
+      "bytesBefore": null
+    },
+    {
+      "tree": "server",
+      "relPath": "desktop/dist-renderer/themes/hana-violet-dusk.css",
+      "kind": "theme-css",
+      "existed": false,
+      "backupRelPath": null,
+      "sha256Before": null,
+      "bytesBefore": null
+    },
+    {
+      "tree": "renderer",
+      "relPath": "themes/hana-deepsleep.css",
+      "kind": "theme-css",
+      "existed": false,
+      "backupRelPath": null,
+      "sha256Before": null,
+      "bytesBefore": null
+    },
+    {
+      "tree": "server",
+      "relPath": "desktop/dist-renderer/themes/hana-deepsleep.css",
+      "kind": "theme-css",
+      "existed": false,
+      "backupRelPath": null,
+      "sha256Before": null,
+      "bytesBefore": null
+    },
+    {
+      "tree": "renderer",
+      "relPath": "themes/hana-claude-clay.css",
+      "kind": "theme-css",
+      "existed": false,
+      "backupRelPath": null,
+      "sha256Before": null,
+      "bytesBefore": null
+    },
+    {
+      "tree": "server",
+      "relPath": "desktop/dist-renderer/themes/hana-claude-clay.css",
+      "kind": "theme-css",
+      "existed": false,
+      "backupRelPath": null,
+      "sha256Before": null,
+      "bytesBefore": null
+    },
+    {
+      "tree": "renderer",
+      "relPath": "themes/hana-luna.css",
+      "kind": "theme-css",
+      "existed": false,
+      "backupRelPath": null,
+      "sha256Before": null,
+      "bytesBefore": null
+    },
+    {
+      "tree": "server",
+      "relPath": "desktop/dist-renderer/themes/hana-luna.css",
+      "kind": "theme-css",
+      "existed": false,
+      "backupRelPath": null,
+      "sha256Before": null,
+      "bytesBefore": null
+    },
+    {
+      "tree": "renderer",
+      "relPath": "assets/SettingsModalShell-C53DvVls.css",
+      "kind": "card-preview-css",
+      "existed": true,
+      "backupRelPath": "files/renderer/assets/SettingsModalShell-C53DvVls.css",
+      "sha256Before": "5473d4e321c458dd58dee57b592289a40c16e12fce51f5509b0c9e5002c5749e",
+      "bytesBefore": 104984
+    },
+    {
+      "tree": "server",
+      "relPath": "desktop/dist-renderer/assets/SettingsModalShell-CcSeNb4H.css",
+      "kind": "card-preview-css",
+      "existed": true,
+      "backupRelPath": "files/server/desktop/dist-renderer/assets/SettingsModalShell-CcSeNb4H.css",
+      "sha256Before": "2012857675c71547787b57913712266ed7b8a8dd4edd0ff5754a8b77ee968c3f",
+      "bytesBefore": 104984
+    },
+    {
+      "tree": "server",
+      "relPath": "bundle/index.js",
+      "kind": "card-palette",
+      "existed": true,
+      "backupRelPath": "files/server/bundle/index.js",
+      "sha256Before": "3196ddd7f841f0551be4f4b61f9dc7b7b79932665992bc2ad9e2595df5f93bb8",
+      "bytesBefore": 13781646
+    },
+    {
+      "tree": "renderer",
+      "relPath": "lib/theme.js",
+      "kind": "theme-cache-bust",
+      "existed": true,
+      "backupRelPath": "files/renderer/lib/theme.js",
+      "sha256Before": "1c093816e74e0189c7329edce3cde60a687e04e897fa7645387adc1c4d09a7cb",
+      "bytesBefore": 19916
+    },
+    {
+      "tree": "renderer",
+      "relPath": "lib/theme.js",
+      "kind": "panel-frame-js",
+      "existed": true,
+      "backupRelPath": "files/renderer/lib/theme.js",
+      "sha256Before": "1c093816e74e0189c7329edce3cde60a687e04e897fa7645387adc1c4d09a7cb",
+      "bytesBefore": 19916
+    }
+  ]
+}

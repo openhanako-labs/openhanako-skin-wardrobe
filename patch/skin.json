@@ -1,0 +1,1052 @@
+{
+  "schema": 1,
+  "skin": "hana-moonlit-court",
+  "displayName": "月满庭",
+  "appliedAt": "2026-10-25T14:42:43.807Z",
+  "appliedAtLocal": "2026-10-25 22:42:43",
+  "tool": "scripts/apply.ps1",
+  "repoRoot": "W:\\Games\\Hanako\\Work\\projects\\hana-skin-app\\patch",
+  "renderer": {
+    "versionDir": "C:\\Users\\Administrator\\.hanako\\artifacts\\renderer\\1.2.1-beta-win32-x64-3b38b32df4522029-g86e6e7d72aa61f52",
+    "version": "1.2.1-beta"
+  },
+  "server": {
+    "versionDir": "C:\\Users\\Administrator\\.hanako\\artifacts\\server\\1.2.1-beta-win32-x64-aea6af373902e67d-ge7fdefc0afdf1bb9",
+    "version": "1.2.1-beta"
+  },
+  "versionLabel": "1.2.1-beta-win32-x64-3b38b32df4522029-g86e6e7d72aa61f52",
+  "backupDir": "W:\\Games\\Hanako\\Work\\projects\\hana-skin-app\\patch\\backups\\1.2.1-beta-win32-x64-3b38b32df4522029-g86e6e7d72aa61f52-20261025-224242",
+  "backupRoot": "W:\\Games\\Hanako\\Work\\projects\\hana-skin-app\\patch\\backups",
+  "backupRootSource": "默认（<RepoRoot>/backups）",
+  "pristineBackupDir": "W:\\Games\\Hanako\\Work\\projects\\hana-skin-app\\patch\\backups\\1.2.1-beta-win32-x64-3b38b32df4522029-g86e6e7d72aa61f52-20261025-222449",
+  "previousBackupDirs": [
+    "W:\\Games\\Hanako\\Work\\projects\\hana-skin-app\\patch\\backups\\1.2.1-beta-win32-x64-3b38b32df4522029-g86e6e7d72aa61f52-20261025-222449",
+    "W:\\Games\\Hanako\\Work\\projects\\hana-skin-app\\patch\\backups\\1.2.1-beta-win32-x64-3b38b32df4522029-g86e6e7d72aa61f52-20261025-223645"
+  ],
+  "material": "bold",
+  "materialSource": {
+    "tier": "bold",
+    "path": "src/material-universal/bold.css",
+    "sha256": "f7cf09011ebb2f194e1e64c5f5cf6b1a5b44c6c63b44c6a6f714629d3d9a664c",
+    "appliedTo": "renderer",
+    "byThemeId": {
+      "hana-moonlit-court": {
+        "path": "src/material-universal/bold.css",
+        "sha256": "f7cf09011ebb2f194e1e64c5f5cf6b1a5b44c6c63b44c6a6f714629d3d9a664c"
+      },
+      "hana-violet-dusk": {
+        "path": "src/material-universal/bold.css",
+        "sha256": "f7cf09011ebb2f194e1e64c5f5cf6b1a5b44c6c63b44c6a6f714629d3d9a664c"
+      },
+      "hana-deepsleep": {
+        "path": "src/material-universal/bold.css",
+        "sha256": "f7cf09011ebb2f194e1e64c5f5cf6b1a5b44c6c63b44c6a6f714629d3d9a664c"
+      },
+      "hana-claude-clay": {
+        "path": "src/material-universal/bold.css",
+        "sha256": "f7cf09011ebb2f194e1e64c5f5cf6b1a5b44c6c63b44c6a6f714629d3d9a664c"
+      },
+      "hana-luna": {
+        "path": "src/material-universal/bold.css",
+        "sha256": "f7cf09011ebb2f194e1e64c5f5cf6b1a5b44c6c63b44c6a6f714629d3d9a664c"
+      }
+    },
+    "note": "renderer 树 themes/*.css = 配色源 + 换行 + 材质源（每主题各取自己的源）；server 树不贴材质源（其成分见 appSurfaceSource）"
+  },
+  "appSurface": null,
+  "appSurfaceSource": null,
+  "background": "dark",
+  "backgroundSource": {
+    "tier": "dark",
+    "path": "src/background/dark.css",
+    "sha256": "5306b5bdeea7c38863d6ba88c0d1ce82b27e5c1d91e10e8c954bd816d7582766",
+    "asset": "src/background/assets/moonlit-night.png",
+    "assetSha256": "a9548c52f8c09eb8ca38936a62c6138284512331f1d4383cb75924e27140582a",
+    "assetBytes": 2943841,
+    "dataUriSha256": "b7f6fc8e32313841ab1b188a69ce5e2025514891f15387ff93822f6607750530",
+    "appliedTo": "renderer",
+    "appliedThemeId": "hana-moonlit-court",
+    "placeholder": "__BG_DARK_DATA_URI__",
+    "byThemeId": {
+      "hana-moonlit-court": {
+        "path": "src/background/dark.css",
+        "sha256": "5306b5bdeea7c38863d6ba88c0d1ce82b27e5c1d91e10e8c954bd816d7582766",
+        "asset": "src/background/assets/moonlit-night.png",
+        "assetSha256": "a9548c52f8c09eb8ca38936a62c6138284512331f1d4383cb75924e27140582a",
+        "assetBytes": 2943841,
+        "dataUriSha256": "b7f6fc8e32313841ab1b188a69ce5e2025514891f15387ff93822f6607750530"
+      },
+      "hana-violet-dusk": {
+        "path": "src/background-violet/dark.css",
+        "sha256": "2a085e967573c978e996ddfa1fce50ec8d6480aafc84314fcee7dbf02271b925",
+        "asset": "src/background-violet/assets/violet-aurora.png",
+        "assetSha256": "57a1fe6eb7434b022496b78ca2a93637c6eb1180b2505a5d085785cbe1017448",
+        "assetBytes": 2904924,
+        "dataUriSha256": "a128a648747ae98d1fd959e0e7329380d8051809dfe44a324d819f48444e8570"
+      },
+      "hana-deepsleep": {
+        "path": "src/background-deepseek/dark.css",
+        "sha256": "449e593c60c4ef06b4dcbcd1b0287c226ad00cd2dd94a3c712edd037954f0515",
+        "asset": "src/background-deepseek/assets/daybreak.png",
+        "assetSha256": "72aa9f63364ce2c0e0e2c390b83f1ce060e0055c7c2c9563308fa8314f315fa0",
+        "assetBytes": 679526,
+        "dataUriSha256": "586c1f5aef79abbd69ea41e2c697e57ab98ad47c77298be58e36f9868ba4648a"
+      },
+      "hana-claude-clay": {
+        "path": "src/background-claude/dark.css",
+        "sha256": "f7409b54b95bc8d743e1ade09a2dc0aa743a1d32b54f97f4f7689685e66efdc3",
+        "asset": "src/background-claude/assets/clay-paper.png",
+        "assetSha256": "f8331ee22a51a12d9d9acb5a23929945f244671ebef8dbc8cd59433f202b4f49",
+        "assetBytes": 404707,
+        "dataUriSha256": "1cbcbe336944e976a02fa501e3e7725e3ae77107202ca1a5d5f66ae7af1e7065"
+      },
+      "hana-luna": {
+        "path": "src/background-luna/dark.css",
+        "sha256": "79f215374f499b90d5b0ebcefd28912efce702be44f3245bb56ed6b495d929fe",
+        "asset": "src/background-luna/assets/luna-art.png",
+        "assetSha256": "fb9e54e58af842d9cd69b45615c23a7430794df056a55ab127e3ad19f4dced4e",
+        "assetBytes": 3265979,
+        "dataUriSha256": "9dfbf9843f470ff13d242e60073457c4622c12635bd72e43f5014c34c6acf880"
+      }
+    },
+    "composedRendererSha256": [
+      "e98fc6234d1d78519990ecb5142fe978ca36b0c1b28a0b8364e44fa9490ea778"
+    ],
+    "note": "只给 renderer 树的主题文件写「配色源 + [材质源] + 背景源」（每主题各取自己的源）；server 树不含背景"
+  },
+  "panelFrame": "on",
+  "panelFrameSource": {
+    "cssPath": "src/panel-frame/dark.css",
+    "cssSha256": "7296cdd726f09344d8d7071a1a1796cbbdf449eb1573f07e8e44f463472b2d77",
+    "jsPath": "src/panel-frame/bg.js",
+    "jsSha256": "e22f7b5cb910c16f941266a5893e779cc8ed93f13e9ebb1ea00b4560a902b3f9",
+    "marker": "/* hana-panel-frame */",
+    "markers": [
+      "/* hana-panel-frame */",
+      "/* hana-panel-frame:hana-violet-dusk */",
+      "/* hana-panel-frame:hana-deepsleep */",
+      "/* hana-panel-frame:hana-claude-clay */",
+      "/* hana-panel-frame:hana-luna */"
+    ],
+    "jsTarget": "renderer/lib/theme.js",
+    "appliedTo": "renderer",
+    "appliedThemeId": "hana-moonlit-court",
+    "byThemeId": {
+      "hana-moonlit-court": {
+        "cssPath": "src/panel-frame/dark.css",
+        "cssSha256": "7296cdd726f09344d8d7071a1a1796cbbdf449eb1573f07e8e44f463472b2d77",
+        "jsPath": "src/panel-frame/bg.js",
+        "jsSha256": "e22f7b5cb910c16f941266a5893e779cc8ed93f13e9ebb1ea00b4560a902b3f9",
+        "marker": "/* hana-panel-frame */"
+      },
+      "hana-violet-dusk": {
+        "cssPath": "src/panel-frame-violet/dark.css",
+        "cssSha256": "1f59d2816b4e2b35e50e99ec8b28a49beb47fc8980b262864aa065da7621a70b",
+        "jsPath": "src/panel-frame-violet/bg.js",
+        "jsSha256": "453449253c7c02b4d23d157b4036516b0b0d2c4e257dd1b0932765f80e443507",
+        "marker": "/* hana-panel-frame:hana-violet-dusk */"
+      },
+      "hana-deepsleep": {
+        "cssPath": "src/panel-frame-deepseek/dark.css",
+        "cssSha256": "4c76c650b9693dcb9e9ebf195cca53b9b9cd4b659da42b62d8483e4c01615c8c",
+        "jsPath": "src/panel-frame-deepseek/bg.js",
+        "jsSha256": "2bc9054f46f5d930e561d4982327f1b718be3dae13a7badd1d320bac522c6d20",
+        "marker": "/* hana-panel-frame:hana-deepsleep */"
+      },
+      "hana-claude-clay": {
+        "cssPath": "src/panel-frame-claude/dark.css",
+        "cssSha256": "97856969ef993fa66fcc2f99925127218ae9956cb29d5571775b1bb499a8ace6",
+        "jsPath": "src/panel-frame-claude/bg.js",
+        "jsSha256": "ae5f364b43cbbfa3f93d9a7bb6d23b3e5381e7f24366f30a70859ec43e3b9bf2",
+        "marker": "/* hana-panel-frame:hana-claude-clay */"
+      },
+      "hana-luna": {
+        "cssPath": "src/panel-frame-luna/dark.css",
+        "cssSha256": "55f52fb4861c6261886ab30ec5be0215f0811a27698c9b0a56f05d12286d322d",
+        "jsPath": "src/panel-frame-luna/bg.js",
+        "jsSha256": "19f9b123262a070c495e97a85ea86bfb0fc73d1dd27886395275f3143bdb07ff",
+        "marker": "/* hana-panel-frame:hana-luna */"
+      }
+    },
+    "scopedPanels": [
+      "chalkboardCardCenterPanel",
+      "capabilitiesPanel",
+      "automationHubPanel",
+      "market-modal-overlay",
+      "settings-modal"
+    ],
+    "note": "面板 CSS 拼在各自主题文件末尾；面板 JS 追加到 renderer lib/theme.js 末尾（每个主题一个独立标记行，可共存）。目标：卡片中心 / 能力 / 自动化 三个浮层面板 + 扩展（市场）模态 + 设置模态。"
+  },
+  "themeCacheBust": "3ea22423e1d201b0",
+  "themeCacheBustQuery": "?v=3ea22423e1d201b0",
+  "themeCacheBustSource": {
+    "mode": "on",
+    "version": "?v=3ea22423e1d201b0",
+    "previousVersion": null,
+    "algorithm": "sha256(renderer 树**单份**合成后主题 CSS) 前 16 位（共 16 位十六进制；工单 21 起单主题）",
+    "constant": "HANA_SKIN_CSS_V",
+    "file": "C:\\Users\\Administrator\\.hanako\\artifacts\\renderer\\1.2.1-beta-win32-x64-3b38b32df4522029-g86e6e7d72aa61f52\\lib\\theme.js",
+    "relPath": "lib/theme.js",
+    "action": "replace-version",
+    "state": "busted",
+    "siteCount": 4,
+    "sites": [
+      {
+        "name": "URL 比较基准（new URL）",
+        "before": "new URL(o.cssPath,document.baseURI).href",
+        "after": "new URL(o.cssPath+HANA_SKIN_CSS_V,document.baseURI).href"
+      },
+      {
+        "name": "快路径分支（E.href=o.cssPath）",
+        "before": "(E.href=o.cssPath)",
+        "after": "(E.href=o.cssPath+HANA_SKIN_CSS_V)"
+      },
+      {
+        "name": "新建 <link>（r.href=o.cssPath）",
+        "before": "r.href=o.cssPath;",
+        "after": "r.href=o.cssPath+HANA_SKIN_CSS_V;"
+      },
+      {
+        "name": "load 回调（E.href=o.cssPath）",
+        "before": "E.href=o.cssPath}",
+        "after": "E.href=o.cssPath+HANA_SKIN_CSS_V}"
+      }
+    ],
+    "registryCssPathUntouched": true,
+    "versionedCssPathCount": 0,
+    "cssPathProbeBefore": 16,
+    "cssPathProbeAfter": 16,
+    "composedSha256": [
+      {
+        "themeId": "hana-moonlit-court",
+        "sha256": "e98fc6234d1d78519990ecb5142fe978ca36b0c1b28a0b8364e44fa9490ea778",
+        "prefix16": "e98fc6234d1d7851"
+      },
+      {
+        "themeId": "hana-violet-dusk",
+        "sha256": "82eed6f9b803bce8cb47c82059ccd3a165fa65a40baf18d5e20091b54bd5bad1",
+        "prefix16": "82eed6f9b803bce8"
+      },
+      {
+        "themeId": "hana-deepsleep",
+        "sha256": "f757aa5e1b1ac18fb6f64175069eb6adc90ff40a976c7e2e59e7095bd0bc3290",
+        "prefix16": "f757aa5e1b1ac18f"
+      },
+      {
+        "themeId": "hana-claude-clay",
+        "sha256": "9bb8c9ae7eab092b8d283e9db7c3f058bc6749da4a7da9f139fa732ae69b97c9",
+        "prefix16": "9bb8c9ae7eab092b"
+      },
+      {
+        "themeId": "hana-luna",
+        "sha256": "41ea590dcaf810b22299adbe7bbb23663bc1111d0d390ee47998ac56fab100bf",
+        "prefix16": "41ea590dcaf810b2"
+      }
+    ],
+    "note": "只在 lib/theme.js 里给主题 CSS 的 URL 加 ?v=<版本串> 以绕过渲染器 HTTP 缓存；注册表三处 cssPath 一律不改（assets/CardShell-*.js 打印依赖）"
+  },
+  "themeLinks": [],
+  "themes": [
+    {
+      "id": "hana-moonlit-court",
+      "cssPath": "themes/hana-moonlit-court.css",
+      "source": "src/hana-moonlit-court.css",
+      "sha256": "b876e0b9544f802c78a8adfe5abf3407fd70f9462480dfadcfced43b2fbbc878",
+      "material": "bold",
+      "background": "dark",
+      "appSurface": "none",
+      "rendererSha256": "e98fc6234d1d78519990ecb5142fe978ca36b0c1b28a0b8364e44fa9490ea778",
+      "serverSha256": "b876e0b9544f802c78a8adfe5abf3407fd70f9462480dfadcfced43b2fbbc878"
+    },
+    {
+      "id": "hana-violet-dusk",
+      "cssPath": "themes/hana-violet-dusk.css",
+      "source": "src/hana-violet-dusk.css",
+      "sha256": "ef8f01753f51538a9f7b0f1cb785e0b7073d1c4764018c6044cfa56b120e68b3",
+      "material": "bold",
+      "background": "dark",
+      "appSurface": "none",
+      "rendererSha256": "82eed6f9b803bce8cb47c82059ccd3a165fa65a40baf18d5e20091b54bd5bad1",
+      "serverSha256": "ef8f01753f51538a9f7b0f1cb785e0b7073d1c4764018c6044cfa56b120e68b3"
+    },
+    {
+      "id": "hana-deepsleep",
+      "cssPath": "themes/hana-deepsleep.css",
+      "source": "src/hana-deepsleep.css",
+      "sha256": "b0f52ceb846ebf932d99e69de53c51dfa4fa6e3872c815e99ec67b7667118edf",
+      "material": "bold",
+      "background": "dark",
+      "appSurface": "none",
+      "rendererSha256": "f757aa5e1b1ac18fb6f64175069eb6adc90ff40a976c7e2e59e7095bd0bc3290",
+      "serverSha256": "b0f52ceb846ebf932d99e69de53c51dfa4fa6e3872c815e99ec67b7667118edf"
+    },
+    {
+      "id": "hana-claude-clay",
+      "cssPath": "themes/hana-claude-clay.css",
+      "source": "src/hana-claude-clay.css",
+      "sha256": "8fff476420c01fe0af58fee2fe84e68f901df035c2fbf8782253387d929950c0",
+      "material": "bold",
+      "background": "dark",
+      "appSurface": "none",
+      "rendererSha256": "9bb8c9ae7eab092b8d283e9db7c3f058bc6749da4a7da9f139fa732ae69b97c9",
+      "serverSha256": "8fff476420c01fe0af58fee2fe84e68f901df035c2fbf8782253387d929950c0"
+    },
+    {
+      "id": "hana-luna",
+      "cssPath": "themes/hana-luna.css",
+      "source": "src/hana-luna.css",
+      "sha256": "415abb152ca8bd24510a95b5ab3e9e87c11cc35b7a638840ba6d524f858960c9",
+      "material": "bold",
+      "background": "dark",
+      "appSurface": "none",
+      "rendererSha256": "41ea590dcaf810b22299adbe7bbb23663bc1111d0d390ee47998ac56fab100bf",
+      "serverSha256": "415abb152ca8bd24510a95b5ab3e9e87c11cc35b7a638840ba6d524f858960c9"
+    }
+  ],
+  "registryAssertions": [
+    {
+      "label": "renderer lib/theme.js",
+      "tree": "renderer",
+      "file": "C:\\Users\\Administrator\\.hanako\\artifacts\\renderer\\1.2.1-beta-win32-x64-3b38b32df4522029-g86e6e7d72aa61f52\\lib\\theme.js",
+      "action": "skip-already-patched",
+      "anchorOccurrences": 1,
+      "followedByOk": true,
+      "beforeContextOk": true,
+      "countBaseline": 16,
+      "countAfter": 16,
+      "expectedCountAfter": 16,
+      "newThemeIds": [
+        "hana-moonlit-court",
+        "hana-violet-dusk",
+        "hana-deepsleep",
+        "hana-claude-clay",
+        "hana-luna"
+      ]
+    },
+    {
+      "label": "renderer assets/index-*.js",
+      "tree": "renderer",
+      "file": "C:\\Users\\Administrator\\.hanako\\artifacts\\renderer\\1.2.1-beta-win32-x64-3b38b32df4522029-g86e6e7d72aa61f52\\assets\\theme-registry-BTJmVriA.js",
+      "action": "skip-already-patched",
+      "anchorOccurrences": 1,
+      "followedByOk": true,
+      "beforeContextOk": true,
+      "countBaseline": 16,
+      "countAfter": 16,
+      "expectedCountAfter": 16,
+      "newThemeIds": [
+        "hana-moonlit-court",
+        "hana-violet-dusk",
+        "hana-deepsleep",
+        "hana-claude-clay",
+        "hana-luna"
+      ]
+    },
+    {
+      "label": "server bundle/index.js",
+      "tree": "server",
+      "file": "C:\\Users\\Administrator\\.hanako\\artifacts\\server\\1.2.1-beta-win32-x64-aea6af373902e67d-ge7fdefc0afdf1bb9\\bundle\\index.js",
+      "action": "skip-already-patched",
+      "anchorOccurrences": 1,
+      "followedByOk": true,
+      "beforeContextOk": true,
+      "countBaseline": 16,
+      "countAfter": 16,
+      "expectedCountAfter": 16,
+      "newThemeIds": [
+        "hana-moonlit-court",
+        "hana-violet-dusk",
+        "hana-deepsleep",
+        "hana-claude-clay",
+        "hana-luna"
+      ]
+    }
+  ],
+  "cardPreviewAssertions": [
+    {
+      "label": "renderer assets/SettingsModalShell-*.css（主题卡片配色）",
+      "tree": "renderer",
+      "file": "C:\\Users\\Administrator\\.hanako\\artifacts\\renderer\\1.2.1-beta-win32-x64-3b38b32df4522029-g86e6e7d72aa61f52\\assets\\SettingsModalShell-D6h_u9_c.css",
+      "relPath": "assets/SettingsModalShell-D6h_u9_c.css",
+      "action": "skip-already-patched",
+      "anchorOccurrences": 1,
+      "followedByOk": true,
+      "globCandidates": 1,
+      "featureMatches": 1,
+      "rulesPerTheme": 3,
+      "ruleCountBefore": 51,
+      "ruleCountAfter": 51,
+      "newThemeIds": [
+        "hana-moonlit-court",
+        "hana-violet-dusk",
+        "hana-deepsleep",
+        "hana-claude-clay",
+        "hana-luna"
+      ]
+    },
+    {
+      "label": "server assets/SettingsModalShell-*.css（主题卡片配色）",
+      "tree": "server",
+      "file": "C:\\Users\\Administrator\\.hanako\\artifacts\\server\\1.2.1-beta-win32-x64-aea6af373902e67d-ge7fdefc0afdf1bb9\\desktop\\dist-renderer\\assets\\SettingsModalShell-a8wgF0L9.css",
+      "relPath": "desktop/dist-renderer/assets/SettingsModalShell-a8wgF0L9.css",
+      "action": "skip-already-patched",
+      "anchorOccurrences": 1,
+      "followedByOk": true,
+      "globCandidates": 1,
+      "featureMatches": 1,
+      "rulesPerTheme": 3,
+      "ruleCountBefore": 51,
+      "ruleCountAfter": 51,
+      "newThemeIds": [
+        "hana-moonlit-court",
+        "hana-violet-dusk",
+        "hana-deepsleep",
+        "hana-claude-clay",
+        "hana-luna"
+      ]
+    }
+  ],
+  "cardPaletteAssertions": [
+    {
+      "label": "server bundle/index.js（卡片调色板）",
+      "tree": "server",
+      "file": "C:\\Users\\Administrator\\.hanako\\artifacts\\server\\1.2.1-beta-win32-x64-aea6af373902e67d-ge7fdefc0afdf1bb9\\bundle\\index.js",
+      "relPath": "bundle/index.js",
+      "patch": "patches/card-palette-server.patch",
+      "action": "skip-already-patched",
+      "anchorOccurrences": 1,
+      "followedByKind": "already-patched",
+      "beforeContextOk": true,
+      "paletteCountBefore": 16,
+      "paletteCountAfter": 16,
+      "paletteKeys": [
+        "--bg",
+        "--bg-card",
+        "--sidebar-bg",
+        "--text",
+        "--text-light",
+        "--text-muted",
+        "--border",
+        "--accent",
+        "--accent-hover",
+        "--accent-light",
+        "--accent-rgb",
+        "--green",
+        "--danger",
+        "--radius-chat-card",
+        "--radius-chat-card-inner"
+      ],
+      "newThemeIds": [
+        "hana-moonlit-court",
+        "hana-violet-dusk",
+        "hana-deepsleep",
+        "hana-claude-clay",
+        "hana-luna"
+      ],
+      "note": "server bundle 的卡片调色板表（MGr）补三个主题项：folio 幻灯片烧主题时走 nYr() 查这张表，不补则抛 no card palette for theme。"
+    }
+  ],
+  "localeMerges": [
+    {
+      "locale": "zh",
+      "file": "C:\\Users\\Administrator\\.hanako\\artifacts\\renderer\\1.2.1-beta-win32-x64-3b38b32df4522029-g86e6e7d72aa61f52\\locales\\zh.json",
+      "action": "skip-no-change",
+      "addedKeys": [],
+      "renamedKeys": [],
+      "skippedKeys": [
+        "moonlitCourt",
+        "moonlitCourtMode",
+        "violetDusk",
+        "violetDuskMode",
+        "deepseekBlue",
+        "deepseekBlueMode",
+        "claudeClay",
+        "claudeClayMode",
+        "lunaDragon",
+        "lunaDragonMode"
+      ],
+      "appearanceKeys": 89
+    },
+    {
+      "locale": "zh-TW",
+      "file": "C:\\Users\\Administrator\\.hanako\\artifacts\\renderer\\1.2.1-beta-win32-x64-3b38b32df4522029-g86e6e7d72aa61f52\\locales\\zh-TW.json",
+      "action": "skip-no-change",
+      "addedKeys": [],
+      "renamedKeys": [],
+      "skippedKeys": [
+        "moonlitCourt",
+        "moonlitCourtMode",
+        "violetDusk",
+        "violetDuskMode",
+        "deepseekBlue",
+        "deepseekBlueMode",
+        "claudeClay",
+        "claudeClayMode",
+        "lunaDragon",
+        "lunaDragonMode"
+      ],
+      "appearanceKeys": 89
+    },
+    {
+      "locale": "en",
+      "file": "C:\\Users\\Administrator\\.hanako\\artifacts\\renderer\\1.2.1-beta-win32-x64-3b38b32df4522029-g86e6e7d72aa61f52\\locales\\en.json",
+      "action": "skip-no-change",
+      "addedKeys": [],
+      "renamedKeys": [],
+      "skippedKeys": [
+        "moonlitCourt",
+        "moonlitCourtMode",
+        "violetDusk",
+        "violetDuskMode",
+        "deepseekBlue",
+        "deepseekBlueMode",
+        "claudeClay",
+        "claudeClayMode",
+        "lunaDragon",
+        "lunaDragonMode"
+      ],
+      "appearanceKeys": 89
+    },
+    {
+      "locale": "ja",
+      "file": "C:\\Users\\Administrator\\.hanako\\artifacts\\renderer\\1.2.1-beta-win32-x64-3b38b32df4522029-g86e6e7d72aa61f52\\locales\\ja.json",
+      "action": "skip-no-change",
+      "addedKeys": [],
+      "renamedKeys": [],
+      "skippedKeys": [
+        "moonlitCourt",
+        "moonlitCourtMode",
+        "violetDusk",
+        "violetDuskMode",
+        "deepseekBlue",
+        "deepseekBlueMode",
+        "claudeClay",
+        "claudeClayMode",
+        "lunaDragon",
+        "lunaDragonMode"
+      ],
+      "appearanceKeys": 89
+    },
+    {
+      "locale": "ko",
+      "file": "C:\\Users\\Administrator\\.hanako\\artifacts\\renderer\\1.2.1-beta-win32-x64-3b38b32df4522029-g86e6e7d72aa61f52\\locales\\ko.json",
+      "action": "skip-no-change",
+      "addedKeys": [],
+      "renamedKeys": [],
+      "skippedKeys": [
+        "moonlitCourt",
+        "moonlitCourtMode",
+        "violetDusk",
+        "violetDuskMode",
+        "deepseekBlue",
+        "deepseekBlueMode",
+        "claudeClay",
+        "claudeClayMode",
+        "lunaDragon",
+        "lunaDragonMode"
+      ],
+      "appearanceKeys": 89
+    }
+  ],
+  "files": [
+    {
+      "tree": "renderer",
+      "relPath": "themes/hana-moonlit-court.css",
+      "action": "overwrite",
+      "sha256": "e98fc6234d1d78519990ecb5142fe978ca36b0c1b28a0b8364e44fa9490ea778",
+      "sha256Before": "e98fc6234d1d78519990ecb5142fe978ca36b0c1b28a0b8364e44fa9490ea778",
+      "bytes": 4105307,
+      "material": "bold",
+      "background": "dark",
+      "panelFrame": "on",
+      "appSurface": "none",
+      "themeLink": null
+    },
+    {
+      "tree": "server",
+      "relPath": "desktop/dist-renderer/themes/hana-moonlit-court.css",
+      "action": "overwrite",
+      "sha256": "b876e0b9544f802c78a8adfe5abf3407fd70f9462480dfadcfced43b2fbbc878",
+      "sha256Before": "b876e0b9544f802c78a8adfe5abf3407fd70f9462480dfadcfced43b2fbbc878",
+      "bytes": 11099,
+      "material": "none",
+      "background": "none",
+      "panelFrame": "none",
+      "appSurface": "none",
+      "themeLink": null
+    },
+    {
+      "tree": "renderer",
+      "relPath": "themes/hana-violet-dusk.css",
+      "action": "overwrite",
+      "sha256": "82eed6f9b803bce8cb47c82059ccd3a165fa65a40baf18d5e20091b54bd5bad1",
+      "sha256Before": "82eed6f9b803bce8cb47c82059ccd3a165fa65a40baf18d5e20091b54bd5bad1",
+      "bytes": 4051242,
+      "material": "bold",
+      "background": "dark",
+      "panelFrame": "on",
+      "appSurface": "none",
+      "themeLink": null
+    },
+    {
+      "tree": "server",
+      "relPath": "desktop/dist-renderer/themes/hana-violet-dusk.css",
+      "action": "overwrite",
+      "sha256": "ef8f01753f51538a9f7b0f1cb785e0b7073d1c4764018c6044cfa56b120e68b3",
+      "sha256Before": "ef8f01753f51538a9f7b0f1cb785e0b7073d1c4764018c6044cfa56b120e68b3",
+      "bytes": 10447,
+      "material": "none",
+      "background": "none",
+      "panelFrame": "none",
+      "appSurface": "none",
+      "themeLink": null
+    },
+    {
+      "tree": "renderer",
+      "relPath": "themes/hana-deepsleep.css",
+      "action": "overwrite",
+      "sha256": "f757aa5e1b1ac18fb6f64175069eb6adc90ff40a976c7e2e59e7095bd0bc3290",
+      "sha256Before": "f757aa5e1b1ac18fb6f64175069eb6adc90ff40a976c7e2e59e7095bd0bc3290",
+      "bytes": 1243175,
+      "material": "bold",
+      "background": "dark",
+      "panelFrame": "on",
+      "appSurface": "none",
+      "themeLink": null
+    },
+    {
+      "tree": "server",
+      "relPath": "desktop/dist-renderer/themes/hana-deepsleep.css",
+      "action": "overwrite",
+      "sha256": "b0f52ceb846ebf932d99e69de53c51dfa4fa6e3872c815e99ec67b7667118edf",
+      "sha256Before": "b0f52ceb846ebf932d99e69de53c51dfa4fa6e3872c815e99ec67b7667118edf",
+      "bytes": 8836,
+      "material": "none",
+      "background": "none",
+      "panelFrame": "none",
+      "appSurface": "none",
+      "themeLink": null
+    },
+    {
+      "tree": "renderer",
+      "relPath": "themes/hana-claude-clay.css",
+      "action": "overwrite",
+      "sha256": "9bb8c9ae7eab092b8d283e9db7c3f058bc6749da4a7da9f139fa732ae69b97c9",
+      "sha256Before": "9bb8c9ae7eab092b8d283e9db7c3f058bc6749da4a7da9f139fa732ae69b97c9",
+      "bytes": 692100,
+      "material": "bold",
+      "background": "dark",
+      "panelFrame": "on",
+      "appSurface": "none",
+      "themeLink": null
+    },
+    {
+      "tree": "server",
+      "relPath": "desktop/dist-renderer/themes/hana-claude-clay.css",
+      "action": "overwrite",
+      "sha256": "8fff476420c01fe0af58fee2fe84e68f901df035c2fbf8782253387d929950c0",
+      "sha256Before": "8fff476420c01fe0af58fee2fe84e68f901df035c2fbf8782253387d929950c0",
+      "bytes": 8898,
+      "material": "none",
+      "background": "none",
+      "panelFrame": "none",
+      "appSurface": "none",
+      "themeLink": null
+    },
+    {
+      "tree": "renderer",
+      "relPath": "themes/hana-luna.css",
+      "action": "overwrite",
+      "sha256": "41ea590dcaf810b22299adbe7bbb23663bc1111d0d390ee47998ac56fab100bf",
+      "sha256Before": "e523cd135be82c0e69e953af9afdc26e139c19dfa1879c68efdb76c5436a4437",
+      "bytes": 4525913,
+      "material": "bold",
+      "background": "dark",
+      "panelFrame": "on",
+      "appSurface": "none",
+      "themeLink": null
+    },
+    {
+      "tree": "server",
+      "relPath": "desktop/dist-renderer/themes/hana-luna.css",
+      "action": "overwrite",
+      "sha256": "415abb152ca8bd24510a95b5ab3e9e87c11cc35b7a638840ba6d524f858960c9",
+      "sha256Before": "415abb152ca8bd24510a95b5ab3e9e87c11cc35b7a638840ba6d524f858960c9",
+      "bytes": 2939,
+      "material": "none",
+      "background": "none",
+      "panelFrame": "none",
+      "appSurface": "none",
+      "themeLink": null
+    },
+    {
+      "tree": "renderer",
+      "relPath": "lib/theme.js",
+      "action": "skip-already-patched",
+      "sha256": "672e18de86cf0116e8d0d9d4a4b2a90303a3c62c0c70fa5184beb13529d5ddf4",
+      "sha256Before": "672e18de86cf0116e8d0d9d4a4b2a90303a3c62c0c70fa5184beb13529d5ddf4",
+      "bytes": 180761,
+      "material": null,
+      "background": null,
+      "panelFrame": null,
+      "appSurface": null,
+      "themeLink": null
+    },
+    {
+      "tree": "renderer",
+      "relPath": "assets/theme-registry-BTJmVriA.js",
+      "action": "skip-already-patched",
+      "sha256": "176805fd5d5103ebc4bc9b90bccb9d86b208b3ead85e3bfc590abe7fe07f3f3a",
+      "sha256Before": "176805fd5d5103ebc4bc9b90bccb9d86b208b3ead85e3bfc590abe7fe07f3f3a",
+      "bytes": 8444,
+      "material": null,
+      "background": null,
+      "panelFrame": null,
+      "appSurface": null,
+      "themeLink": null
+    },
+    {
+      "tree": "server",
+      "relPath": "bundle/index.js",
+      "action": "skip-already-patched",
+      "sha256": "ca073343833420b385c260abbe57ebc7bab703a0273a0cd54aabfe4eaa1cf567",
+      "sha256Before": "ca073343833420b385c260abbe57ebc7bab703a0273a0cd54aabfe4eaa1cf567",
+      "bytes": 13914679,
+      "material": null,
+      "background": null,
+      "panelFrame": null,
+      "appSurface": null,
+      "themeLink": null
+    },
+    {
+      "tree": "server",
+      "relPath": "bundle/index.js",
+      "action": "skip-already-patched",
+      "sha256": "ca073343833420b385c260abbe57ebc7bab703a0273a0cd54aabfe4eaa1cf567",
+      "sha256Before": "ca073343833420b385c260abbe57ebc7bab703a0273a0cd54aabfe4eaa1cf567",
+      "bytes": 13914679,
+      "material": null,
+      "background": null,
+      "panelFrame": null,
+      "appSurface": null,
+      "themeLink": null
+    },
+    {
+      "tree": "renderer",
+      "relPath": "lib/theme.js",
+      "action": "replace-version",
+      "sha256": "bdf155133f9368f5a59c6f1fff272fee252a02638a340131304225bdab98da72",
+      "sha256Before": "672e18de86cf0116e8d0d9d4a4b2a90303a3c62c0c70fa5184beb13529d5ddf4",
+      "bytes": 180761,
+      "material": null,
+      "background": null,
+      "panelFrame": null,
+      "appSurface": null,
+      "themeLink": null
+    },
+    {
+      "tree": "renderer",
+      "relPath": "lib/theme.js",
+      "action": "append",
+      "sha256": "bdf155133f9368f5a59c6f1fff272fee252a02638a340131304225bdab98da72",
+      "sha256Before": "672e18de86cf0116e8d0d9d4a4b2a90303a3c62c0c70fa5184beb13529d5ddf4",
+      "bytes": 180761,
+      "material": null,
+      "background": null,
+      "panelFrame": "on",
+      "appSurface": null,
+      "themeLink": null
+    },
+    {
+      "tree": "renderer",
+      "relPath": "assets/SettingsModalShell-D6h_u9_c.css",
+      "action": "skip-already-patched",
+      "sha256": "da2004fc6b7c6892f2f0eb16d81abfe3022612d07f12400acc261029ad2a3a0d",
+      "sha256Before": "da2004fc6b7c6892f2f0eb16d81abfe3022612d07f12400acc261029ad2a3a0d",
+      "bytes": 106484,
+      "material": null,
+      "background": null,
+      "panelFrame": null,
+      "appSurface": null,
+      "themeLink": null
+    },
+    {
+      "tree": "server",
+      "relPath": "desktop/dist-renderer/assets/SettingsModalShell-a8wgF0L9.css",
+      "action": "skip-already-patched",
+      "sha256": "de4ab30ce16a1ca155fae5d469213cf2a7c84a8f55798189af8dd1d71758a41d",
+      "sha256Before": "de4ab30ce16a1ca155fae5d469213cf2a7c84a8f55798189af8dd1d71758a41d",
+      "bytes": 106484,
+      "material": null,
+      "background": null,
+      "panelFrame": null,
+      "appSurface": null,
+      "themeLink": null
+    },
+    {
+      "tree": "renderer",
+      "relPath": "locales/zh.json",
+      "action": "skip-no-change",
+      "sha256": "14b5cf098505b19130590b219d250f2b27995efe09d350ea33169554ee139f10",
+      "sha256Before": "14b5cf098505b19130590b219d250f2b27995efe09d350ea33169554ee139f10",
+      "bytes": 311203,
+      "material": null,
+      "background": null,
+      "panelFrame": null,
+      "appSurface": null,
+      "themeLink": null
+    },
+    {
+      "tree": "renderer",
+      "relPath": "locales/zh-TW.json",
+      "action": "skip-no-change",
+      "sha256": "d687ff384c6268f68d8827fd0f693b49616968294556b741939c3af24ad887e3",
+      "sha256Before": "d687ff384c6268f68d8827fd0f693b49616968294556b741939c3af24ad887e3",
+      "bytes": 312870,
+      "material": null,
+      "background": null,
+      "panelFrame": null,
+      "appSurface": null,
+      "themeLink": null
+    },
+    {
+      "tree": "renderer",
+      "relPath": "locales/en.json",
+      "action": "skip-no-change",
+      "sha256": "aa1ea3d8901bde1825e380869255168dd758fe32985bc3939b8510ee45fa0a7f",
+      "sha256Before": "aa1ea3d8901bde1825e380869255168dd758fe32985bc3939b8510ee45fa0a7f",
+      "bytes": 324297,
+      "material": null,
+      "background": null,
+      "panelFrame": null,
+      "appSurface": null,
+      "themeLink": null
+    },
+    {
+      "tree": "renderer",
+      "relPath": "locales/ja.json",
+      "action": "skip-no-change",
+      "sha256": "04e523f3449c7da40d82fbe52bfa92abdd00ce3154420474978e2c8b5e2b75ca",
+      "sha256Before": "04e523f3449c7da40d82fbe52bfa92abdd00ce3154420474978e2c8b5e2b75ca",
+      "bytes": 407472,
+      "material": null,
+      "background": null,
+      "panelFrame": null,
+      "appSurface": null,
+      "themeLink": null
+    },
+    {
+      "tree": "renderer",
+      "relPath": "locales/ko.json",
+      "action": "skip-no-change",
+      "sha256": "d0469aca9975db15066a9661a7c8162df941adc62297f9f6b208d2c146ca64fc",
+      "sha256Before": "d0469aca9975db15066a9661a7c8162df941adc62297f9f6b208d2c146ca64fc",
+      "bytes": 369410,
+      "material": null,
+      "background": null,
+      "panelFrame": null,
+      "appSurface": null,
+      "themeLink": null
+    }
+  ],
+  "backupEntries": [
+    {
+      "tree": "renderer",
+      "relPath": "lib/theme.js",
+      "kind": "registry",
+      "existed": true,
+      "backupRelPath": "files/renderer/lib/theme.js",
+      "sha256Before": "672e18de86cf0116e8d0d9d4a4b2a90303a3c62c0c70fa5184beb13529d5ddf4"
+    },
+    {
+      "tree": "renderer",
+      "relPath": "assets/theme-registry-BTJmVriA.js",
+      "kind": "registry",
+      "existed": true,
+      "backupRelPath": "files/renderer/assets/theme-registry-BTJmVriA.js",
+      "sha256Before": "176805fd5d5103ebc4bc9b90bccb9d86b208b3ead85e3bfc590abe7fe07f3f3a"
+    },
+    {
+      "tree": "server",
+      "relPath": "bundle/index.js",
+      "kind": "registry",
+      "existed": true,
+      "backupRelPath": "files/server/bundle/index.js",
+      "sha256Before": "ca073343833420b385c260abbe57ebc7bab703a0273a0cd54aabfe4eaa1cf567"
+    },
+    {
+      "tree": "renderer",
+      "relPath": "locales/zh.json",
+      "kind": "locale",
+      "existed": true,
+      "backupRelPath": "files/renderer/locales/zh.json",
+      "sha256Before": "14b5cf098505b19130590b219d250f2b27995efe09d350ea33169554ee139f10"
+    },
+    {
+      "tree": "renderer",
+      "relPath": "locales/zh-TW.json",
+      "kind": "locale",
+      "existed": true,
+      "backupRelPath": "files/renderer/locales/zh-TW.json",
+      "sha256Before": "d687ff384c6268f68d8827fd0f693b49616968294556b741939c3af24ad887e3"
+    },
+    {
+      "tree": "renderer",
+      "relPath": "locales/en.json",
+      "kind": "locale",
+      "existed": true,
+      "backupRelPath": "files/renderer/locales/en.json",
+      "sha256Before": "aa1ea3d8901bde1825e380869255168dd758fe32985bc3939b8510ee45fa0a7f"
+    },
+    {
+      "tree": "renderer",
+      "relPath": "locales/ja.json",
+      "kind": "locale",
+      "existed": true,
+      "backupRelPath": "files/renderer/locales/ja.json",
+      "sha256Before": "04e523f3449c7da40d82fbe52bfa92abdd00ce3154420474978e2c8b5e2b75ca"
+    },
+    {
+      "tree": "renderer",
+      "relPath": "locales/ko.json",
+      "kind": "locale",
+      "existed": true,
+      "backupRelPath": "files/renderer/locales/ko.json",
+      "sha256Before": "d0469aca9975db15066a9661a7c8162df941adc62297f9f6b208d2c146ca64fc"
+    },
+    {
+      "tree": "renderer",
+      "relPath": "themes/hana-moonlit-court.css",
+      "kind": "theme-css",
+      "existed": true,
+      "backupRelPath": "files/renderer/themes/hana-moonlit-court.css",
+      "sha256Before": "e98fc6234d1d78519990ecb5142fe978ca36b0c1b28a0b8364e44fa9490ea778"
+    },
+    {
+      "tree": "server",
+      "relPath": "desktop/dist-renderer/themes/hana-moonlit-court.css",
+      "kind": "theme-css",
+      "existed": true,
+      "backupRelPath": "files/server/desktop/dist-renderer/themes/hana-moonlit-court.css",
+      "sha256Before": "b876e0b9544f802c78a8adfe5abf3407fd70f9462480dfadcfced43b2fbbc878"
+    },
+    {
+      "tree": "renderer",
+      "relPath": "themes/hana-violet-dusk.css",
+      "kind": "theme-css",
+      "existed": true,
+      "backupRelPath": "files/renderer/themes/hana-violet-dusk.css",
+      "sha256Before": "82eed6f9b803bce8cb47c82059ccd3a165fa65a40baf18d5e20091b54bd5bad1"
+    },
+    {
+      "tree": "server",
+      "relPath": "desktop/dist-renderer/themes/hana-violet-dusk.css",
+      "kind": "theme-css",
+      "existed": true,
+      "backupRelPath": "files/server/desktop/dist-renderer/themes/hana-violet-dusk.css",
+      "sha256Before": "ef8f01753f51538a9f7b0f1cb785e0b7073d1c4764018c6044cfa56b120e68b3"
+    },
+    {
+      "tree": "renderer",
+      "relPath": "themes/hana-deepsleep.css",
+      "kind": "theme-css",
+      "existed": true,
+      "backupRelPath": "files/renderer/themes/hana-deepsleep.css",
+      "sha256Before": "f757aa5e1b1ac18fb6f64175069eb6adc90ff40a976c7e2e59e7095bd0bc3290"
+    },
+    {
+      "tree": "server",
+      "relPath": "desktop/dist-renderer/themes/hana-deepsleep.css",
+      "kind": "theme-css",
+      "existed": true,
+      "backupRelPath": "files/server/desktop/dist-renderer/themes/hana-deepsleep.css",
+      "sha256Before": "b0f52ceb846ebf932d99e69de53c51dfa4fa6e3872c815e99ec67b7667118edf"
+    },
+    {
+      "tree": "renderer",
+      "relPath": "themes/hana-claude-clay.css",
+      "kind": "theme-css",
+      "existed": true,
+      "backupRelPath": "files/renderer/themes/hana-claude-clay.css",
+      "sha256Before": "9bb8c9ae7eab092b8d283e9db7c3f058bc6749da4a7da9f139fa732ae69b97c9"
+    },
+    {
+      "tree": "server",
+      "relPath": "desktop/dist-renderer/themes/hana-claude-clay.css",
+      "kind": "theme-css",
+      "existed": true,
+      "backupRelPath": "files/server/desktop/dist-renderer/themes/hana-claude-clay.css",
+      "sha256Before": "8fff476420c01fe0af58fee2fe84e68f901df035c2fbf8782253387d929950c0"
+    },
+    {
+      "tree": "renderer",
+      "relPath": "themes/hana-luna.css",
+      "kind": "theme-css",
+      "existed": true,
+      "backupRelPath": "files/renderer/themes/hana-luna.css",
+      "sha256Before": "e523cd135be82c0e69e953af9afdc26e139c19dfa1879c68efdb76c5436a4437"
+    },
+    {
+      "tree": "server",
+      "relPath": "desktop/dist-renderer/themes/hana-luna.css",
+      "kind": "theme-css",
+      "existed": true,
+      "backupRelPath": "files/server/desktop/dist-renderer/themes/hana-luna.css",
+      "sha256Before": "415abb152ca8bd24510a95b5ab3e9e87c11cc35b7a638840ba6d524f858960c9"
+    },
+    {
+      "tree": "renderer",
+      "relPath": "assets/SettingsModalShell-D6h_u9_c.css",
+      "kind": "card-preview-css",
+      "existed": true,
+      "backupRelPath": "files/renderer/assets/SettingsModalShell-D6h_u9_c.css",
+      "sha256Before": "da2004fc6b7c6892f2f0eb16d81abfe3022612d07f12400acc261029ad2a3a0d"
+    },
+    {
+      "tree": "server",
+      "relPath": "desktop/dist-renderer/assets/SettingsModalShell-a8wgF0L9.css",
+      "kind": "card-preview-css",
+      "existed": true,
+      "backupRelPath": "files/server/desktop/dist-renderer/assets/SettingsModalShell-a8wgF0L9.css",
+      "sha256Before": "de4ab30ce16a1ca155fae5d469213cf2a7c84a8f55798189af8dd1d71758a41d"
+    },
+    {
+      "tree": "server",
+      "relPath": "bundle/index.js",
+      "kind": "card-palette",
+      "existed": true,
+      "backupRelPath": "files/server/bundle/index.js",
+      "sha256Before": "ca073343833420b385c260abbe57ebc7bab703a0273a0cd54aabfe4eaa1cf567"
+    },
+    {
+      "tree": "renderer",
+      "relPath": "lib/theme.js",
+      "kind": "theme-cache-bust",
+      "existed": true,
+      "backupRelPath": "files/renderer/lib/theme.js",
+      "sha256Before": "672e18de86cf0116e8d0d9d4a4b2a90303a3c62c0c70fa5184beb13529d5ddf4"
+    },
+    {
+      "tree": "renderer",
+      "relPath": "lib/theme.js",
+      "kind": "panel-frame-js",
+      "existed": true,
+      "backupRelPath": "files/renderer/lib/theme.js",
+      "sha256Before": "672e18de86cf0116e8d0d9d4a4b2a90303a3c62c0c70fa5184beb13529d5ddf4"
+    }
+  ],
+  "restartRequired": true,
+  "notes": [
+    "本文件由 scripts/apply.ps1 生成，记录本次贴入的版本目录与各文件改动后 sha256。",
+    "skin.json 本身不在安装目录内，回滚请用 scripts/restore.ps1（配合 backupDir / pristineBackupDir）。",
+    "defaultTheme / autoLightDefault / autoDarkDefault 未改动（auto 仍指向 warm-paper / midnight）。",
+    "材质档位 material = bold；材质源 src/material-universal/<档位>.css（none 时不贴材质，行为与第一期逐字节等价）。",
+    "背景档位 background = dark；背景源 src/background/<档位>.css（none 时不贴背景，行为与现状逐字节等价）。",
+    "背景图 src/background/assets/moonlit-night.png 以 data URI 内联，只进 renderer 树的深色主题文件；server 树不含背景。",
+    "App 面材质 appSurface = （未贴）；源 src/app-surface/*.css 只拼进 **server 树**那份主题文件（App 面唯一样式表入口），renderer 树不含；server 树 themes/*.css 的 sha256 是合成后**落盘实测**值。",
+    "主题缓存版本 themeCacheBust = 3ea22423e1d201b0；只在 renderer lib/theme.js 里给主题 CSS 的 URL 加 ?v=<版本串>（绕过 Chromium HTTP 缓存），注册表 cssPath 保持 themes/xxx.css 不带参数（CardShell 打印依赖）。",
+    "浮层面板取景框 panelFrame = on；面板 CSS 拼在 renderer 树深色主题末尾，面板 JS 追加到 renderer lib/theme.js 末尾（标记行 '/* hana-panel-frame */' 幂等）。目标：卡片中心 / 能力 / 自动化 三个浮层面板 + 扩展（市场）模态 + 设置模态。",
+    "卡片调色板 cardPalette = on（hana-moonlit-court, hana-violet-dusk, hana-deepsleep, hana-claude-clay, hana-luna）；server bundle 的 MGr 表每项 15 个键，只补表、不改任何上游逻辑（改后既有 11 项逐键逐值未变）。没这张表，folio 幻灯片传 theme=<本皮肤 id> 会抛 no card palette for theme。",
+    "独立文档主题 link（themeLinks）：；把写死的 assets/warm-paper-*.css 引用换成当前主题 <link id=\"themeSheet\">（锚点用通配匹配，不写死构建哈希），使 lib/theme.js 能接管这两个独立文档。"
+  ]
+}

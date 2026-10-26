@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "patchId": "theme-registry-bundle",
+  "description": "向 renderer/assets/*.js 的主题注册表插入 hana-moonlit-court / hana-violet-dusk / hana-deepsleep 四项（第三个为浅色 DeepSeek 蓝）。运行时主题切换依赖此表。（第四项 hana-luna 由本地追加）",
+  "target": "renderer/assets/*.js",
+  "targetPathHint": "<rendererVersionDir>/assets/（chunk 文件名带构建哈希）",
+  "targetGlob": "renderer/assets/*.js",
+  "locateStrategy": "content-anchor",
+  "locateNotes": "该注册表所在的 chunk **名字与位置都随上游构建变化**：1.0.11 在 assets/index-UfqwUMsA.js，1.1.24 已搬到 assets/link-open-CW6g1Ihb.js。故通配写成 assets/*.js（不再钉 index-*.js），完全靠内容特征定位：候选文件必须同时含全部 contentFeatures 与唯一 anchor。若通配命中 0 个或多个，报错中止（绝不猜）。",
+  "contentFeaturesNote": "paperTextureBlockedThemeIds 这个标识符在 1.1.24-beta 已被上游**整段删除**（renderer 两处与 server bundle 都不再有），故从特征表移除；保留的三条仍足以唯一锁定该 chunk（实测 assets/*.js 中仅 link-open-*.js 命中）。",
+  "styleProfile": "compact-no-spaces",
+  "contentFeatures": [
+    "theme-registry: theme",
+    "legacyThemeAliases:",
+    "themes:"
+  ],
+  "anchor": "coral:{cssPath:\"themes/coral.css\",backgroundColor:\"#FDF6EC\",appearance:\"light\",i18nName:\"settings.appearance.coral\",i18nMode:\"settings.appearance.coralMode\"}",
+  "anchorOccurrencesExpected": 1,
+  "anchorContext": {
+    "before": "-contrast.css\",backgroundColor:\"#26343D\",appearance:\"dark\",i18nName:\"settings.appearance.midnightContrast\",i18nMode:\"settings.appearance.midnightContrastMode\"},",
+    "after": "},（1.0.11 实测：锚点末尾之后紧跟注册表对象自己的闭合 }，再是 ,Ci={storageKey:...。此处的 'Ci' 与 'storageKey' 右侧的变量名都是压缩器产物，跨构建即变，故**不作断言**；断言只依赖 followedByStructure）"
+  },
+  "insertionPoint": "after-anchor",
+  "insertionPointDescription": "在 anchor 的末尾字符（coral 项的 }）之后、注册表对象闭合 } 之前插入。锚点是注册表最后一项，故锚点末尾之后（允许空白）遇到的第一个 } 就是注册表对象的闭合括号。",
+  "insertBefore": "}",
+  "followedBy": null,
+  "followedByStructure": "closing-braces",
+  "followedByStructureNotes": "结构校验（不含任何压缩器变量名）：锚点末尾之后只允许出现空白与 '}'，直到遇到第一个其它字符为止；这一段里至少要有 '}'；并且注册表对象的闭合括号（由 apply.ps1 的花括号配对给出位置）必须落在这段内，锚点与它之间只能有空白。等价含义：锚点确实是注册表最后一项、插入点之后紧跟对象闭合 '}'。",
+  "followedByExample": "},Ci={storageKey:XU,...（1.0.11 实测原文；仅作人工核对参考，apply.ps1 不断言此串）",
+  "insertAfter": {
+    "ref": "anchor",
+    "offset": "end"
+  },
+  "insertText": ",\"hana-moonlit-court\":{cssPath:\"themes/hana-moonlit-court.css\",backgroundColor:\"#172725\",appearance:\"dark\",i18nName:\"settings.appearance.moonlitCourt\",i18nMode:\"settings.appearance.moonlitCourtMode\"},\"hana-violet-dusk\":{cssPath:\"themes/hana-violet-dusk.css\",backgroundColor:\"#3C354A\",appearance:\"dark\",i18nName:\"settings.appearance.violetDusk\",i18nMode:\"settings.appearance.violetDuskMode\"},\"hana-deepsleep\":{cssPath:\"themes/hana-deepsleep.css\",backgroundColor:\"#F6F7FB\",appearance:\"light\",i18nName:\"settings.appearance.deepseekBlue\",i18nMode:\"settings.appearance.deepseekBlueMode\"},\"hana-luna\":{cssPath:\"themes/hana-luna.css\",backgroundColor:\"#141313\",appearance:\"dark\",i18nName:\"settings.appearance.lunaDragon\",i18nMode:\"settings.appearance.lunaDragonMode\"}",
+  "legacyInsertTexts": [
+    ",\"hana-moonlit-court\":{cssPath:\"themes/hana-moonlit-court.css\",backgroundColor:\"#172725\",appearance:\"dark\",i18nName:\"settings.appearance.moonlitCourt\",i18nMode:\"settings.appearance.moonlitCourtMode\"}",
+    ",\"hana-moonlit-court\":{cssPath:\"themes/hana-moonlit-court.css\",backgroundColor:\"#172725\",appearance:\"dark\",i18nName:\"settings.appearance.moonlitCourt\",i18nMode:\"settings.appearance.moonlitCourtMode\"},\"hana-violet-dusk\":{cssPath:\"themes/hana-violet-dusk.css\",backgroundColor:\"#3C354A\",appearance:\"dark\",i18nName:\"settings.appearance.violetDusk\",i18nMode:\"settings.appearance.violetDuskMode\"}"
+  ],
+  "countBaseline": 11,
+  "expectedCountAfter": 15,
+  "newThemeIds": [
+    "hana-moonlit-court",
+    "hana-violet-dusk",
+    "hana-deepsleep",
+    "hana-luna"
+  ],
+  "untouched": [
+    "assertThemeEntry",
+    "defaultTheme",
+    "autoLightDefault",
+    "autoDarkDefault"
+  ],
+  "onAnchorMissing": "error",
+  "onAnchorNotUnique": "error"
+}

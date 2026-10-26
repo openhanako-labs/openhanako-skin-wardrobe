@@ -1,0 +1,158 @@
+/*
+ * Hana 配色源：Claude · 陶土（hana-claude-clay）
+ * ---------------------------------------------------------------------------
+ * 定位：项目第四个主题，也是第二个**浅色**主题。取 Claude（Anthropic）界面的
+ *   招牌观感 —— 暖象牙纸底 + 陶土橙强调 + 暖墨字。
+ *
+ * 与 Deepsleep 的分工：DeepSeek 是「冷白 + 电蓝」，读数快、办公感强；
+ *   本主题是「暖白 + 陶土」，纸感、呼吸感强，长时间读长文更软。
+ *   两者刻意做成同一明暗档位下的两个色温极端，切换时能立刻感到差别。
+ *
+ * 配色出处：Anthropic / Claude 官方品牌六色（designpieces 收录的官方 token 表）
+ *
+ *     官方 token                      本主题
+ *     ------------------------------  --------------------------------
+ *     Clay            #d97757         --accent        #D97757
+ *     Slate Dark      #141413         --text          #141413
+ *     Ivory Light     #faf9f5         --bg            #FAF9F5
+ *     Cloud Medium    #b0aea5         → 派生 --text-muted 压深到 #6B675F（见下）
+ *     Sage Green      #788c5d         → 派生 --green 压深到 #4F6136（见下）
+ *     Dusty Blue      #6a9bcc         → 不进正文层，仅终端 ansi-blue 低饱和一档
+ *
+ *   界面侧的三个辅助取值（不属于品牌六色，是 Claude 产品 UI 的实测观感）：
+ *     侧栏底 #F0EEE6（比正文底深半档的暖灰米，Claude 的左栏就是这个色）
+ *     Crail  #C15F3C（Clay 的深一档，hover / pressed 用；官方品牌指南里作为按下态）
+ *     暖墨影 rgba(74,58,44,…)（米底上用纯黑影会发脏，必须带棕调）
+ *
+ * ⚠️ 与深色主题**反向**的三处（浅色主题的老坑，与 Deepsleep 同款解法）：
+ *
+ *   ① overlay 系一律「墨水系」。深色主题用白 overlay 提亮；白底上白压白看不见，
+ *      本主题一律 rgba(20,20,19,…) 压深。
+ *
+ *   ② 强调色不能当正文/链接色用。Clay #D97757 对 #FAF9F5 实测 **2.96:1**，
+ *      只够做按钮底 / 图标 / 装饰。正文链接另取深陶土 #8F3F1C（**6.88:1**）。
+ *      同理 Sage Green 原值 #788C5D 对米底约 2.7:1，压深到 #4F6136（6.44:1）
+ *      才可承载文字。
+ *
+ *   ③ 面板要「比底更白」，不是「比底更亮」。--bg-card 走 rgba(255,255,255,.78)
+ *      浮在 #FAF9F5 上；照搬深色主题的「提亮一档」会把面板做成灰。
+ *
+ * 实测对比度（对 --bg #FAF9F5）：
+ *   --text       #141413  17.50:1
+ *   --text-light #3D3A34  10.76:1
+ *   --text-muted #6B675F   5.34:1
+ *   --link       #8F3F1C   6.88:1
+ *   --green      #4F6136   6.44:1
+ *   --coral      #A9482A   5.47:1
+ *   --danger     #B3261E   6.20:1
+ *   --accent     #D97757   2.96:1  ← 只用于底色/装饰，不承载正文
+ *   （侧栏 #F0EEE6 上：text 15.87:1 / text-muted 4.85:1 / link 6.24:1，均达标）
+ *
+ * 纪律：本文件是**纯变量表**，只有 --xxx 声明，包在 [data-theme="hana-claude-clay"]
+ *   作用域里，不写任何类名 / 结构规则。背景与面板半透明归 background-claude 源，
+ *   描边高光归 material-claude 源。
+ *
+ * 半径与 --border-width 原样沿用既有三主题：四个主题共用同一套几何，切换时
+ *   只有明暗与色相在变，控件不会跳尺寸。
+ * ---------------------------------------------------------------------------
+ */
+[data-theme="hana-claude-clay"] {
+    /* ── 底与面 ───────────────────────────────────────────────────────── */
+    --bg:              #FAF9F5;
+    --bg-card: rgba(255, 255, 255, 0.78);
+    --bg-glass: rgba(255, 255, 255, 0.90);
+    --sidebar-bg:      #F0EEE6;
+
+    /* ── 文字档（官方 Slate Dark 起手，逐档提亮保持暖灰而非冷灰）───────── */
+    --text:            #141413;
+    --text-light:      #3D3A34;
+    --text-muted:      #6B675F;
+
+    /* ── 线与影（暖墨 + 棕调影，米底上用纯黑会显脏）───────────────────── */
+    --border:          rgba(20, 20, 19, 0.13);
+    --shadow:          rgba(74, 58, 44, 0.14);
+
+    /* ── 强调色（Claude Clay）───────────────────────────────────────── */
+    --accent:          #D97757;
+    --accent-hover:    #C15F3C;              /* Crail：浅底上 hover 要更深，不是更亮 */
+    --accent-light:    rgba(217, 119, 87, 0.12);
+    --accent-rgb:      217, 119, 87;
+
+    /* ── 链接（深陶土，保证 6.8:1；Clay 本身只有 2.96:1，不能当字用）──── */
+    --link:            #8F3F1C;
+    --link-hover:      #7A3415;
+    --link-rgb:        143, 63, 28;
+
+    /* ── 状态色（品牌色压深到文字可用档）─────────────────────────────── */
+    --green:           #4F6136;              /* 官方 Sage #788C5D 压深 */
+    --green-rgb:       79, 97, 54;
+    --coral:           #A9482A;
+    --coral-rgb:       169, 72, 42;
+    --danger:          #B3261E;
+    --danger-rgb:      179, 38, 30;
+
+    /* ── 心境块 ───────────────────────────────────────────────────────── */
+    --mood-text:       #8F3F1C;
+    --mood-bg:         rgba(217, 119, 87, 0.08);
+    --mood-border:     rgba(217, 119, 87, 0.22);
+
+    /* ── 会话区 ───────────────────────────────────────────────────────── */
+    --hana-text:       #141413;
+    --tool-bg:         rgba(20, 20, 19, 0.035);
+    --tool-text:       #6B675F;
+    --user-bg:         rgba(217, 119, 87, 0.10);
+
+    /* ── 面板与附件 ───────────────────────────────────────────────────── */
+    --drop-overlay-bg: rgba(250, 249, 245, 0.90);
+    --attach-bg:       rgba(20, 20, 19, 0.05);
+    --jian-note-bg:    #FFFDF8;              /* 便笺比正文底再暖、再白一点 */
+    --jian-note-border: rgba(20, 20, 19, 0.13);
+
+    /* ── 叠加层（**墨水系**，与深色主题的白 overlay 反向）───────────────── */
+    --overlay-subtle:  rgba(20, 20, 19, 0.015);
+    --overlay-light:   rgba(20, 20, 19, 0.03);
+    --overlay-medium:  rgba(20, 20, 19, 0.05);
+    --overlay-strong:  rgba(20, 20, 19, 0.08);
+
+    --tab-slider-bg:     rgba(255, 255, 255, 0.58);
+    --tab-slider-shadow: 0 1px 2px rgba(20, 20, 19, 0.10), 0 1px 1px rgba(20, 20, 19, 0.04);
+
+    /* ── 几何（与既有三主题逐字节一致，主题切换不跳尺寸）───────────────── */
+    --radius-sm:           8px;
+    --radius-md:          12px;
+    --radius-lg:          18px;
+    --radius-input:        9px;
+    --radius-card:        12px;
+    --radius-chat-surface: 24px;
+    --radius-chat-card:    12px;
+    --border-width:        1px;
+
+    /* 下拉箭头：浅底上必须是深色描边，否则箭头消失（暖墨，不是蓝墨） */
+    --select-arrow:        url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b675f' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+
+    /* ── 终端：浅色主题里终端仍走深底（对比更强，也符合终端习惯）。
+          这里的深底是**暖黑 #1F1E1D**（Claude 暗色界面的底色），不是 DeepSeek
+          那套蓝黑 —— 与暖米底同源，切主题时终端不会突然变冷。 ───────────── */
+    --term-bg:                 #1F1E1D;
+    --term-fg:                 #F5F2EA;
+    --term-cursor:             #D97757;
+    --term-cursor-accent:      #1F1E1D;
+    --term-selection-bg:       rgba(217, 119, 87, 0.30);
+
+    --term-ansi-black:         #3A3733;
+    --term-ansi-red:           #E58F6B;
+    --term-ansi-green:         #A3B57C;
+    --term-ansi-yellow:        #E0B363;
+    --term-ansi-blue:          #8FB4DC;
+    --term-ansi-magenta:       #C9A0B4;
+    --term-ansi-cyan:          #86BDAF;
+    --term-ansi-white:         #E8E4D9;
+    --term-ansi-bright-black:  #6B675F;
+    --term-ansi-bright-red:    #F0A98C;
+    --term-ansi-bright-green:  #C2D19B;
+    --term-ansi-bright-yellow: #EFC98C;
+    --term-ansi-bright-blue:   #AFCBEA;
+    --term-ansi-bright-magenta:#DEBCCB;
+    --term-ansi-bright-cyan:   #A5D2C6;
+    --term-ansi-bright-white:  #FAF9F5;
+}

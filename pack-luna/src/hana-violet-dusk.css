@@ -1,0 +1,151 @@
+/*
+ * Hana Theme: 极光（深色版 / 夜穹）
+ * id: hana-violet-dusk     ·    appearance: dark
+ *
+ * ⚠️ 本主题**独立于** hana-moonlit-court：自带配色 / 材质 / 背景 / 取景框全套源，
+ *    与月满庭不共用任何文件，也不包进月满庭的作用域。改这里不会影响月满庭，
+ *    改月满庭也不会影响这里。（约束来源：用户 2026-10-18「不能改造月满庭，要独立」）
+ *
+ * 色源：Morrow 0.1.9-test.56 的「空间外观 → 主题色调 = 深色 + 自定义色盘」实渲结果。
+ *   真机采样（PrintWindow 1936×1048，测的是磨砂 60% 叠壁纸之后的合成色）：
+ *     侧栏 #211E2E · 右面板 #282636 · 窗口底 #332F43 · 卡片面 #3D354C · 输入条 #40384D
+ *     强调色 #7662BA（界面自显）· 最饱和像素 #8C78C4
+ *   外观档位（workbench.db → cards.morrow-studio-preferences，protobuf 解出）：
+ *     dark / frosted / ambient / 磨砂不透明度 0.6 / 圆角 18 / 变体 flat
+ *
+ * 映射说明（Morrow 自定义色盘 → Hana 变量）：
+ *   1. 这套紫不是"某主题的紫版"，是 Morrow 用**单一色相 253°** 按明度分档染出来的
+ *      整套表面（实测各面色相 247–263°，饱和度 16–21%）。故本主题按同一逻辑重建：
+ *      同一色相、明度分档，而不是逐面色值照抄。
+ *   2. 表面三档**逐个等于真机区域均值**（不是抽样点，是 16200~70000 像素的面积均值）：
+ *        --sidebar-bg #221F2E  L=15.1%（实测侧栏）
+ *        --bg         #3C354A  L=24.9%（实测主画布）
+ *        --bg-card    #3D394A  L=25.7%（实测卡片面）
+ *      ⚠️ 一个关键观察：在 Morrow 里**卡片面与画布几乎同亮度**（对比仅 1.05:1），
+ *      卡片不是靠填充区分的，是靠描边 + 阴影。所以本主题的 --border 承担了分层职责，
+ *      不能像月满庭那样写得过淡。
+ *      ⚠️ 第一版曾把 --bg 写成 #2A2638（L 18.4%），比实测深 6.5 个百分点 —— 已按实测修正。
+ *   3. 文字三档用同一低饱和紫灰（色相 254°、S 7~8%），保证三级单调递减，
+ *      且都以**更亮的实测底**为基准重新校过：
+ *      --text #E5E4E7（对 --bg 9.21:1）→ --text-light #CFCED4（7.46:1）
+ *      → --text-muted #B5B3BD（5.64:1）。对 --bg-card 分别为 8.81 / 7.14 / 5.39:1，均达 AA。
+ *   4. 强调：Morrow 的 #7662BA 对 --bg 只有 **2.35:1**，做正文链接不合 AA。故分两档：
+ *      --accent 保留 #7662BA 作**身份色**（填充块 / 选中态 / 滑块 / 强调条，不承担正文可读性）；
+ *      --link 另给可读档 #B7ABE3（5.53:1）、--link-hover #C4BAE8（6.41:1）。
+ *      这条与月满庭同构（那份的赭金也不能直接当链接，另给了暖金更亮档）。
+ *      --accent-hover #ACA0DA（4.89:1）：hover 时按钮上的文字要能读，故提到 AA。
+ *   5. 语义色：Morrow 自定义色盘未给红/绿档，按暖冷两端推导，均在 --bg 上达 AA：
+ *      --green #92BFAE（5.71:1）· --coral #D8AA97（5.62:1）· --danger #E39699（5.05:1）。
+ *   6. 覆盖层在暗面上用白色低透明（与月满庭同理：暗底上黑叠黑会糊成一块），
+ *      --shadow 用纯黑。
+ *   7. 圆角：Morrow 实测圆角 18 → --radius-lg，其余档按 18/12 比例派生，与月满庭一致
+ *      （两套皮肤同源于 Morrow 的圆角体系，故结构 token 相同；这是结构一致，不是共用文件）。
+ *   8. 终端：深紫墨底 + 浅紫字，16 色 ANSI 按紫族重排。
+ *   9. 刻意不写 --bg-texture：该变量无消费点（月满庭那份源的说明 10 同样如此）。
+ */
+
+[data-theme="hana-violet-dusk"] {
+    /* ─── 背景 / 面板（Morrow 实测层阶：逐个等于真机区域均值）─── */
+    --bg:           #3C354A;                    /* = 实测主画布（区域均值，L 24.9%）*/
+    /* 卡片面：实测 #3D394A，与画布**几乎同亮度**（1.05:1）—— Morrow 里卡片靠描边 + 阴影分层，
+     * 不靠填充。改为半透同为工单 42-续 的取舍（不透明会埋掉壁纸，全透明会打死组件底）。
+     * 合成不透明度 = A + 0.70 × (1 - A)：A=0.85 → 0.955，壁纸透出 4.5%。
+     * 想调档只改这一个数。 */
+    --bg-card:      rgba(61, 57, 74, 0.85);     /* = 实测卡片面 #3D394A @ 85% */
+    --bg-glass:     rgba(61, 57, 74, 0.92);     /* 面板面 @ 92% */
+    --sidebar-bg:   #221F2E;                    /* = 实测侧栏（L 15.1%，比画布沉 9.8pp）*/
+
+    /* ─── 墨色三档（同色相低饱和紫灰，三级单调，见说明 3）─── */
+    --text:         #E5E4E7;                    /* 正文，对 --bg 9.21:1 */
+    --text-light:   #CFCED4;                    /* 中间档，对 --bg 7.46:1 */
+    --text-muted:   #B5B3BD;                    /* 次级文字，对 --bg 5.64:1 */
+
+    /* ─── 分割线 / 阴影 ─── */
+    /* 描边在本主题里承担分层职责（卡片面与画布同亮度），故取比月满庭更有存在感的一档：
+       对 --bg 1.43:1 —— 足以让卡片边缘成立，又不至于像硬框。 */
+    --border:       #5C5473;
+    --shadow:       rgba(0, 0, 0, 0.36);        /* 暗面纯黑投影 */
+
+    /* ─── 强调：紫罗兰（Morrow 实测身份色）─── */
+    --accent:       #7662BA;                    /* = Morrow 界面自显的强调色（身份色）*/
+    --accent-hover: #ACA0DA;                    /* 4.89:1 —— hover 时按钮上的文字要能读，故提到 AA */
+    --accent-light: rgba(118, 98, 186, 0.11);   /* accent @ 11% */
+    --accent-rgb:   118, 98, 186;               /* = --accent */
+
+    /* ─── 链接：accent 在深底上只有 2.95:1，另给可读档（见说明 4）─── */
+    --link:         #B7ABE3;                    /* 对 --bg 6.94:1 */
+    --link-hover:   #C4BAE8;                    /* 对 --bg 8.05:1（hover）*/
+    --link-rgb:     183, 171, 227;              /* = --link */
+
+    /* ─── 语义色（色盘未给红绿，按同族推导，均达 AA，见说明 5）─── */
+    --green:        #92BFAE;                    /* 对 --bg 5.71:1 */
+    --green-rgb:    146, 191, 174;              /* = --green */
+    --coral:        #D8AA97;                    /* 陶土暖橘，在紫底上作提示色 */
+    --coral-rgb:    216, 170, 151;              /* = --coral */
+    --danger:       #E39699;                    /* 对 --bg 5.05:1（更暗的档在更亮的底上不合 AA）*/
+    --danger-rgb:   227, 150, 153;              /* = --danger */
+
+    /* ─── plan-mode（mood）：复用 accent 族 ─── */
+    --mood-text:    #ACA0DA;                    /* = --accent-hover */
+    --mood-bg:      rgba(118, 98, 186, 0.10);
+    --mood-border:  rgba(118, 98, 186, 0.22);
+
+    /* ─── 聊天 / 工具（色值对齐本主题墨色）─── */
+    --hana-text:    #E5E4E7;                    /* = --text */
+    --tool-bg:      rgba(255, 255, 255, 0.03);  /* 暗面提亮 */
+    --tool-text:    #B5B3BD;                    /* = --text-muted */
+    --user-bg:      rgba(118, 98, 186, 0.14);   /* 用户气泡：accent @ 14% */
+    --drop-overlay-bg: rgba(60, 53, 74, 0.85);  /* 背景 @ 85% */
+    --attach-bg:    rgba(255, 255, 255, 0.06);
+
+    /* ─── 便笺（底色 = 面板，描边 = 分割线低透明）─── */
+    --jian-note-bg:     #3D394A;                /* = 卡片面实色 */
+    --jian-note-border: rgba(92, 84, 115, 0.55);
+
+    /* ─── 覆盖层（暗面用白色低透明，避免糊成灰块）─── */
+    --overlay-subtle: rgba(255, 255, 255, 0.03);
+    --overlay-light:  rgba(255, 255, 255, 0.05);
+    --overlay-medium: rgba(255, 255, 255, 0.08);
+    --overlay-strong: rgba(255, 255, 255, 0.15);
+
+    /* ─── 标签滑块 ─── */
+    --tab-slider-bg:     var(--overlay-strong); /* = --overlay-strong */
+    --tab-slider-shadow: none;
+
+    /* ─── 结构 token：圆角与边框（Morrow 圆角 18，与月满庭同体系，见说明 7）─── */
+    --radius-sm:     8px;                       /* 5/12 × 18  ≈ 7.5 → 8   input/button/chip */
+    --radius-md:     12px;                      /* 8/12 × 18  = 12        card / list block */
+    --radius-lg:     18px;                      /* Morrow 实测圆角        modal / 大面板 */
+    --radius-input:  9px;                       /* 6/12 × 18  = 9         设置页控件 */
+    --radius-card:   12px;                      /* 8/12 × 18  = 12        SettingsSection 等 */
+    --radius-chat-surface: 24px;                /* 16/12 × 18 = 24        聊天输入框外壳 */
+    --radius-chat-card:    12px;                /* 8/12 × 18  = 12        消息内卡片 */
+    --border-width:  1px;
+
+    /* Select 下拉箭头（SVG 内联必须硬编码颜色，跟随 --text-muted #B2AFBB） */
+    --select-arrow: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23B5B3BD' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+
+    /* 终端调色：深紫墨底 + 浅紫字（xterm 从这些变量读色；
+       容器用 var(--term-bg) 画底，xterm 自身绘制保持透明）*/
+    --term-bg:                 #221F2E;   /* = --sidebar-bg */
+    --term-fg:                 #E5E4E7;   /* = --text */
+    --term-cursor:             #B7ABE3;   /* = --link（accent 太暗做光标看不清）*/
+    --term-cursor-accent:      #3C354A;   /* = --bg（光标内字色）*/
+    --term-selection-bg:       #7662BA33; /* accent @ 20% */
+    --term-ansi-black:         #3A3450;
+    --term-ansi-red:           #E39699;   /* = --danger */
+    --term-ansi-green:         #92BFAE;   /* = --green */
+    --term-ansi-yellow:        #D8C79A;   /* 暖金，紫底上可读的警示档 */
+    --term-ansi-blue:          #8FA8DB;
+    --term-ansi-magenta:       #C6A2D8;
+    --term-ansi-cyan:          #8FC9C6;
+    --term-ansi-white:         #C9C6D2;
+    --term-ansi-bright-black:  #6C6784;
+    --term-ansi-bright-red:    #EFABAD;
+    --term-ansi-bright-green:  #B0D6C8;
+    --term-ansi-bright-yellow: #E8DAB5;
+    --term-ansi-bright-blue:   #ADC0E9;
+    --term-ansi-bright-magenta:#DCBFEA;
+    --term-ansi-bright-cyan:   #AEDDD9;
+    --term-ansi-bright-white:  #F0EFF4;
+}

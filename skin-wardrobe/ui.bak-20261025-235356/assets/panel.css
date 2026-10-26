@@ -1,0 +1,233 @@
+/*
+ * 衣橱 · 皮肤库 —— 面板样式
+ *
+ * 设计约束（2026-10-25 重写）：
+ *   1. 不再引用 app-ui.css，也不再用官方控件。它们的配色不跟随宿主主题，
+ *      在浅底上渲成浅灰字，实际观感是"糊成一片"。
+ *   2. 所有文字颜色显式写成 var(--text)，不用 --text-muted / --text-light，
+ *      也不用 opacity。宿主这套变量的"淡"档位在浅色主题下不够用。
+ *   3. 背景显式用 var(--bg)，避免被外层容器样式盖成别的色。
+ */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg, #f7f6f3);
+}
+
+.wardrobe {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  background: var(--bg, #f7f6f3);
+  color: var(--text, #1c1c1f);
+  font: 13px/1.6 var(--font-ui, system-ui, "Segoe UI", "Microsoft YaHei UI", sans-serif);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── 顶栏 ── */
+.bar { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.bar-left { min-width: 0; }
+.bar h1 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: .01em;
+  color: var(--text, #1c1c1f);
+}
+.bar-left p {
+  margin: 5px 0 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text, #1c1c1f);
+}
+.bar-right { display: flex; align-items: center; gap: 8px; flex: none; }
+
+/* ── 按钮（自绘） ── */
+.btn {
+  appearance: none;
+  border: 1px solid var(--border, #c8c6c0);
+  background: transparent;
+  color: var(--text, #1c1c1f);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 550;
+  line-height: 1;
+  padding: 8px 13px;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .12s, border-color .12s, transform .06s;
+}
+.btn:hover { background: var(--overlay-subtle, rgba(0, 0, 0, .05)); }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-primary {
+  background: var(--accent, #6b7a99);
+  border-color: transparent;
+  color: #fff;
+}
+.btn-primary:hover { filter: brightness(1.07); background: var(--accent, #6b7a99); }
+.btn-quiet { border-color: var(--border, #c8c6c0); }
+
+/* ── 预览墙 ── */
+.wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+.wall-empty {
+  grid-column: 1 / -1;
+  padding: 30px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text, #1c1c1f);
+  border: 1px dashed var(--border, #c8c6c0);
+  border-radius: 10px;
+}
+
+.skin-card {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 11px;
+  border: 1px solid var(--border, #c8c6c0);
+  border-radius: 10px;
+  background: var(--bg-card, #fff);
+  color: var(--text, #1c1c1f);
+}
+.skin-card.is-patch { border-style: dashed; }
+
+.skin-card header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.skin-name {
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--text, #1c1c1f);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge {
+  flex: none;
+  padding: 2px 8px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .03em;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+.badge-vars { color: var(--green, #3f7d5a); }
+.badge-patch { color: var(--coral, #a4553f); }
+.badge-host { color: var(--text, #4a4a52); }
+
+.meta { font-size: 12px; line-height: 1.65; color: var(--text, #1c1c1f); }
+.meta .warn { color: var(--danger, #b03030); font-weight: 650; }
+.meta .hint { color: var(--text, #1c1c1f); }
+.patch-note {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--text, #1c1c1f);
+  border-top: 1px solid var(--border, #e2e0da);
+  padding-top: 7px;
+}
+
+.actions { display: flex; gap: 7px; margin-top: 2px; }
+
+/* ── 缩略 UI：变量由 JS 注入到 [data-sw-*] 上 ── */
+.swatch {
+  height: 96px;
+  padding: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border, #c8c6c0);
+  border-radius: 8px;
+}
+.sw-ui { display: flex; height: 100%; gap: 7px; }
+.sw-side {
+  width: 20%;
+  border-radius: 5px;
+  background: var(--sidebar-bg, rgba(0, 0, 0, .08));
+}
+.sw-body { flex: 1; display: flex; flex-direction: column; gap: 5px; justify-content: center; }
+.sw-bubble {
+  height: 13px;
+  border-radius: 5px;
+  border: 1px solid var(--border, transparent);
+  background: var(--bg-card, rgba(0, 0, 0, .06));
+}
+.sw-bubble.sw-user { width: 62%; align-self: flex-end; border-color: transparent; }
+.sw-bubble.sw-agent { width: 82%; }
+.sw-row { display: flex; align-items: center; gap: 5px; margin-top: 2px; }
+.sw-chip { height: 11px; width: 26px; border-radius: 4px; background: rgba(128, 128, 128, .3); }
+.sw-btn { height: 11px; width: 34px; border-radius: 4px; background: var(--accent, #6b7a99); }
+
+/* ── 报损明细 ── */
+.detail { font-size: 12px; line-height: 1.7; color: var(--text, #1c1c1f); }
+.detail:empty { display: none; }
+.detail .warn { color: var(--danger, #b03030); font-weight: 650; }
+
+/* ── 图例 ── */
+.legend {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding-top: 10px;
+  font-size: 11.5px;
+  color: var(--text, #1c1c1f);
+  border-top: 1px solid var(--border, #e2e0da);
+}
+
+.build-tag {
+  margin-left: auto;
+  padding: 2px 7px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  color: var(--text, #1c1c1f);
+  border: 1px solid var(--border, #c8c6c0);
+  border-radius: 5px;
+}
+
+/* 拖拽提示 */
+body.is-dragover .wardrobe {
+  outline: 2px dashed var(--accent, #6b7a99);
+  outline-offset: -6px;
+}
+body.is-dragover .wall-empty::after {
+  content: ' 松手就导入';
+  color: var(--accent, #6b7a99);
+  font-weight: 650;
+}
+
+.btn-danger { border-color: var(--danger, #b03030); color: var(--danger, #b03030); font-weight: 650; }
+
+/* ── 工作台 ── */
+.editor {
+  border: 1px solid var(--border, #c8c6c0);
+  border-radius: 10px;
+  background: var(--bg-card, #fff);
+  padding: 12px;
+}
+.ed-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.ed-head strong { font-size: 14px; color: var(--text, #1c1c1f); }
+.ed-grid { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 14px; }
+.ed-fields { max-height: 52vh; overflow: auto; padding-right: 4px; }
+.ed-meta { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.ed-meta label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text, #1c1c1f); }
+.ed-meta input, .ed-meta select {
+  border: 1px solid var(--border, #c8c6c0);
+  background: var(--bg, #f7f6f3);
+  color: var(--text, #1c1c1f);
+  border-radius: 6px; padding: 5px 8px; font: inherit; font-size: 12px;
+}
+.ed-group { border-top: 1px solid var(--border, #e2e0da); padding: 6px 0; }
+.ed-group summary { cursor: pointer; font-size: 12px; font-weight: 650; color: var(--text, #1c1c1f); padding: 4px 0; }
+.ed-row { display: flex; align-items: center; gap: 8px; padding: 2px 0 2px 10px; }
+.ed-key { flex: 1; font-size: 11px; color: var(--text, #1c1c1f); font-family: var(--font-mono, monospace); }
+.ed-row input[type="color"] { width: 34px; height: 22px; padding: 0; border: 1px solid var(--border, #c8c6c0); border-radius: 4px; background: none; }
+.ed-row input[type="number"] { width: 56px; }
+.ed-row input[type="text"] { width: 150px; }
+.ed-row input { border: 1px solid var(--border, #c8c6c0); background: var(--bg, #f7f6f3); color: var(--text, #1c1c1f); border-radius: 5px; padding: 3px 6px; font: inherit; font-size: 11px; }
+.ed-preview { display: flex; flex-direction: column; gap: 9px; position: sticky; top: 0; align-self: start; }
+.ed-preview .swatch { height: 150px; }
+@media (max-width: 720px) { .ed-grid { grid-template-columns: 1fr; } }

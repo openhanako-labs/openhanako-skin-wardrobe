@@ -1,0 +1,166 @@
+/*
+ * Hana Theme: 月满庭（深色版 / 夜阑）
+ * id: hana-moonlit-court     ·    appearance: dark
+ *
+ * 来源：Morrow「中秋 · 月满庭」八色板（theme-mid-autumn-v1.0.0）深色面
+ *   背景 #172725 · 面板 surface #223430
+ *   强调 accent 赭金 #D9B77C · 次要强调 secondary 松墨绿 #91B5A5
+ *   分割线 line #41544B · 圆角 radius 18
+ *   注：八色板的墨色 ink / 次要文字 muted 未照抄，本主题按官方「青夜·高对比」的
+ *   正文水平另行定档（见映射说明 3）。
+ *
+ * 映射说明（八色板 → Hana 变量）：
+ *   1. 深色面是独立设计的一套色，不是浅色面的取反：八色板深色面同义直落
+ *      --bg / --bg-card / --accent / --green / --border；文字档 --text /
+ *      --text-muted 另行定档（理由见 3）。
+ *   2. 面板层：--bg-card 比 --bg 更亮（surface #223430 浮在 background #172725
+ *      之上）；--bg-glass = 面板 surface 的 92%；--sidebar-bg 比 --bg 再沉一档
+ *      （#12201E），对齐 midnight 的「侧栏深一层」。
+ *   3. 文字三档：--text #E2E1D6；--text-muted #B5B3AB；--text-light = 两者中点
+ *      #CCCBC1，保证三级层次单调。定档基准是官方「青夜·高对比」
+ *      (midnight-contrast) 的正文水平（其正文对底 11.74:1）。本主题 --bg #172725
+ *      比官方底 #26343D 更暗，故文字需略亮一档才能对齐：三层对 --bg 依次
+ *      11.80 / 9.52 / 7.39 递减。
+ *   4. 强调：深色面 hover 提亮（对齐 midnight #C99AAF → #D8AFC0 的方向），
+ *      --accent × 1.08 → #EAC686；--accent-light = accent 11%（对齐 midnight
+ *      在暗面上的 0.11）；--accent-rgb 与 --accent 数值一致。
+ *   5. 语义色：--green = 松墨绿浅档（八色板深色面「次要强调」）。八色板未给红档，
+ *      推导两个暖红：--coral 取柔和陶土 #E3AE93（与赭金同族、明度高，用作提示），
+ *      --danger 取较实的砖红 #DA8072（在 bg #172725 上 5.4:1、在面板 #223430 上
+ *      4.6:1，均达 AA；更深的 #C9705F 在面板上只有 3.7:1，故不用）。
+ *   6. 覆盖层用白色低透明度（对齐 midnight：暗面上 --overlay-* 翻白，才不会糊成
+ *      灰块）；--shadow 用纯黑（对齐 midnight）。--mood-* 复用 accent 族。
+ *   7. 圆角：八色板只给一个 radius = 18。官方 :root 的 radius 体系以 --radius-lg
+ *      为最大基准档，故把 18 锚定到 --radius-lg，其余 token 按官方 :root 各档与
+ *      --radius-lg 的比例等比放大 1.5 倍后取整：sm 5/12 → 8、input 6/12 → 9、
+ *      md 8/12 → 12、card 8/12 → 12、chat-card 8/12 → 12、chat-surface 16/12 → 24。
+ *      浅深两版圆角一致（八色板两版都写 18）。
+ *   8. --border-width 取官方默认 1px（八色板未给边框粗细；本期不做 hairline）。
+ *   9. 终端：深色版为深青墨底 + 月白字（对齐 midnight 的「深色底 + 浅字」），
+ *      --term-bg 复用 --sidebar-bg；ANSI 取暗面可读的 16 色。
+ *  10. 刻意不搬 warm-paper 的 --bg-texture：该变量无消费点，纸纹实际由
+ *      styles.css 的 body.paper-texture 系统承担。
+ */
+
+[data-theme="hana-moonlit-court"] {
+    /* ─── 背景 / 面板（八色板：背景 + 面板 surface）─── */
+    --bg:           #172725;                    /* = 八色板 背景 */
+    /* 2026-10-17（工单 42-续）：用户选定「中间档：--bg-card 半透 0.85」。
+     *
+     * 演变过程（三个阶段，都留有记录）：
+     *   ① 原本 #223430（不透明）—— 模板卡纸底实心、看不到壁纸
+     *   ② 一度改成 transparent —— 模板卡透了，但**打死了全构建 223 处用它铺底的组件**
+     *      （设置页下拉框 ._popup_7f252、CardShell 瓦片、能力面板…），
+     *      用户截图报「所有选项框的底都没了」。
+     *      ⚠️ 当时的「影响只有 11 个元素」是假阴性：只扫了屏幕已挂载的 DOM，
+     *         弹出层/下拉框不展开就根本不在 DOM 里。
+     *   ③ 现在取中间档 0.85，两边都能看。
+     *
+     * 效果换算（卡片 = 纸底 A 叠在外圈 0.70 薄垫上）：
+     *   合成不透明度 = A + 0.70 × (1 - A)
+     *     A=1.00 → 1.000（壁纸 0%）
+     *     A=0.85 → 0.955（壁纸 4.5%）—— 本档
+     *     A=0.70 → 0.910（壁纸 9.0%）
+     *     A=0.00 → 0.700（壁纸 30%）
+     *   即：0.85 本档里卡片几乎看不出变化（只多透 4.5%），
+     *   但选项框只有一层、没有薄垫叠加，拿到的是实打实的 85%，底能保住。
+     *
+     * 想调档：只改下面这一个数。往 1.0 走 = 组件底更实、卡片更闷；
+     *   往 0.7 走 = 卡片更透但组件底更薄。1.0 等于官方的完全不透明。 */
+    --bg-card:      rgba(34, 52, 48, 0.85);
+    --bg-glass:     rgba(34, 52, 48, 0.92);     /* 面板 surface @ 92% */
+    --sidebar-bg:   #12201E;                    /* 比 --bg 再沉一档的夜青 */
+
+    /* ─── 墨色三档（对齐官方「青夜·高对比」正文水平，见文件头说明 3）─── */
+    --text:         #E2E1D6;                    /* 正文，对 --bg 11.80:1 */
+    --text-light:   #CCCBC1;                    /* --text 与 --text-muted 的中点 */
+    --text-muted:   #B5B3AB;                    /* 次级文字，对 --bg 7.39:1 */
+
+    /* ─── 分割线 / 阴影（八色板：分割线 line）─── */
+    --border:       #41544B;                    /* = 八色板 分割线 */
+    --shadow:       rgba(0, 0, 0, 0.36);        /* 暗面纯黑投影，对齐 midnight */
+
+    /* ─── 强调：赭金（八色板：强调 accent）─── */
+    --accent:       #D9B77C;                    /* = 八色板 赭金 */
+    --accent-hover: #EAC686;                    /* accent × 1.08（暗面 hover 提亮）*/
+    --accent-light: rgba(217, 183, 124, 0.11);  /* accent @ 11% */
+    --accent-rgb:   217, 183, 124;              /* = --accent */
+
+    /* ─── 链接：深底上 accent 不够醒目，显式给更亮的暖金链接色（对齐 midnight）─── */
+    --link:         #E8CE9A;                    /* accent 同族更亮档，深底可读 */
+    --link-hover:   #F2E0B8;                    /* 再亮一档（hover）*/
+    --link-rgb:     232, 206, 154;              /* = --link */
+
+    /* ─── 语义色（绿取自八色板「次要强调」；红为推导档）─── */
+    --green:        #91B5A5;                    /* = 八色板 松墨绿（暗面浅档）*/
+    --green-rgb:    145, 181, 165;              /* = --green */
+    --coral:        #E3AE93;                    /* 陶土暖橘（八色板未给红档，见说明 5）*/
+    --coral-rgb:    227, 174, 147;              /* = --coral */
+    --danger:       #DA8072;                    /* 砖红，暗面上可读 */
+    --danger-rgb:   218, 128, 114;              /* = --danger */
+
+    /* ─── plan-mode（mood）：复用 accent 族，对齐官方主题 ─── */
+    --mood-text:    #EAC686;                    /* = --accent-hover */
+    --mood-bg:      rgba(217, 183, 124, 0.08);
+    --mood-border:  rgba(217, 183, 124, 0.20);
+
+    /* ─── 聊天 / 工具（沿用官方语义，色值对齐本主题墨色）─── */
+    --hana-text:    #E2E1D6;                    /* = --text */
+    --tool-bg:      rgba(255, 255, 255, 0.03);  /* 暗面提亮，对齐 midnight */
+    --tool-text:    #B5B3AB;                    /* = --text-muted */
+    --user-bg:      rgba(217, 183, 124, 0.10);  /* 用户气泡：accent @ 10% */
+    --drop-overlay-bg: rgba(23, 39, 37, 0.85);  /* 背景 @ 85% */
+    --attach-bg:    rgba(255, 255, 255, 0.06);
+
+    /* ─── 便笺（对齐 midnight：底色 = 面板，描边 = 分割线低透明）─── */
+    --jian-note-bg:     #223430;                /* = --bg-card */
+    --jian-note-border: rgba(65, 84, 75, 0.55);
+
+    /* ─── 覆盖层（暗面用白色低透明，避免糊成灰块）─── */
+    --overlay-subtle: rgba(255, 255, 255, 0.03);
+    --overlay-light:  rgba(255, 255, 255, 0.05);
+    --overlay-medium: rgba(255, 255, 255, 0.08);
+    --overlay-strong: rgba(255, 255, 255, 0.15);
+
+    /* ─── 标签滑块（参照 midnight：底色用强覆盖层，阴影关闭）─── */
+    --tab-slider-bg:     var(--overlay-strong); /* = --overlay-strong */
+    --tab-slider-shadow: none;
+
+    /* ─── 结构 token：圆角与边框（取法见文件头说明 7）───
+     * 锚定：八色板 radius 18 → --radius-lg；其余按官方 :root 比例 × 1.5 */
+    --radius-sm:     8px;                       /* 5/12 × 18  ≈ 7.5 → 8   input/button/chip */
+    --radius-md:     12px;                      /* 8/12 × 18  = 12        card / list block */
+    --radius-lg:     18px;                      /* 八色板基准档            modal / 大面板 */
+    --radius-input:  9px;                       /* 6/12 × 18  = 9         设置页控件 */
+    --radius-card:   12px;                      /* 8/12 × 18  = 12        SettingsSection 等 */
+    --radius-chat-surface: 24px;                /* 16/12 × 18 = 24        聊天输入框外壳 */
+    --radius-chat-card:    12px;                /* 8/12 × 18  = 12        消息内卡片 */
+    --border-width:  1px;                       /* 官方默认（八色板未给）*/
+
+    /* Select 下拉箭头（SVG 内联必须硬编码颜色，跟随 --text-muted #B5B3AB） */
+    --select-arrow: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23B5B3AB' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+
+    /* 终端调色：xterm 从这些变量读色。容器用 var(--term-bg) 画出终端块底色，
+       xterm 自身绘制保持透明；深色主题为深青墨底 + 月白字。 */
+    --term-bg:                 #12201E;   /* = --sidebar-bg（比 --bg 更沉的终端块）*/
+    --term-fg:                 #E2E1D6;   /* = --text 月白 */
+    --term-cursor:             #D9B77C;   /* = --accent 赭金 */
+    --term-cursor-accent:      #172725;   /* = --bg（光标内字色）*/
+    --term-selection-bg:       #D9B77C33; /* accent @ 20% */
+    --term-ansi-black:         #2C3B37;
+    --term-ansi-red:           #E08A7C;
+    --term-ansi-green:         #91B5A5;   /* = --green 松墨绿 */
+    --term-ansi-yellow:        #D9B77C;   /* = --accent 赭金 */
+    --term-ansi-blue:          #8FB3CC;
+    --term-ansi-magenta:       #C79FC7;
+    --term-ansi-cyan:          #86C3BC;
+    --term-ansi-white:         #C9CFC2;
+    --term-ansi-bright-black:  #6E7C74;
+    --term-ansi-bright-red:    #EEA798;
+    --term-ansi-bright-green:  #AFD2C3;
+    --term-ansi-bright-yellow: #EBD09B;
+    --term-ansi-bright-blue:   #ABCBE0;
+    --term-ansi-bright-magenta:#DCBBDC;
+    --term-ansi-bright-cyan:   #A5DCD5;
+    --term-ansi-bright-white:  #F5F4EC;
+}

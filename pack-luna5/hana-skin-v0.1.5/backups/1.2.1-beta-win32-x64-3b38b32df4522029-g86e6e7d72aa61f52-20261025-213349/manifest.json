@@ -1,0 +1,219 @@
+{
+  "schema": 1,
+  "versionLabel": "1.2.1-beta-win32-x64-3b38b32df4522029-g86e6e7d72aa61f52",
+  "createdAt": "2026-10-25T13:33:49.491Z",
+  "createdAtLocal": "2026-10-25 21:33:49",
+  "tool": "scripts/apply.ps1",
+  "rendererVersionDir": "C:\\Users\\Administrator\\.hanako\\artifacts\\renderer\\1.2.1-beta-win32-x64-3b38b32df4522029-g86e6e7d72aa61f52",
+  "serverVersionDir": "C:\\Users\\Administrator\\.hanako\\artifacts\\server\\1.2.1-beta-win32-x64-aea6af373902e67d-ge7fdefc0afdf1bb9",
+  "pristineBackupDir": "W:\\Games\\Hanako\\Work\\projects\\hana-skin-app\\pack-luna5\\hana-skin-v0.1.5\\backups\\1.2.1-beta-win32-x64-3b38b32df4522029-g86e6e7d72aa61f52-20261025-202713",
+  "entries": [
+    {
+      "tree": "renderer",
+      "relPath": "lib/theme.js",
+      "kind": "registry",
+      "existed": true,
+      "backupRelPath": "files/renderer/lib/theme.js",
+      "sha256Before": "10e1b05c12dd9995753f12b2b7fe09732b1799e21adb57cf3cbd39d233c0d83e",
+      "bytesBefore": 180761
+    },
+    {
+      "tree": "renderer",
+      "relPath": "assets/theme-registry-BTJmVriA.js",
+      "kind": "registry",
+      "existed": true,
+      "backupRelPath": "files/renderer/assets/theme-registry-BTJmVriA.js",
+      "sha256Before": "176805fd5d5103ebc4bc9b90bccb9d86b208b3ead85e3bfc590abe7fe07f3f3a",
+      "bytesBefore": 8444
+    },
+    {
+      "tree": "server",
+      "relPath": "bundle/index.js",
+      "kind": "registry",
+      "existed": true,
+      "backupRelPath": "files/server/bundle/index.js",
+      "sha256Before": "ca073343833420b385c260abbe57ebc7bab703a0273a0cd54aabfe4eaa1cf567",
+      "bytesBefore": 13914679
+    },
+    {
+      "tree": "renderer",
+      "relPath": "locales/zh.json",
+      "kind": "locale",
+      "existed": true,
+      "backupRelPath": "files/renderer/locales/zh.json",
+      "sha256Before": "14b5cf098505b19130590b219d250f2b27995efe09d350ea33169554ee139f10",
+      "bytesBefore": 311203
+    },
+    {
+      "tree": "renderer",
+      "relPath": "locales/zh-TW.json",
+      "kind": "locale",
+      "existed": true,
+      "backupRelPath": "files/renderer/locales/zh-TW.json",
+      "sha256Before": "d687ff384c6268f68d8827fd0f693b49616968294556b741939c3af24ad887e3",
+      "bytesBefore": 312870
+    },
+    {
+      "tree": "renderer",
+      "relPath": "locales/en.json",
+      "kind": "locale",
+      "existed": true,
+      "backupRelPath": "files/renderer/locales/en.json",
+      "sha256Before": "aa1ea3d8901bde1825e380869255168dd758fe32985bc3939b8510ee45fa0a7f",
+      "bytesBefore": 324297
+    },
+    {
+      "tree": "renderer",
+      "relPath": "locales/ja.json",
+      "kind": "locale",
+      "existed": true,
+      "backupRelPath": "files/renderer/locales/ja.json",
+      "sha256Before": "04e523f3449c7da40d82fbe52bfa92abdd00ce3154420474978e2c8b5e2b75ca",
+      "bytesBefore": 407472
+    },
+    {
+      "tree": "renderer",
+      "relPath": "locales/ko.json",
+      "kind": "locale",
+      "existed": true,
+      "backupRelPath": "files/renderer/locales/ko.json",
+      "sha256Before": "d0469aca9975db15066a9661a7c8162df941adc62297f9f6b208d2c146ca64fc",
+      "bytesBefore": 369410
+    },
+    {
+      "tree": "renderer",
+      "relPath": "themes/hana-moonlit-court.css",
+      "kind": "theme-css",
+      "existed": true,
+      "backupRelPath": "files/renderer/themes/hana-moonlit-court.css",
+      "sha256Before": "bc23994ce5eaa67e7f75c08aaa92d9f2838b20242dcd38f4e76410f9b6fbdca1",
+      "bytesBefore": 4105728
+    },
+    {
+      "tree": "server",
+      "relPath": "desktop/dist-renderer/themes/hana-moonlit-court.css",
+      "kind": "theme-css",
+      "existed": true,
+      "backupRelPath": "files/server/desktop/dist-renderer/themes/hana-moonlit-court.css",
+      "sha256Before": "17da16f346cc559db8ca097074f6e0af64bbf0fdf78822ac2d120ae973d15ca1",
+      "bytesBefore": 11073
+    },
+    {
+      "tree": "renderer",
+      "relPath": "themes/hana-violet-dusk.css",
+      "kind": "theme-css",
+      "existed": true,
+      "backupRelPath": "files/renderer/themes/hana-violet-dusk.css",
+      "sha256Before": "2cb0a8859b2875ad0d3fb5d0f7fe2fb14e975ec98aadb8f347f6bde4a338e0c2",
+      "bytesBefore": 4049196
+    },
+    {
+      "tree": "server",
+      "relPath": "desktop/dist-renderer/themes/hana-violet-dusk.css",
+      "kind": "theme-css",
+      "existed": true,
+      "backupRelPath": "files/server/desktop/dist-renderer/themes/hana-violet-dusk.css",
+      "sha256Before": "69c2ae17be3ae3d38ace9ec2b5edf58a6b032a111b391c31416206bbdea711a6",
+      "bytesBefore": 10421
+    },
+    {
+      "tree": "renderer",
+      "relPath": "themes/hana-deepsleep.css",
+      "kind": "theme-css",
+      "existed": true,
+      "backupRelPath": "files/renderer/themes/hana-deepsleep.css",
+      "sha256Before": "c061111c381afc75c59cf09599eba521b7f2b6ed394c8c9710d7382e491d391d",
+      "bytesBefore": 1266356
+    },
+    {
+      "tree": "server",
+      "relPath": "desktop/dist-renderer/themes/hana-deepsleep.css",
+      "kind": "theme-css",
+      "existed": true,
+      "backupRelPath": "files/server/desktop/dist-renderer/themes/hana-deepsleep.css",
+      "sha256Before": "2a24ce2f37386d585487b9d26d367f03bcb460d7edab9edc07fc274a4d6635b6",
+      "bytesBefore": 8807
+    },
+    {
+      "tree": "renderer",
+      "relPath": "themes/hana-claude-clay.css",
+      "kind": "theme-css",
+      "existed": true,
+      "backupRelPath": "files/renderer/themes/hana-claude-clay.css",
+      "sha256Before": "9106cc6ee8f2ee3e2ec874bef48bc1a2c6a53b7865dad5882b5f8fbfe2b248c2",
+      "bytesBefore": 715397
+    },
+    {
+      "tree": "server",
+      "relPath": "desktop/dist-renderer/themes/hana-claude-clay.css",
+      "kind": "theme-css",
+      "existed": true,
+      "backupRelPath": "files/server/desktop/dist-renderer/themes/hana-claude-clay.css",
+      "sha256Before": "a170f75053822de72779ec81d2ac55af51c46475fab356bd3c203c2d52c420c8",
+      "bytesBefore": 8869
+    },
+    {
+      "tree": "renderer",
+      "relPath": "themes/hana-luna.css",
+      "kind": "theme-css",
+      "existed": true,
+      "backupRelPath": "files/renderer/themes/hana-luna.css",
+      "sha256Before": "c59ca9070ae24a71d99d415934fae2fb3fb7b9e3ef0113053893f9e677dd58ec",
+      "bytesBefore": 4525941
+    },
+    {
+      "tree": "server",
+      "relPath": "desktop/dist-renderer/themes/hana-luna.css",
+      "kind": "theme-css",
+      "existed": true,
+      "backupRelPath": "files/server/desktop/dist-renderer/themes/hana-luna.css",
+      "sha256Before": "fa1fefabeceeac630f3fc89a6e36e4dffa1317e67253d587311ba6e999f984de",
+      "bytesBefore": 2913
+    },
+    {
+      "tree": "renderer",
+      "relPath": "assets/SettingsModalShell-D6h_u9_c.css",
+      "kind": "card-preview-css",
+      "existed": true,
+      "backupRelPath": "files/renderer/assets/SettingsModalShell-D6h_u9_c.css",
+      "sha256Before": "da2004fc6b7c6892f2f0eb16d81abfe3022612d07f12400acc261029ad2a3a0d",
+      "bytesBefore": 106484
+    },
+    {
+      "tree": "server",
+      "relPath": "desktop/dist-renderer/assets/SettingsModalShell-a8wgF0L9.css",
+      "kind": "card-preview-css",
+      "existed": true,
+      "backupRelPath": "files/server/desktop/dist-renderer/assets/SettingsModalShell-a8wgF0L9.css",
+      "sha256Before": "de4ab30ce16a1ca155fae5d469213cf2a7c84a8f55798189af8dd1d71758a41d",
+      "bytesBefore": 106484
+    },
+    {
+      "tree": "server",
+      "relPath": "bundle/index.js",
+      "kind": "card-palette",
+      "existed": true,
+      "backupRelPath": "files/server/bundle/index.js",
+      "sha256Before": "ca073343833420b385c260abbe57ebc7bab703a0273a0cd54aabfe4eaa1cf567",
+      "bytesBefore": 13914679
+    },
+    {
+      "tree": "renderer",
+      "relPath": "lib/theme.js",
+      "kind": "theme-cache-bust",
+      "existed": true,
+      "backupRelPath": "files/renderer/lib/theme.js",
+      "sha256Before": "10e1b05c12dd9995753f12b2b7fe09732b1799e21adb57cf3cbd39d233c0d83e",
+      "bytesBefore": 180761
+    },
+    {
+      "tree": "renderer",
+      "relPath": "lib/theme.js",
+      "kind": "panel-frame-js",
+      "existed": true,
+      "backupRelPath": "files/renderer/lib/theme.js",
+      "sha256Before": "10e1b05c12dd9995753f12b2b7fe09732b1799e21adb57cf3cbd39d233c0d83e",
+      "bytesBefore": 180761
+    }
+  ]
+}
