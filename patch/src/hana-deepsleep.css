@@ -1,0 +1,158 @@
+/*
+ * Hana 配色源：DeepSeek 蓝 · 白昼（hana-deepsleep）
+ * ---------------------------------------------------------------------------
+ * 定位：项目第一个**浅色**主题（月满庭 / 紫夜都是深色）。它是「构图与材质实验」
+ *   的载体 —— 浅色底上，深色主题里那些看不见的手段（黑投影、半透明填充的明暗
+ *   关系、玻璃的厚度）会全部显形，因此它最适合拿来判断材质是否成立。
+ *
+ * 配色出处：DeepSeek Style Theme（github.com/Lichtspur/deepseek-style-theme, MIT）
+ *   的浅色 token 表。逐条映射如下（左 = 他们的 --dsw-alias-*，右 = 本主题变量）：
+ *
+ *     他们                                本主题
+ *     ----------------------------------  --------------------------------
+ *     --dsw-alias-bg-base       #f6f7fb   --bg          #f6f7fb
+ *     --dsw-alias-bg-layer-2  rgba(255,255,255,.94)  --bg-card
+ *     --dsw-alias-bg-overlay  rgba(255,255,255,.97)  --bg-glass
+ *     --dsw-alias-label-primary #152443   --text
+ *     --dsw-alias-label-secondary #3c4a63 --text-muted
+ *     --dsw-alias-border-l2     rgba(0,0,0,.1)  --border（改带蓝调的黑）
+ *     --ds-brand #4d6bfe -> 浅底上取深色档 #5d79ff  --accent
+ *     --ds-brand-deep           #3a65c2   --accent-hover
+ *     --ds-brand-light          #73a3d2   派生出 --text-light / 淡底
+ *     dark 侧 --dsw-alias-bg-base #0a1a3a --term-bg（终端保持深蓝）
+ *
+ * ⚠️ 与深色主题**反向**的三处（浅色主题最容易翻车的地方）：
+ *
+ *   ① overlay 系从「白系」改成「墨水系」。
+ *      月满庭：--overlay-medium: rgba(255,255,255,.08)（在深底上提亮）
+ *      本主题：--overlay-medium: rgba(21,36,67,.07)（在白底上压深）
+ *      把深色版的白 overlay 照搬过来 = 什么也看不见（白压白）。
+ *
+ *   ② 强调色不能当正文/链接色用。
+ *      #4d6bfe 对 #f6f7fb 的对比度实测 **3.98:1**，低于正文 4.5 的门槛，
+ *      只够做按钮底 / 装饰 / 图标。正文链接另取 #2c4fa8（**6.98:1**）。
+ *      同理 --green / --coral / --danger 都比他们的 brand 侧取值压深一档：
+ *      success 原值 #22c55e 对白底 **2.16:1**，当图标可以、当文字不行，
+ *      故 --green 取 #0a7a4c（**5.03:1**）。
+ *
+ *   ③ 面板要「比底更白」，不是「比底更亮」。
+ *      深色主题里 --bg-card 比 --bg 提亮一档（#223430 浮在 #172725 上）；
+ *      浅色主题里同样的动作会把面板做成灰，正确做法是往白走
+ *      （rgba(255,255,255,.85) 浮在 #f6f7fb 上）。这是"浮起"在两种明暗下的
+ *      不同解法，不是把同一个公式换个值。
+ *
+ * 实测对比度（对 --bg #f6f7fb）：
+ *   --text       #152443  14.40:1
+ *   --text-light #26354f  11.02:1
+ *   --text-muted #3c4a63   8.35:1
+ *   --link       #2c4fa8   6.98:1
+ *   --accent     #4d6bfe   3.98:1  ← 只用于底色/装饰，不承载正文
+ *
+ * 纪律：本文件是**纯变量表**（与月满庭一致）—— 只有 --xxx 声明，包在
+ *   [data-theme="hana-deepsleep"] 作用域里，不写任何类名 / 结构规则。
+ *   背景图与面板半透明归 background-deepseek 源，描边高光归材质源。
+ *
+ * 半径与 --border-width 原样沿用月满庭：三个主题共用同一套几何，切换时
+ *   只有明暗与色相在变，控件不会跳尺寸。
+ * ---------------------------------------------------------------------------
+ */
+[data-theme="hana-deepsleep"] {
+    /* ── 底与面 ───────────────────────────────────────────────────────── */
+    --bg:              #f6f7fb;
+    --bg-rgb: 246, 247, 251;
+    --bg-card: rgba(255, 255, 255, 0.76);
+    --bg-glass: rgba(255, 255, 255, 0.88);
+    --sidebar-bg:      #eef1f9;
+
+    /* ── 文字档 ───────────────────────────────────────────────────────── */
+    --text:            #152443;
+    --text-light:      #26354f;
+    --text-muted:      #3c4a63;
+
+    /* ── 线与影（带蓝调的黑，纯黑在浅底上会显脏）───────────────────────── */
+    --border:          rgba(21, 36, 67, 0.14);
+    --shadow:          rgba(21, 36, 67, 0.14);
+
+    /* ── 强调色（DeepSeek 品牌蓝）───────────────────────────────────── */
+    --accent:          #5D79FF;
+    --accent-hover:    #4D6BFE;              /* 浅底上 hover 要更深，不是更亮 */
+    --accent-light:    rgba(93, 121, 255, 0.11);
+    --accent-rgb:      93, 121, 255;
+
+    /* ── 链接（比 accent 深一档，保证 7:1）───────────────────────────── */
+    --link:            #2C4FA8;
+    --link-hover:      #1F3D8A;
+    --link-rgb:        44, 79, 168;
+
+    /* ── 状态色（全部压深到文字可用）─────────────────────────────────── */
+    --green:           #0A7A4C;
+    --green-rgb:       10, 122, 76;
+    --coral:           #C2552F;
+    --coral-rgb:       194, 85, 47;
+    --danger:          #D92D20;
+    --danger-rgb:      217, 45, 32;
+
+    /* ── 心境块 ───────────────────────────────────────────────────────── */
+    --mood-text:       #2C4FA8;
+    --mood-bg:         rgba(77, 107, 254, 0.07);
+    --mood-border:     rgba(77, 107, 254, 0.20);
+
+    /* ── 会话区 ───────────────────────────────────────────────────────── */
+    --hana-text:       #152443;
+    --tool-bg:         rgba(21, 36, 67, 0.035);
+    --tool-text:       #3c4a63;
+    --user-bg:         rgba(77, 107, 254, 0.09);
+
+    /* ── 面板与附件 ───────────────────────────────────────────────────── */
+    --drop-overlay-bg: rgba(244, 246, 252, 0.90);
+    --attach-bg:       rgba(21, 36, 67, 0.05);
+    --jian-note-bg:    #ffffff;
+    --jian-note-border: rgba(21, 36, 67, 0.14);
+
+    /* ── 叠加层（**墨水系**，与深色主题的白 overlay 反向）───────────────── */
+    --overlay-subtle:  rgba(21, 36, 67, 0.015);
+    --overlay-light:   rgba(21, 36, 67, 0.03);
+    --overlay-medium:  rgba(21, 36, 67, 0.05);
+    --overlay-strong:  rgba(21, 36, 67, 0.08);
+
+    --tab-slider-bg:     rgba(255, 255, 255, 0.56);
+    --tab-slider-shadow: 0 1px 2px rgba(21, 36, 67, 0.10), 0 1px 1px rgba(21, 36, 67, 0.04);
+
+    /* ── 几何（与月满庭逐字节一致，主题切换不跳尺寸）───────────────────── */
+    --radius-sm:           8px;
+    --radius-md:          12px;
+    --radius-lg:          18px;
+    --radius-input:        9px;
+    --radius-card:        12px;
+    --radius-chat-surface: 24px;
+    --radius-chat-card:    12px;
+    --border-width:        1px;
+
+    /* 下拉箭头：浅底上必须换成深色描边，否则箭头消失 */
+    --select-arrow:        url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%233c4a63' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+
+    /* ── 终端：保持深蓝。浅色主题里终端仍走深底，一是对比更强，
+          二是 #0a1a3a 正是他们 dark 侧的 bg-base，与品牌蓝同族。 ───────── */
+    --term-bg:                 #0A1A3A;
+    --term-fg:                 #EEF2FF;
+    --term-cursor:             #5D79FF;
+    --term-cursor-accent:      #0A1A3A;
+    --term-selection-bg:       rgba(77, 107, 254, 0.30);
+
+    --term-ansi-black:         #1A2B52;
+    --term-ansi-red:           #FF7875;
+    --term-ansi-green:         #4ED17E;
+    --term-ansi-yellow:        #F7AD31;
+    --term-ansi-blue:          #7A96FF;
+    --term-ansi-magenta:       #C79FE8;
+    --term-ansi-cyan:          #6FD3D0;
+    --term-ansi-white:         #D6DFF5;
+    --term-ansi-bright-black:  #5A6B96;
+    --term-ansi-bright-red:    #FFA39E;
+    --term-ansi-bright-green:  #6EE7B7;
+    --term-ansi-bright-yellow: #FFD666;
+    --term-ansi-bright-blue:   #9DB9FF;
+    --term-ansi-bright-magenta:#E0C2F0;
+    --term-ansi-bright-cyan:   #9AE6E3;
+    --term-ansi-bright-white:  #F5F8FF;
+}

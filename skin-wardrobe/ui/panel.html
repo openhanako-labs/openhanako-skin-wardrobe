@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>衣橱 · 皮肤库</title>
+  <link rel="stylesheet" href="./assets/panel.css">
+</head>
+<body>
+  <main class="wardrobe">
+    <header class="bar">
+      <div class="bar-left">
+        <h1><span id="brand-hanger"></span>衣橱 · 皮肤库</h1>
+        <p id="status" role="status">正在启动…</p>
+      </div>
+      <div class="bar-right">
+        <input id="search" class="search" type="search" placeholder="搜索名称 / 标签" autocomplete="off">
+        <button id="new" class="btn btn-quiet">新建</button>
+        <button id="import" class="btn btn-quiet">导入</button>
+        <input id="file" type="file" accept=".json,application/json" hidden>
+      </div>
+    </header>
+
+    <nav class="filters">
+      <div id="groups" class="group-chips"></div>
+      <label class="fav-only"><input type="checkbox" id="only-fav"> 只看收藏</label>
+    </nav>
+
+    <section class="wall-wrap">
+      <div id="wall" class="wall"></div>
+    </section>
+
+    <!-- 工作台：从零做一个新皮肤 -->
+    <section id="composer" class="composer" hidden>
+      <div class="composer-head">
+        <h2>新建皮肤</h2>
+        <p class="hint">底色跟着 <b>--bg</b> 走，其余派生项自动跟随。</p>
+      </div>
+
+      <div class="composer-body">
+        <div class="field-row">
+          <label class="field"><span>名称</span><input id="c-name" placeholder="我的皮肤"></label>
+          <label class="field"><span>包 id</span><input id="c-id" placeholder="my-skin"></label>
+          <label class="field"><span>标签</span><input id="c-tags" placeholder="暗色, 粉色"></label>
+          <label class="field"><span>分组</span><input id="c-group" placeholder="mine"></label>
+        </div>
+
+        <div class="bg-zone">
+          <label class="upload-box" id="c-bg-box">
+            <input type="file" id="c-bg" accept="image/*" hidden>
+            <div id="c-bg-preview" class="bg-preview"><span>点击选一张背景图<br><small>会自动压缩到 1920px 宽</small></span></div>
+          </label>
+          <div class="bg-controls">
+            <label class="field-slider"><span>遮罩强度 <b id="c-alpha-val">0.60</b></span>
+              <input type="range" id="c-alpha" min="0" max="0.95" step="0.05" value="0.6">
+            </label>
+            <p class="micro-hint">遮罩色用的是下方「底色」——它盖在图上，不是改图本身。</p>
+            <label class="field-slider"><span>图片位置</span>
+              <select id="c-pos">
+                <option value="50% 50%">居中</option>
+                <option value="50% 20%">偏上</option>
+                <option value="50% 80%">偏下</option>
+                <option value="20% 50%">偏左</option>
+                <option value="80% 50%">偏右</option>
+              </select>
+            </label>
+            <button id="c-bg-clear" class="btn btn-quiet">清除背景图</button>
+          </div>
+        </div>
+
+        <div class="preset-row">
+          <span class="preset-label">预设</span>
+          <button class="chip" data-preset="dark">暗夜</button>
+          <button class="chip" data-preset="light">雪白</button>
+          <button class="chip" data-preset="paper">暖纸</button>
+          <button class="chip" data-preset="ink">墨蓝</button>
+          <button class="chip" data-preset="blush">淡粉</button>
+        </div>
+
+        <div class="shape-row">
+          <label class="field-slider"><span>圆角 <b id="c-radius-val">18</b> px</span>
+            <input type="range" id="c-radius" min="0" max="28" step="2" value="18">
+          </label>
+          <label class="field-slider"><span>描边强度 <b id="c-rim-val">0.26</b></span>
+            <input type="range" id="c-rim" min="0" max="0.8" step="0.02" value="0.26">
+          </label>
+          <label class="field-slider"><span>毛玻璃 <b id="c-blur-val">26</b> px</span>
+            <input type="range" id="c-blur" min="0" max="60" step="2" value="26">
+          </label>
+        </div>
+
+        <details class="adv-block">
+          <summary>更多自定义（字体 / 终端配色）</summary>
+          <div class="adv-body">
+            <div class="font-row">
+              <label class="field"><span>界面字体</span><input id="c-font-ui" placeholder="Segoe UI, Microsoft YaHei UI"></label>
+              <label class="field"><span>衬线字体</span><input id="c-font-serif" placeholder="Noto Serif SC"></label>
+              <label class="field"><span>等宽字体</span><input id="c-font-mono" placeholder="Cascadia Code, Consolas"></label>
+            </div>
+            <p class="micro-hint">字体留空则沿用基线。终端配色改的是终端里那 16 个 ANSI 颜色，界面其他部分不受影响。</p>
+            <div class="ansi-grid" id="c-ansi"></div>
+            <button id="c-ansi-reset" class="btn btn-quiet" type="button">终端配色还原基线</button>
+          </div>
+        </details>
+
+        <div class="shot-row">
+          <button id="c-shot" class="btn btn-quiet" type="button">生成封面预览</button>
+          <span class="micro-hint">用当前设置画一张小图，卡片列表上用它替代 SKIN 占位块</span>
+        </div>
+        <canvas id="c-shot-canvas" width="480" height="300" hidden></canvas>
+        <div id="c-shot-preview" class="shot-preview" hidden></div>
+
+        <div class="color-row">
+          <label class="field-color"><span>底色 / 遮罩</span><input type="color" id="c-bg-color" value="#141313"></label>
+          <label class="field-color"><span>卡片</span><input type="color" id="c-card" value="#1E1D1E"></label>
+          <label class="field-color"><span>强调</span><input type="color" id="c-accent" value="#CD5B85"></label>
+          <label class="field-color"><span>文字</span><input type="color" id="c-text" value="#F0EFF0"></label>
+        </div>
+
+        <div class="composer-foot">
+          <span id="c-status" class="c-status"></span>
+          <div class="composer-actions">
+            <button id="c-cancel" class="btn btn-quiet">取消</button>
+            <button id="c-save" class="btn btn-primary">生成并入库</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="legend">
+      <span id="counts">—</span>
+      <span id="pending"></span>
+    </footer>
+  </main>
+
+  <script>
+    // 全局 error 监听已移除：它会把任何无关的异步错误谎报成「启动失败」。
+    // 启动失败由 panel.js 自己的 try/catch 上报到状态栏。
+  </script>
+  <script type="module" src="./assets/panel.js"></script>
+</body>
+</html>

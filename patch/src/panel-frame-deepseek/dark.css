@@ -1,0 +1,408 @@
+/*
+ * 浮层面板 / 模态 · 取景框
+ *   浮层面板（同一个浮层组件，三个 id）：卡片中心 #chalkboardCardCenterPanel、
+ *     能力 #capabilitiesPanel、自动化 #automationHubPanel
+ *   模态：扩展/市场 `[data-testid="market-modal-overlay"] > [class*="container"]`、
+ *     设置 `:has(> [data-input-ctx-zone="settings"])`
+ *   （工单 30 只做卡片中心；工单 31 扩到其余四个目标。）
+ *
+ * 目标（用户 2026-10-11 原话）：
+ *   「在浮层中增加背景图片，背景图片是不透明的，浮层中组件加透明度。
+ *     这样正文就不会显露出来。」
+ *   —— 面板的底是**不透明**的背景图，面板里的组件保持半透明，于是组件透出的是
+ *      那张图，聊天正文被图挡住、不会露出来。
+ *
+ * 为什么面板需要「不透明」的底：
+ *   现状（src/background/dark.css）给三个浮层外壳覆盖了 --bg / --bg-card = 0.70，
+ *   面板是半透明的 —— 它浮在聊天区之上，于是会透出下面的聊天内容。这正是用户
+ *   不想要的那种透。本文件把面板底改成不透明，透出的只能是图。
+ *
+ * ══════════════════════════════════════════════════════════════════════════
+ * 背景为什么画在 ::before 上，且必须做「反相动画」
+ * ══════════════════════════════════════════════════════════════════════════
+ *   面板的可见圆角面挂着官方入场动画（真值取自 animations.css）：
+ *     @keyframes hana-slide-in-left {
+ *         from { opacity: 0; transform: translateX(-20px) scale(0.97); }
+ *         to   { opacity: 1; transform: translateX(0) scale(1); }
+ *     }
+ *   背景若画在面板本身上，就会**跟着一起缩放平移** —— 面板在滑，窗里的景也在滑，
+ *   失去「取景框」的语义（真机反馈：「浮层中的背景往下移了」「从左向右移动」）。
+ *
+ *   修法：让背景层做**严格互逆**的变换，合成后为恒等：
+ *     面板 transform  Tp（绕自己中心）
+ *     ::before transform Tc = Tp⁻¹（绕同一个中心）
+ *     合成 = Tp ∘ Tc = 恒等  →  背景在屏幕上钉住
+ *   而面板的 overflow:hidden 裁剪是在**局部**空间做的、再被 Tp 变换 ——
+ *   于是可见区域 = 随动画收缩的圆角窗，窗里的景不动。这正是要的效果。
+ *
+ *   ⚠️ 关键：**两条动画必须同时跑在合成器上**。曾经的实现是 JS 每帧读 transform、
+ *   算补偿值写 CSS 变量，结果：
+ *     1) 写变量改 background-position → 主线程必须重绘那张 3.9 MB 的图；
+ *     2) 入场动画跑在**合成器**线程，主线程一边重绘大图一边追，必然落后，
+ *        于是背景按「上一帧的面板位置」补偿 → 真机表现为**朝反方向漂移**
+ *        （用户反馈：「还是有抖动，这次是从右向左移了」）。
+ *   CSS 反相动画没有这个问题：同时间轴、同一条合成路径，不可能失步。
+ *
+ *   ⚠️ 若上游改了 hana-slide-in-left / -out-left 的关键帧数值，
+ *   下面的 hana-panel-frame-in / -out 必须**同步重算**（见各自的注释）。
+ *
+ * ══════════════════════════════════════════════════════════════════════════
+ * 变量（由 src/panel-frame/bg.js 写在**可见圆角面**上，::before 继承）
+ * ══════════════════════════════════════════════════════════════════════════
+ *   --hana-scrim-w / -h / -x / -y   两个 scrim 层：铺满主背景容器
+ *   --hana-img-w / -h / -x / -y     图片层：主背景的显示尺寸与原点
+ *   四组都是**元素局部**值（相对 ::before 的盒子 = 面板的 padding box），
+ *   按「面板处在布局位置、没有 transform」算 —— 因为反相动画已经抵消了 transform。
+ *   背景图本身不走变量：3.9 MB 的 data URI 超过 CSS 变量值的长度上限
+ *   （实测 1.5~2 MB，超了会被**静默丢弃**），由 bg.js 注入样式表提供。
+ *
+ * ⚠️ 保留的已知代价：面板落在照片亮区（如满月、水面倒影）时，面板里的文字对比度
+ *   会掉。这是「图能按屏幕位置滑动」的固有代价（背景源文件头那段 28 处文字
+ *   4.5:1 的调优是按**窗口固定坐标**做的）。可读性方案另议。
+ *
+ * ⚠️ 本文件的选择器与 src/panel-frame/bg.js 的 TARGETS 必须**一起改**：
+ *   每个目标的「面选择器」要在两处保持一致（CSS 写 ::before 规则，JS 找 face 写几何变量）。
+ */
+
+/* 面板面：
+     * background-color —— 不透明的兜底（图尚未贴上 / 覆盖不到时也不露出正文）
+     * position:relative + z-index:0 —— 给 ::before 当包含块，并自建层叠上下文，
+       这样 ::before 的 z-index:-1 才落在「底色之上、内容之下」。
+       （面板带 transform 时本就有层叠上下文，但动画结束后被移除时不一定有，
+        显式声明避免「图被底色盖住」。） */
+:is([data-theme="hana-deepsleep"]) #chalkboardCardCenterPanel > [class*="floatingPanelInner"],
+:is([data-theme="hana-deepsleep"]) #capabilitiesPanel > [class*="floatingPanelInner"],
+:is([data-theme="hana-deepsleep"]) #automationHubPanel > [class*="floatingPanelInner"] {
+    /* 2026-10-20：从深色主题那份拷过来时这里留着月满庭的 rgb(23,39,37)。
+       壁纸铺在上面所以平时看不见，但壁纸是 inset:0 跟 padding box 走，
+       边线与圆角那一圈会露出它 —— 浅色主题下成了一条近黑发丝线
+       （真机 y=500 在 x=252 读到 rgb(23,39,38)，同列两侧都是 190~225）。
+       兜底色换成本主题的 --bg：图案未就绪时也不会露出正文，且边框那一圈是浅色。 */
+    background-color: var(--bg);
+    position: relative;
+    z-index: 0;
+}
+
+/* 背景层：两层 scrim + 图。
+   尺寸与位置来自 bg.js 写的变量；图由 bg.js 注入的样式表提供。
+   动画与面板的 hana-slide-in-left 严格互逆（见文件头）。 */
+:is([data-theme="hana-deepsleep"]) #chalkboardCardCenterPanel > [class*="floatingPanelInner"]::before,
+:is([data-theme="hana-deepsleep"]) #capabilitiesPanel > [class*="floatingPanelInner"]::before,
+:is([data-theme="hana-deepsleep"]) #automationHubPanel > [class*="floatingPanelInner"]::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    /* 【工单 44】几何由 bg.js 按**主背景真实层数**逐层生成，不再在这里写死项数。
+       旧写法是硬编码三项（[scrim][scrim][图]），去对主背景的两层（[scrim][图]）——
+       2026-10-14 删掉底部 scrim 后层数从 3 变 2，照片层就拿到了 scrim 的几何，
+       被纵向放大 4.65%，月亮跨面板边缘即错位一戟（详见 bg.js 里那段注释）。
+
+       ⚠️ 两道兜底，顺序不能改：
+         1) `--hana-before-size`（新 bg.js 逐层生成）优先；
+         2) 没它时用「两项」旧变量拼（scrim + 图）—— 这是为了**旧 bg.js 还在场**时也对。
+            JS 贴在 lib/theme.js 里，只在 Hana 启动时加载；CSS 能用 ?v= 现拉。
+            没有这一道，改完 CSS 不重启就会退到 100% 100% / 0px 0px（更错）。
+         3) 最后才是 100% 100%（JS 完全未跑）。 */
+    background-size: var(
+        --hana-before-size,
+        var(--hana-scrim-w, 100%) var(--hana-scrim-h, 100%),
+        var(--hana-img-w, 100%) var(--hana-img-h, 100%)
+    );
+    background-position: var(
+        --hana-before-pos,
+        var(--hana-scrim-x, 0px) var(--hana-scrim-y, 0px),
+        var(--hana-img-x, 0px) var(--hana-img-y, 0px)
+    );
+    background-repeat: no-repeat;
+    animation: hana-panel-frame-in var(--duration-slow, 0.25s) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+
+/*
+ * 反相入场 —— 与 animations.css 的 hana-slide-in-left 互逆。
+ *
+ * 面板在进度 e 处：P = translateX(-20(1-e)) · scale(0.97+0.03e)，绕中心 O。
+ * 逆变换（要求 P ∘ C = 恒等）：
+ *     C = P⁻¹ = scale(1/k) · translateX(20(1-e))，其中 k = 0.97+0.03e
+ *             = translateX(20(1-e)/k) scale(1/k)
+ * 两端取值：
+ *     e=0 -> translateX(20/0.97) scale(1/0.97) = translateX(20.618556701030927px) scale(1.0309278350515464)
+ *     e=1 -> translateX(0) scale(1)
+ * 中间段用线性关键帧逼近上面那条非线性曲线：两端的函数列表结构一致
+ * （translateX + scale），逐函数线性插值，最大偏差约 0.2px（亚像素，可忽略）。
+ */
+@keyframes hana-panel-frame-in {
+    0% {
+        transform: translateX(20.618556701030927px) scale(1.0309278350515464);
+    }
+    100% {
+        transform: translateX(0px) scale(1);
+    }
+}
+
+/* 关闭时官方把动画换成 hana-slide-out-left（duration-instant / ease-in / forwards）：
+      from { opacity: 1; transform: translateX(0) scale(1); }
+      to   { opacity: 0; transform: translateX(-12px) scale(0.97); }
+   同步镜像，否则关闭那一瞬背景会跟着面板漂。
+   逆变换：C = translateX(12e/(1-0.03e)) scale(1/(1-0.03e))
+     e=0 -> translateX(0) scale(1)
+     e=1 -> translateX(12/0.97) scale(1/0.97) = translateX(12.371134020618556px) scale(1.0309278350515464) */
+:is([data-theme="hana-deepsleep"]) [class*="floatingPanelClosing"] > [class*="floatingPanelInner"]::before {
+    animation: hana-panel-frame-out var(--duration-instant, 0.1s) ease-in forwards;
+}
+
+@keyframes hana-panel-frame-out {
+    0% {
+        transform: translateX(0px) scale(1);
+    }
+    100% {
+        transform: translateX(12.371134020618556px) scale(1.0309278350515464);
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * 工单 31：把取景框扩到两个模态（扩展/市场 · 设置）
+ *
+ * 两个模态的「可见圆角面」不是 floatingPanelInner，而是各自那张卡；
+ * 入场机制也不同（市场是 animation，设置是 transition）。分节写。
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 扩展（市场）模态 ──────────────────────────────────────────────────────
+   铺底卡 = `[data-testid="market-modal-overlay"] > [class*="container"]`
+     （源码实测：data-testid 挂在 popup 壳 `_popup_ba84f` 上，铺底卡是它的**直接子**
+      `_container_7cf03 _card_4232d`。testid 在 contentProps 里 ≠ 它在铺底那层 —— 前车之鉴。）
+
+   入场：`animation: hana-scale-in var(--duration-slow) var(--ease-out)`（**无 fill-mode**）。
+     官方关键帧 from `scale(0.96) translateY(8px)` → to `scale(1) translateY(0)`。
+     ⚠️ 函数顺序是 scale + translateY，与 hana-slide-in-left 的 translateX + scale **相反**，
+        反相必须照抄同一顺序（scale 在前、translateY 在后）。
+
+   反相：面板在进度 e 处 P = scale(k)·translateY(8(1-e))，k = 0.96 + 0.04e（绕中心）。
+     逆变换 C = P⁻¹ = translateY(-8(1-e)) · scale(1/k)：
+       e=0 -> translateY(-8px) scale(1.0416666667)；e=1 -> 恒等。
+     中间段线性关键帧逼近非线性曲线（同 slide 族，亚像素偏差）。
+
+   ⚠️ 无 fill-mode → 动画结束后卡没有 transform、不建层叠上下文，
+      ::before 的 z-index:-1 会落到卡片底色之下（被 0.70 的底盖住）。
+      故这里给卡显式 `position:relative; z-index:0` 自建层叠上下文与包含块。 */
+:is([data-theme="hana-deepsleep"]) [data-testid="market-modal-overlay"] > [class*="container"] {
+    position: relative;
+    z-index: 0;
+}
+
+:is([data-theme="hana-deepsleep"]) [data-testid="market-modal-overlay"] > [class*="container"]::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    /* 【工单 44】几何由 bg.js 按主背景真实层数逐层生成（兜底链同上方面板那段注释）。 */
+    background-size: var(
+        --hana-before-size,
+        var(--hana-scrim-w, 100%) var(--hana-scrim-h, 100%),
+        var(--hana-img-w, 100%) var(--hana-img-h, 100%)
+    );
+    background-position: var(
+        --hana-before-pos,
+        var(--hana-scrim-x, 0px) var(--hana-scrim-y, 0px),
+        var(--hana-img-x, 0px) var(--hana-img-y, 0px)
+    );
+    background-repeat: no-repeat;
+    animation: hana-market-frame-in var(--duration-slow, 0.25s) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+
+/* ── 市场卡：壁纸之上再压一层暗垫（工单 43；用户 2026-10-17 选定 0.38）─────────
+   ⚠️ 为什么**不是**改卡片的 background-color（这条坑值得留字）：
+     卡片自己那层 `rgba(23, 39, 37, 0.70)`（= background/dark.css 里
+     `:has(> [data-input-ctx-zone="market"])` 那条）在壁纸 **::before 之下** ——
+     `::before` 带 z-index:-1，按绘制顺序它反而画在元素自身背景**之上**
+     （与工单 35 描边被 ::before 吃掉是同一个机制）。所以改那层的 alpha，
+     画面一点变化都没有（实测：0.70 → 0.94 四档截图逐像素同值，均值全是 0.2450）。
+     要压暗**可见的**那块（壁纸），只能在壁纸**之上**叠一层。
+
+   手法：inset box-shadow 大扩散，铺满 ::before 的盒子。
+     为什么不用再挂一个伪元素：::before / ::after 都已被占用（取景框 + 描边），
+     且 inset 阴影天然在元素内容之上、不需要新层。
+     为什么不会漏到卡外：卡的 `overflow: hidden` + 33px 圆角把 9999px 的扩散裁住
+     （真机实测：卡片 border 1px、overflow hidden、radius 33.1361px）。
+
+   颜色取 rgb(12,22,21)：比面板基色 #172725 再深一档，纯中性压暗、不带色偏。
+
+   ── 定档依据（工单 43，全部真机 1920×1032 实测）────────────────────────────
+   判据有两层，先看错了第一层（拿“整屏均值”当“背景亮暗”）：
+     ① **背景层**（把两张卡内容 visibility:hidden 后只量壁纸）：
+        设置与「未压暗的市场」**完全相同**，mean 均为 0.2223（逐像素差 >2/255 仅 0.94%，
+        在遮盖背后的残余）。—— 所以设置**从来没有被压过**，用户最初看到的“设置更暗”
+        不是背景造成的。
+     ② **整屏层**（含内容）：设置 0.1928 天生比未压市场的 0.2450 低 21%
+        —— 因为设置里控件/输入框密，那一屏内容本身就在压暗。
+   用户的目标最后定为「两张卡摆在一起不分轻重」= **按整屏均值对齐**。实测各档（含内容）：
+     无压 → 0.2450 / p95 0.4467
+     0.26 → 0.2096 / p95 0.3617
+     0.38 → 0.1913 / p95 0.3211   ← **本档**（设置 = 0.1928，差 0.0015，基本齐平）
+   代价（已向用户说明并得到确认）：市场背景比设置深 16.5%，月亮只剩一轮轮廓。
+   若以后改回“按背景齐平”，用 0.26（背景 0.1855）或更小。
+
+   ⚠️ 选择器带 `[data-hana-frame-ready]`：与背景图同一个就绪标记，
+     于是「压暗」与「壁纸」在同一帧出现，不会先灰一块再压暗。 */
+:is([data-theme="hana-deepsleep"]) [data-testid="market-modal-overlay"] > [class*="container"][data-hana-frame-ready]::before {
+    /* 2026-10-20：用户要求「让市场和设置透出壁纸」。
+       设置那边的壁纸是被内层 .settings-panel 的不透明 --bg 盖住的（已换成 0.15 白纱），
+       市场的壁纸则是被这层底盖住的。两边同一档：0.15。
+       为什么不是面板那档 0.42：这个模态坐在壁纸最白的那一段上，0.42 盖下去与
+       不透明板分不出来（卡面 mean 242.6 对设置 245，肉眼齐平）。要真读到壁纸，
+       白纱得比面板薄。早先那层 0.38 墨是深色主题的做法（先压暗再显），浅色主题下
+       它只会把壁纸洗成灰（卡面 L≈156），所以这里走白纱。 */
+    box-shadow: inset 0 0 0 9999px rgba(255, 255, 255, 0.15);
+}
+
+/* 反相入场 —— 与 animations.css 的 hana-scale-in 互逆（注意 scale + translateY 顺序）。 */
+@keyframes hana-market-frame-in {
+    0% {
+        transform: translateY(-8px) scale(1.0416666667);
+    }
+    100% {
+        transform: translateY(0px) scale(1);
+    }
+}
+
+/* ── 设置模态 ──────────────────────────────────────────────────────────────
+   铺底卡 = `:has(> [data-input-ctx-zone="settings"])`（data-input-ctx-zone 是 JSX 明文属性）。
+
+   入场是 **transition**，不是 animation：
+     卡基础 `transform: scale(var(--settings-modal-scale, .96))`，`[data-state="open"]` 时 scale(1)，
+     `transition: transform .25s cubic-bezier(.22,1,.36,1)`。
+     ⚠️ transition 与 animation 是两套机制，**不能**用「两条反相 CSS 动画」对齐
+        （getAnimations() 拿不到 transition，工单 30 那套暂停+同步 currentTime 的手法也不适用）。
+
+   解法：给 ::before 也写一条**同 duration / 同 easing** 的 transition，
+     触发条件用卡上稳定的 `[data-state="open"]`（源码实测：data-state 由 React 状态直绑，
+     与驱动类名 _open_ 的是**同一个变量** g —— 稳定契约，不是构建哈希）。
+     两条 transition 由同一次 DOM 更新触发 → 天然同步，不需要 JS 逐帧追（那会重蹈工单 30 第四个坑）。
+
+   反相：P = scale(k)（绕中心、无平移），C = scale(1/k)：
+     k=0.96（未打开）-> scale(1.0416666667)；k=1（打开）-> scale(1)。
+     用 calc(1 / var(--settings-modal-scale)) 让上游改 scale 时自动跟随。
+
+   关闭：`[data-state="closing"]` 时改用 fast duration（与卡的 close-dur = --duration-fast 同步）。 */
+:is([data-theme="hana-deepsleep"]) :has(> [data-input-ctx-zone="settings"]) {
+    position: relative;
+    z-index: 0;
+}
+
+:is([data-theme="hana-deepsleep"]) :has(> [data-input-ctx-zone="settings"])::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    /* 【工单 44】几何由 bg.js 按主背景真实层数逐层生成（兜底链同上方面板那段注释）。 */
+    background-size: var(
+        --hana-before-size,
+        var(--hana-scrim-w, 100%) var(--hana-scrim-h, 100%),
+        var(--hana-img-w, 100%) var(--hana-img-h, 100%)
+    );
+    background-position: var(
+        --hana-before-pos,
+        var(--hana-scrim-x, 0px) var(--hana-scrim-y, 0px),
+        var(--hana-img-x, 0px) var(--hana-img-y, 0px)
+    );
+    background-repeat: no-repeat;
+    transform: scale(calc(1 / var(--settings-modal-scale, 0.96)));
+    transition: transform var(--settings-modal-open-dur, var(--duration-slow, 0.25s)) var(--settings-modal-ease, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+:is([data-theme="hana-deepsleep"]) :has(> [data-input-ctx-zone="settings"])[data-state="open"]::before {
+    transform: scale(1);
+}
+
+:is([data-theme="hana-deepsleep"]) :has(> [data-input-ctx-zone="settings"])[data-state="closing"]::before {
+    transition-duration: var(--settings-modal-close-dur, var(--duration-fast, 0.1s));
+}
+
+/* ── prefers-reduced-motion 降级（工单 30 的已知脆弱点）──────────────────────
+   上游在 reduced-motion 下**只**关了设置（`._card_5b61e{transition:none}`）与市场
+   （`._card_4232d{animation:none}`），**没关**浮层面板的 `hana-slide-in-left`。
+   若只关 ::before 的反相、而面板动画还在跑 → 反相只剩一半 → 背景错位。
+   故这里把「面板/模态自身」与「::before 反相」**成对**关掉，回到
+   「无 transform、背景按布局坐标静态对齐」的降级形态。 */
+@media (prefers-reduced-motion: reduce) {
+    :is([data-theme="hana-deepsleep"]) #chalkboardCardCenterPanel > [class*="floatingPanelInner"],
+    :is([data-theme="hana-deepsleep"]) #capabilitiesPanel > [class*="floatingPanelInner"],
+    :is([data-theme="hana-deepsleep"]) #automationHubPanel > [class*="floatingPanelInner"],
+    :is([data-theme="hana-deepsleep"]) #chalkboardCardCenterPanel > [class*="floatingPanelInner"]::before,
+    :is([data-theme="hana-deepsleep"]) #capabilitiesPanel > [class*="floatingPanelInner"]::before,
+    :is([data-theme="hana-deepsleep"]) #automationHubPanel > [class*="floatingPanelInner"]::before,
+    :is([data-theme="hana-deepsleep"]) [data-testid="market-modal-overlay"] > [class*="container"],
+    :is([data-theme="hana-deepsleep"]) [data-testid="market-modal-overlay"] > [class*="container"]::before,
+    :is([data-theme="hana-deepsleep"]) :has(> [data-input-ctx-zone="settings"])::before {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * 通用确认框（alertdialog）· 取景框（2026-10-24，与两个深色主题同构）
+ *   机制、反相动画、就绪门、坑位全部同 src/panel-frame/dark.css 同名段。
+ *
+ * 纱色用 rgba(255,255,255,0.15) —— 即本主题 `.settings-panel` 那一档。
+ * ⚠️ 这档非常薄，在设置那种大面板上合适（壁纸本身就亮，深色字站得住），
+ *   但在 420×210 且文字密的小弹窗上可能不够。若真机发现字发顶、
+ *   先提到 0.28~0.35，别直接动壁纸。
+ * ══════════════════════════════════════════════════════════════════════════ */
+:is([data-theme="hana-deepsleep"]) [role="alertdialog"] > [class*="_dialog_"] {
+    position: relative;
+    z-index: 0;
+}
+
+:is([data-theme="hana-deepsleep"]) [role="alertdialog"] > [class*="_dialog_"]::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-size: var(--hana-before-size, 100% 100%);
+    background-position: var(--hana-before-pos, 0px 0px);
+    background-repeat: no-repeat;
+    animation: hana-confirm-frame-in var(--overlay-duration, var(--duration-slow, 0.25s))
+        var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+
+/* 纱挂在 ::before 上（写在元素上会被 z-index:-1 的壁纸盖掉，详见月满庭那份注释）。
+   浅色这档比设置的 0.15 厚一档（0.20）：弹窗小、文字密，纯壁纸压不住字。 */
+:is([data-theme="hana-deepsleep"])
+    [role="alertdialog"]
+    > [class*="_dialog_"][data-hana-frame-ready]::before {
+    box-shadow: inset 0 0 0 9999px rgba(255, 255, 255, 0.20);
+}
+
+:is([data-theme="hana-deepsleep"])
+    [role="alertdialog"][data-ending-style]
+    > [class*="_dialog_"]::before {
+    animation: hana-confirm-frame-out var(--duration-fast, 0.1s) var(--ease-in, ease-in) forwards;
+}
+
+@keyframes hana-confirm-frame-in {
+    0% {
+        transform: translateY(-8px) scale(1.0416666667);
+    }
+    100% {
+        transform: translateY(0px) scale(1);
+    }
+}
+
+@keyframes hana-confirm-frame-out {
+    0% {
+        transform: translateY(0px);
+    }
+    100% {
+        transform: translateY(calc(-1 * var(--slide-y, 4px)));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :is([data-theme="hana-deepsleep"]) [role="alertdialog"] > [class*="_dialog_"]::before {
+        animation: none !important;
+    }
+}

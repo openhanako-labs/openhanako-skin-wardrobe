@@ -1,0 +1,642 @@
+/*
+ * 背景图层 · DeepSeek 蓝（浅色）
+ * ---------------------------------------------------------------------------
+ * 由 apply.ps1 -Background dark 读入；模板里的 BG 数据 URI 占位符在贴入时被替换为
+ * src/background-deepseek/assets/daybreak.png 的 base64 data URI。
+ *
+ * 与月满庭那份背景源的**结构差异**（这是浅色主题的必然，不是偷懒）：
+ *
+ *   月满庭的背景是一张夜景照片：满月 L=0.98、金色水面倒影很亮，所以它需要
+ *   两层 scrim（左列压暗保护侧栏、底部压暗保护输入区）才让文字守住 4.5:1。
+ *   那一份 852 行里绝大部分是 scrim 的调参与层序说明。
+ *
+ *   本主题的背景是**生成的柔和色团**：全图最深处 #9DB8FF 级（左上蓝团 80%
+ *   叠在 #f7f9fd 上），相对亮度 L≈0.49；而 --text #152443 的 L≈0.018。
+ *   二者对比 **7.87:1** —— 不需要任何 scrim。硬加一层压暗反而会把
+ *   "白昼"压成阴天。故本文件只有一条主规则 + 侧栏一条，不做压暗。
+ *
+ * 为什么侧栏是半透明白纱而不是全透明：
+ *   全透明时侧栏文字直接压在蓝团上，--text-muted #3c4a63 对最深处 #9DB8FF
+ *   只有 **4.56:1**（勉强过线，团块再深一点就掉下去）。0.42 的白纱把它抬到
+ *   8:1 以上，同时仍能看见背后的蓝 —— 这正是那份主题浅色预览里侧栏的读感。
+ *
+ * ⚠️ 占位符必须**恰好出现 1 次**（apply.ps1 的 Expand-BackgroundTemplate 会断言）：
+ *   连注释里也不能写出它的字面量（出现两次就会 Stop-Fail）。
+ *   写第二遍等于灌入第二份 base64 副本，脚本会 Stop-Fail。
+ *   若将来工作室窗口要独立一张图，只能走"同一条声明加选择器"这条路。
+ * ---------------------------------------------------------------------------
+ */
+
+:is([data-theme="hana-claude-clay"]) [data-chalkboard-root],
+:is([data-theme="hana-claude-clay"]) [data-studio-window-root] {
+    background-color: #f4f6fc;
+    background-image: url("__BG_DARK_DATA_URI__");
+    background-size: cover;
+    background-position: center 40%;
+    background-repeat: no-repeat;
+}
+
+/* 侧栏：透出背后的蓝团，但留一层白纱保护文字。
+   月满庭在同一个锚点上写的是 rgba(23,39,37,0.28)（深色薄纱）；
+   这里方向相反 —— 浅色主题的白纱是"提亮"而不是"压暗"。 */
+:is([data-theme="hana-claude-clay"]) aside[data-titlebar-mode] {
+    background-color: rgba(255, 255, 255, 0.42);
+}
+
+/* 工作室独立窗口：把壁纸放出来（2026-10-21，用户报「工作室还没改，需要增加背景和玻璃效果」）
+ * ---------------------------------------------------------------------------
+ * ⚠️ 这个窗口的壁纸**一直在** —— 就是上面那条 [data-studio-window-root] 规则给的
+ *   （bg #f4f6fc + daybreak，真机读数 bgiLen 906065 / size=cover / pos 50% 40%）。
+ *   它被内层一层 opaque 实底盖死了，用户看到的是「白板」。
+ *
+ * 真机层序（工作室窗口自己的文档，不是主窗口 DOM；CDP 里是一个 about:blank target）：
+ *   div[data-studio-window-root]                           壁纸（cover）           ✔ 已生效
+ *     div._root_4a78b._window_dc6dc[data-studio-window]     background: var(--bg)   ← 白板元凶
+ *       aside[data-titlebar-mode=solid]                     0.42 白纱              ✔ 主窗口那条已命中
+ *       div.universal-card[data-preview-panel-body]          0.76 白                 ← 右侧内容板
+ *
+ * 修法两行：中间那层改透明（让壁纸上来），右侧内容板降到与侧栏同档 0.42。
+ *   ❗ 只写了 `[data-studio-window]` 前缀收窄右侧板：同一个 [data-preview-panel-body]
+ *   在主窗口也挂着（右侧预览面板），那里目前是 0.76，本次没要求动它，不改就不会误伤。
+ *   ❗ 上下两个锚点都是**明文 data 属性**（data-studio-window / data-studio-window-root /
+ *   data-preview-panel-body），跨构建稳定；没有拿 _root_<hash> / _window_<hash> 硬编码。
+ *
+ * 为什么右侧板还要加 blur（真机看过才加的，不是惯例）：
+ *   这块面板大面积盖在壁纸**最白的那团**上（daybreak 为落字而留白），0.42 白纱
+ *   盖下去与不透明板几乎分不出。真正让“这是一层玻璃”可读的是两道东西：
+ *   背后色团被 blur 抹成一层柔霸的色晕，以及材质源给的顶光 + 1px 内边线。
+ *
+ * 圆角：面板官方基础规则本来与侧栏同公式
+ *   `calc(var(--panel-card-radius) * var(--corner-radius-scale, 1))`，但它被
+ *   `._previewTileHost_x:not([data-preview-single-host])` 那条“嵌在卡片里”的变体减了 5px。
+ *   工作室窗口里这块面板并不嵌在卡片里，减 5 没道理 —— 用户要求“边框处理按侧栏样式”，
+ *   所以这里把公式抄回来，半径与侧栏一致。
+ *
+ * 为什么是 0.30 而不是与侧栏同档的 0.42（真机 A/B 看过）：
+ *   这块面板占窗口 **86%** 面积（260..1906），背后恰好是 daybreak 的中央留白 + 右上淡紫。
+ *   0.42 时右侧几乎纯白、与左侧那层蓝紫玻璃完全两个语系。
+ *
+ * ❌ 2026-10-21 二次修正（用户第二次报「这部分能不能透出背景」）：
+ *   0.30 + blur 18 仍然是“淡蓝白板”。原因不是白纱不够薄，而是这块区域的壁纸**本身**
+ *   就是 daybreak 的中央留白区（为落字留白，L≈0.95），而 blur 18 又把它挠成了一片均匀色。
+ *   于是改成：白纱 0.12（只留一层雾，让“有面”成立）+ blur 10（不再抹平色团）。
+ *   代价：干净度的保证从“底”转到了“边”—— 描边完全照抄侧栏（见材质源）。
+ *   若壁纸换成对比强的图，先抬模糊与白纱，别把描边改厚。 */
+/* ⚠️ 作用域与月满庭 / 紫夜那两份**逐字对齐**：都收在 [data-studio-window-root] 之内。
+ *   （那两份从 2026-10-14 就有这条；深蓝这份当时漏了，所以浅色主题一直是白板。）*/
+:is([data-theme="hana-claude-clay"]) [data-studio-window-root] [data-studio-window] {
+    background-color: transparent;
+}
+
+/* 工作室窗口：把卡片壳的实底掎空，壁纸才透得出来（2026-10-21 三次修正）
+ * ---------------------------------------------------------------------------
+ * 前两版一直在调右侧面板的白纱与模糊，怎么调都发白 —— 因为**白不在面板上**。
+ * 面板下面还压着一层卡片壳（占窗口 86%）：
+ *   section._tileShell_<hash>._tileCard_<hash>
+ *     [data-surface="card"][data-card-body-form="self-framed"][data-layout-surface-id="studio-window"]
+ *   background: var(--chalkboard-card-shell-bg) = rgba(247,248,252,0.952)   ← 白板真凶
+ *
+ * 官方那条是 `._tileShell[data-card-body-form=x][data-surface=card]._tileCard:not([data-titlebar-mode])`
+ * = **（0,5,0）**，而主题 CSS 又排在官方之前，硬拼特异性很难看。但它引用的是**变量**：
+ * 在该窗口的根上把 `--chalkboard-card-shell-bg` 改成 transparent 就行 ——
+ * 自定义属性靠继承下发，不参与“谁的选择器更硬”的比赛。
+ * 作用域收在 [data-studio-window] 里，主窗口的卡片壳不受影响。
+ *
+ * 真机像素对照（同一点、同一张壁纸）：
+ *   卡壳 0.952 白    → #F7F7FC（看上去就是白板，且怎么调面板都没用）
+ *   卡壳 transparent → #CFDEFF（与主窗口同位置的 #CBD9FC 基本一致）
+ * 这就是“主界面背景不是纯白、工作室却发白”的真正原因：主窗口聊天区背后根本没有这层壳。
+ * 前两版那个“补色层”已在本次删除 —— 壁纸自己能透出来了，不需要假色。 */
+:is([data-theme="hana-claude-clay"]) [data-studio-window] {
+    --chalkboard-card-shell-bg: transparent;
+}
+
+/* ❌ 2026-10-21 撤回：曾在工作室窗口里把侧栏降到 0.12 想去对齐面板，用户指出方向错了——
+ * 他要的是**两侧都用主页面侧栏那套**（0.42 白纱），不是把侧栏拉低到面板。
+ * 主窗口的 aside[data-titlebar-mode] 规则本来就在全局生效，不需要本窗口另写一条。 */
+
+/* 工作室内容区的文件夹卡 / 设备卡：按左侧栏那套玻璃（2026-10-21，用户要求）
+ * ---------------------------------------------------------------------------
+ * 官方：`._folderTile_<hash>{ background: transparent; border:1px solid var(--overlay-light) }`
+ *       —— 轻色主题里 overlay-light 是 3% 墨，几乎看不见，所以卡片现在“没面”。
+ *       `._deviceCard_<hash>{ background: var(--panel-card-bg) }` = 0.76 白，比周围还实。
+ * 目标：与 aside[data-titlebar-mode] 同一层玻璃 —— 填充 0.42 白纱（值逐字相同），
+ *   悬停 0.52 做反馈（官方 hover 原本是 overlay-subtle，那会变成“变淡”，在玻璃上反而闪断）。
+ *   描边与顶光归材质源（同标签号）。
+ * 作用域收在 [data-studio-window] 里：主窗口的文件夹卡不受影响。 */
+:is([data-theme="hana-claude-clay"]) div[data-studio-window] button[class*="_folderTile_"],
+:is([data-theme="hana-claude-clay"]) div[data-studio-window] div[class*="_deviceCard_"] {
+    background-color: rgba(255, 255, 255, 0.42);
+}
+:is([data-theme="hana-claude-clay"]) div[data-studio-window] button[class*="_folderTile_"]:hover,
+:is([data-theme="hana-claude-clay"]) div[data-studio-window] div[class*="_deviceCard_"]:hover {
+    background-color: rgba(255, 255, 255, 0.52);
+}
+/* ⚠️ 右侧内容板必须加两个元素名：官方那条是
+ *   `._previewTileHost_<hash>:not([data-preview-single-host]) ._previewPanelBody_<hash>`
+ *   = (0,3,0)，与我们不加元素名时的 (0,3,0) 同分，而它排在主题 CSS **之后** → 输。
+ *   抬到 (0,3,2) 才压得住。本文件里第三次遇到“同分被往后排的官方规则反超”，
+ *   碰到改不动时先算特异性，别怀疑选择器没匹配上。 */
+:is([data-theme="hana-claude-clay"]) div[data-studio-window] div[data-preview-panel-body] {
+    background-color: rgba(255, 255, 255, 0.42);
+    border-radius: calc(var(--panel-card-radius) * var(--corner-radius-scale, 1));
+    -webkit-backdrop-filter: blur(10px) saturate(120%);
+    backdrop-filter: blur(10px) saturate(120%);
+}
+
+/* 右侧工作区面板：与侧栏同一档白纱（2026-10-20，用户报「右侧几乎没有底色」）
+ * ---------------------------------------------------------------------------
+ * 现象：左侧栏透得出淡蓝底，右侧文件面板几乎纯白。
+ *
+ * 根因：右侧面板吃的是 --bg-card（0.76），而它是**单层**铺在透明瓦片上
+ *   （_workspaceCardSurface_ / _tileContent_ / _tileShell_ 全透明）——
+ *   0.76 白已经把背后压到 L≈96，侧栏只有 0.42 一层，L≈87，两者差 10 个点。
+ *   之前那版 --bg-card 是 0.94（为了修紫边），差距更大。
+ *
+ * 修法：给这个锚点单独给一层与侧栏相同的 0.42 白纱，而不是把 --bg-card 全局压下去
+ *   —— 后者会把输入框、聊天文件卡、笺面板一起拖透，那些地方需要更实。
+ *
+ * ⚠️ 锚点用语义名子串（构建哈希 _workspaceCardMain_<hash>），与背景源既有
+ *   [class*="_chalkboardPageGrid_"] 同一类写法：前缀稳定、哈希会变。
+ *   真机实测：该元素 284×429，z-index 2，原本 bg = --bg-card。
+ *
+ * ⚠️ **特异性必须压过它官方那条**（2026-10-20 第一版写错了，规则静默失效）：
+ *   上游写法是
+ *     ._workspaceCardSurface_<h>[data-workspace-drawers] ._workspaceCardMain_<h>
+ *       { background: var(--panel-card-bg) }
+ *   三个简单选择器 = (0,3,0)，而 `:is([data-theme]) [class*=...]` 只有 (0,2,0)
+ *   —— 计算值实测仍是 rgba(255,255,255,0.76)，规则写了等于没写。
+ *   所以这里**沿用它同一套层级**再加主题前缀，共 (0,4,0) 稳赢；
+ *   写成 background（而非 background-color）是为了跟它的简写同属一层，
+ *   否则简写会把它未声明的子属性一并重置。 */
+:is([data-theme="hana-claude-clay"])
+    [class*="_workspaceCardSurface_"][data-workspace-drawers]
+    [class*="_workspaceCardMain_"] {
+    /* 2026-10-20 三次修正：这里定为 **transparent** 而不是 0.42。
+       原因：外层 _tileShell_ 已经有 0.42，这里再叠一层就是 1-(0.58)² = 0.664。
+       而标题栏在 main 之外，只有瓦片壳那一层 0.42 —— 于是“标题栏 0.42 / 内容区 0.66”，
+       看着就是标题更蓝、内容更白。只留一层白纱，整块才会连成一片。 */
+    background: transparent;
+}
+
+/* 右侧整族结构瓦片：同样的 0.42 白纱（2026-10-20，二次修正）
+ * ---------------------------------------------------------------------------
+ * 上一版只改了 _workspaceCardMain_，但真机用 elementsFromPoint 拆开才发现：
+ * 右侧那一列并不是一块大面板，而是**多个独立瓦片**（文件 / 后台任务 / …），
+ * 每个瓦片的外壳 _tileShell_._tileCard_ 自己带一层 rgba(255,255,255,.76)。
+ * 所以只改内层时，往外一点（比如 y=600 的后台任务区）依然是 0.76，看着仍“没底色”。
+ *
+ * 锚点用平台自己发的 data-card-body-form：真机实测结构族瓦片 = structural，
+ * 聊天瓦片 = framed（记忆里工单 36-续 7 的结论，这里再确认一次）。
+ * 不用 class 子串，是因为这族有十多个哈希类名，前缀对不上就会漏。 */
+:is([data-theme="hana-claude-clay"]) [data-card-body-form="structural"] {
+    background-color: rgba(255, 255, 255, 0.42);
+    /* 2026-10-20：瓦片带 overflow:hidden，box-shadow 会被裁掉（试过 0 5px 10px -5px，下方一点影子都没有）。
+       drop-shadow 作用于渲染结果的轮廓，不受溢出裁切 —— 它才是这条缝上能读出层次的那道影。 */
+    filter: drop-shadow(0 7px 12px rgba(21, 36, 67, 0.18));
+}
+
+/* 抽屉层：也是 --bg-card 驱动，但它不是瓦片、盖不到上面那条规则（2026-10-20）
+ * ---------------------------------------------------------------------------
+ * 用户圈出的第二处：文件列表底部与「本次对话」之间那条白色带。
+ * 真机在 y=478 读到 _workspaceDrawerLayer_<h> bg = rgba(255,255,255,0.76)，
+ * 它属于另一个瓦片内部的抽屉层，不是 structural 瓦片本体，所以躲过了上一条。 */
+:is([data-theme="hana-claude-clay"]) [class*="_workspaceDrawerLayer_"] {
+    /* 同理：它在瓦片壳之上，再叠一层就是双白 */
+    background-color: transparent;
+}
+
+/* 标签凹槽：墨色压得太重，饱和度被吃掉了（2026-10-20）
+ * ---------------------------------------------------------------------------
+ * 用户圈出的第一处：标题栏与标签行之间的整行色差。实测：
+ *   标题栏 #DDE4F7 S61.9 ↔ 标签行 #E1E5F2 S39.5（明度只差 0.2）
+ * 凹槽上那层 rgba(21,36,67,.016) 墨色把彩度拉下去 22 个点。
+ * 压到 .004：既保留了“这里是凹槽”的极微压痕，又不把蓝洗成灰。
+ * （凹槽不靠颜色区分也行 —— 选中标签有白色滑块，那才是真正的指示器。）
+ *
+ * 2026-10-20 第二次：用户拿「后台任务面板」做对照 —— 那块是**一整片**没有分层的淡蓝，
+ * 看着连贯；文件面板却被切成标题栏 / 标签栏 / 列表 / 底部四段，每段各自一层底。
+ * 所以不能只调数值，得把这两层的底色**取消**，让它们直接透出面板那一层 0.42：
+ *   * _tabs_：完全透明（凹槽消失，靠下面滑块与文字色区分）
+ *   * _tabSlider_：从 .56 降到 .26，只当“选中”的微亮提示，不再是一块白纸
+ */
+:is([data-theme="hana-claude-clay"]) [class*="_tabs_"] {
+    background-color: transparent;
+}
+
+:is([data-theme="hana-claude-clay"]) [class*="_tabSlider_"] {
+    background-color: rgba(255, 255, 255, 0.26);
+    box-shadow: none;
+}
+
+/* Code 页「改动」瓦片：与右下那块「文件」同一层玻璃（2026-10-24，用户要求
+ * 「给 Deepsleep 主题的改动窗口增加玻璃效果，按右下的文件改」）
+ * ---------------------------------------------------------------------------
+ * 现场（用户截图 1568×843 逐点取色）：右上「改动」= #fdfdff 一块死白硬板；
+ *   右下「文件」= #eceff6~#e9edf6，壁纸的蓝从它里面透出来。
+ *
+ * 根因不是「少写了一条规则」，而是这两张卡在上游是**两种身体**（assets/CardShell-*.js
+ * 的 chalkboard 定义表）：
+ *   「文件」= cardForm:"structural"（表里 [uf] 那一项）
+ *        ⇒ bodyForm=structural ⇒ 只有一层壳，壳底吃本文件上面那条 0.42 白纱。
+ *   「改动」= **没有 cardForm**（表里 [hf] 那一项，titleKey chalkboard.tile.codeChanges）
+ *        ⇒ 上游兜底 bodyForm="framed" ⇒ 两层白：外壳
+ *          --chalkboard-card-shell-bg = color-mix(--bg 80%, --bg-card 20%)
+ *          = rgba(247,248,252,0.952)，里面再套 _tileContent_ = var(--bg-card) = 0.76 白
+ *          + 1px 边 + shadow-xs。0.952 外面压 0.76，壁纸只剩约 1.6% 透得过来 —— 死的。
+ *   探针实测（.scratch/t91-code-changes-glass/dump.html，同一张纸上并排两种身体）：
+ *     A-shell bg = color(srgb … / 0.952)   A-content bg = rgba(255,255,255,0.76)
+ *     B-shell bg = rgba(255,255,255,0.42)  B-content bg = rgba(0,0,0,0)
+ *
+ * 修法（都只挂在 code-changes 这一张瓦片上）：
+ *   ① 外壳变量改成与 structural 同一档：--chalkboard-card-shell-bg = 0.42 白纱。
+ *      走**变量**而不是覆盖 background，理由是官方那条壳底规则
+ *      `._tileShell_[data-card-body-form=framed][data-surface=card]._tileCard_:not([data-titlebar-mode=translucent])`
+ *      是 (0,5,0)，而自定义属性不参与「谁的选择器更硬」的比赛 —— 元素自己声明的值直接生效；
+ *      顺带把标题栏读的 --titlebar-surface-bg / --paper-texture-surface 一起带过去
+ *      （它们就是 var(--chalkboard-card-shell-bg)）。覆盖 background 的话，标题栏还得再补两条。
+ *   ② 内层 _tileContent_ 让空（透明 + 去边 + 去影）：否则 0.42 上再叠 0.76 合成 0.86，
+ *      与「文件」那块（0.42 单层）差四十多个亮度点，看着还是两张纸。
+ *      它那个 margin 保留 —— 标题栏是 absolute 铺在卡片顶上的，margin 正是给标题栏让的位置。
+ *   ③ drop-shadow 与 structural 那条**逐字相同**（0 7px 12px rgba(21,36,67,0.18)）。
+ *      不只是为了「也浮起来」：0.42 的壳是半透的，它自己的 drop-shadow 会从面板内部透上来
+ *      （阴影画在元素自身之下，而元素只盖住它 42%）—— 这正是「文件」那块比旁边壁纸略暗一点
+ *      的原因（真机 #eceff6 对壁纸 #ecf0fb，探针里同样复现）。少了这条，两块玻璃厚度差一档，
+ *      并排放着看得出来。
+ *
+ * ⚠️ 特异性：`section[data-card-definition-id=…][data-card-body-form=framed][data-surface=card]
+ *   > [class*="_tileContent_"]` = (0,5,1)，压官方那条同族规则 (0,5,0)
+ *   （官方组件 CSS 排在主题 CSS 之后，同分就输，所以必须算到这一位）。
+ * ⚠️ 变量那条故意不带 bodyForm：[data-card-definition-id="code-changes"][data-surface="card"]
+ *   就够了 —— 壳底只有 framed/self-framed 才吃这个变量，写宽不会误伤；而上游哪天给这张卡补上
+ *   cardForm，0.42 仍是我们想要的那一档。
+ * ⚠️ 锚点用平台自己发的 data-card-definition-id（值 = index-*.js 里的 builtinId
+ *   `$a="code-changes"`，与材质源里 sub-processes / wb-tile-* 同一类锚点），不用哈希类名。
+ * ⚠️ 必须带 `:not([data-detached-card-shell])`：把这张卡拖出成独立窗口时，壳换成
+ *   `section._detachedShell_`（contributed-keybindings 里逐个发的 data-* 与瓦片同值，包括
+ *   data-card-definition-id），内层换成 `_detachedContent_`（另一条 0.76 白规则）。
+ *   脱离窗背后不是这张壁纸、也不好验（独立文档），所以**只收停靠在画布上的那一支**，
+ *   脱离窗保持上游原样 —— 这也是工单 39 那条「按 body-form 收口必须排除脱离壳」的同一个理由。
+ * ⚠️ 不碰 structural 那条：那是「文件」的底，改了会连它一起动。
+ * ⚠️ 另两套主题（月满庭 / 紫夜）**有意不改**：它们那对 framed 瓦片本来就是深色面 + 遮罩，
+ *   正文读得清（2026-10-24 用户确认「已经有遮罩了，也不影响阅读」）。别顺手去「统一」。
+ * ⚠️ 没加 backdrop-filter：这块背后只有壁纸（没有滚动的正文），模糊在平滑渐变上看不出差别，
+ *   而「文件」那块也没有模糊。两块要读作同一层玻璃，就别一块带雾一块不带。 */
+:is([data-theme="hana-claude-clay"])
+    section[data-card-definition-id="code-changes"][data-surface="card"]:not([data-detached-card-shell]) {
+    --chalkboard-card-shell-bg: rgba(255, 255, 255, 0.42);
+    filter: drop-shadow(0 7px 12px rgba(21, 36, 67, 0.18));
+}
+
+:is([data-theme="hana-claude-clay"])
+    section[data-card-definition-id="code-changes"][data-card-body-form="framed"][data-surface="card"]
+    > [class*="_tileContent_"] {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+/* 输入卡：与侧栏同一档白纱（2026-10-20，用户要求「改成侧栏那样透出底色的样式」）
+ * ---------------------------------------------------------------------------
+ * 现状：可见的圆角输入卡是 [data-input-card]（明文 data 属性，跨构建稳定），
+ *       它的底吃 --bg-card = rgba(255,255,255,0.76)，实到壁纸透不过来；
+ *       侧栏 / 瓦片都是 0.42 一层。本卡降到同一档。
+ *
+ * ⚠️ **不去覆盖 --bg-card 变量**（深色主题那版是这么干的）：输入区子树里还有
+ *   模型药丸、附件按钮等一批 var(--bg-card) 消费者，改变量会把它们一起拖透。
+ *   直接钉在这张卡自己身上。
+ * ⚠️ 特异性：[data-theme] + [data-input-card] = (0,2,0)，官方那条
+ *   ._input-wrapper_<hash> 是 (0,1,0)；且官方组件 CSS 排在主题 CSS **之后**
+ *   （见 material-deepseek §4 的说明），所以必须靠特异性赢，不能靠顺序。
+ *   悬停时官方把 box-shadow 整个换掉（材质那边补了 :hover 变体），但**不碰**
+ *   background —— 这里不需要悬停变体。 */
+/* 输入卡加毛玻璃模糊（2026-10-20，用户报「纯透明会导致字堆叠在一起」）
+ * ---------------------------------------------------------------------------
+ * 现象：0.42 白纱只**提亮**不**遮挡**，聊天正文滚到卡背后时，笔画直接穿到
+ *   输入框里与自己的草稿叠在一行，读不成句。
+ *
+ * 修法：在本卡自己身上加 backdrop-filter —— 把卡**背后**那一层先模糊再合成，
+ *   正文糊成一片柔和色块，卡内文字重新独占焦点。这是模糊而不是加深白纱，
+ *   因为加不透明度会把壁纸一起压死（本卡刚降到与侧栏同档 0.42，再抬回去就白做）。
+ *
+ * 数值：blur 18px 足够把 14px 正文糊到认不出字（约等于 1.3 字宽），又没糊成
+ *   一片纯色；saturate 1.35 是给壁纸的蓝留一点气，否则模糊后颜色会发闷。
+ *   圆角 29.45px 由 backdrop-filter 自动按 border-radius 裁切，不用额外处理。
+ *
+ * ⚠️ 官方悬停只改 box-shadow，不碰 background / backdrop-filter，故不需要悬停变体。
+ * ⚠️ 这两个属性在本元素上是**新属性**，不与上方 background-color 冲突。
+ * ⚠️ 若真机发现仍有远景文字隐约可见，优先加白纱（0.42 → 0.46），别把 blur 推过 24px
+ *   —— 超过之后边缘会糊出灰雾，卡看着发脏。 */
+:is([data-theme="hana-claude-clay"]) [data-input-card] {
+    background-color: rgba(255, 255, 255, 0.42);
+    -webkit-backdrop-filter: blur(18px) saturate(135%);
+    backdrop-filter: blur(18px) saturate(135%);
+}
+
+/* 下拉框（SelectWidget）：与输入卡同一层毛玻璃（2026-10-21，用户要求
+ * 「把所有的下拉选项框，改为输入框这种毛玻璃效果」）
+ * ---------------------------------------------------------------------------
+ * 用户截图里那个「语言 / 时区」下拉，用的是全局共用的 SelectWidget（设置 → 通用里
+ * 语言 / 时区、设置 → 界面里字体 / 字号等全是它）。它的触发按钮与弹层都只有一个
+ * token 可吃：`background-color: var(--bg-card)`（本主题 = 0.76 白），所以站在这套
+ * 皮肤里读起来是「一块实心白」，与旁边 0.42 的输入卡不是同一个语系。
+ *
+ * 锚点（静态核过构建产物，三条都唯一，哈希换构建会变故一律用前缀 / ARIA）：
+ *   button[class*="_trigger_"]   SelectWidget 触发按钮。`_trigger_<hash>` 在本版
+ *                                assets/*.css 里只出现在 SettingsForm 模块，全构建仅此一个组件
+ *   [role="listbox"]             它的普通弹层内部的 padding 容器（ARIA 契约；全构建 JS 里
+ *                                role:"listbox" 只有 SettingsForm 两处引用）——**不直接铺底**，
+ *                                只拿来当 :has() 的标识别；见下方“弹层有两层”
+ *   [class*="_menuPopup_"]       它的 menu 外观弹层（menuPopup 前缀同样只此一处）
+ *
+ * 值：trigger 与输入卡**逐字相同**（0.42 白纱 + blur 18 / saturate 135%）。
+ *   下拉框和输入框是同一层玻璃，以后要调厚度就一起调，别单独给下拉一档。
+ *
+ * popup 比 trigger 厚一档（0.60 + blur 30 / saturate 140%），理由不是审美：
+ *   它**压在表单内容之上**，底下是标签、提示和其他控件（真机叠加位置：弹层正下方就是
+ *   那张深色的「自动 / 跟随系统」卡片）。0.42 会让下层文字透上来与选项叠在一起
+ *   （工单 49 那个「字叠字」的翻版）。
+ *   实测四档（0.55/20、0.66/26、0.72/30、0.60/30）：小 blur 会把下层深色卡片的**轮廓**
+ *   糊成一块灰影（发脏）；把 blur 推大比把白纱加厚更有效 —— blur 32 吋时那片灰影就化
+ *   成一层柔和色雾，同时 0.60 的白纱还让整体读得到玻璃的透光感。故取“适度白纱 + 大 blur”，
+ *   而不是一路把白纱推到 0.76（那就不是玻璃了）。
+ * ⚠️ 若哪天觉得弹层发灰，优先加大 blur（≤ 36），再动白纱（0.60 → 0.64），
+ *   别回头抄 0.76 的实底。
+ *
+ * ⚠️ 弹层有两层，选错就白做（真机实测，2026-10-21）：
+ *   外层 div._popup_<hash>._sourceMotionRow_<hash>._surface_<hash>._menuPopup_<hash>
+ *         ← **可见面**：border / border-radius / overflow / box-shadow 都在这一层
+ *   内层 div[role="listbox"]                                   ← 只是 padding 容器，无圆角无底
+ *   第一版把填充写给了 [role="listbox"]，结果只是给一个看不见的内层铺了底，
+ *   用户看到的仍然是外层那 0.76。第二版改成“外层面包 internals 里带 listbox 的那个 popup”：
+ *     div[class*="_popup_"]:has([role="listbox"])   （自证式锚点：只有 SelectWidget 的弹层里才有 listbox）
+ *     div[class*="_popup_"][class*="_menuPopup_"]    （menu 外观的弹层，前缀全构建只此一处）
+ *   两条都是 (0,2,1)，稳压官方 `._surface_x._surface_x{ background: var(--bg-card) }` 的 (0,2,0)
+ *   （官方组件 CSS 排在主题 CSS 之后，同分就输）。
+ *   内层 listbox **一律不铺**：外层已有底，内层再叠一层 0.55 会合成约 0.80，白得发僵。
+ *
+ * ⚠️ 特异性：官方 `._trigger_<hash>` 是 (0,1,0)，但它的
+ *   `:hover:not(:disabled)` / `[data-open]:not(:disabled)` 两条是 (0,3,0)，
+ *   而 head 里官方组件 CSS 排在主题 CSS **之后**。只写 (0,2,0) 的常态会在鼠标
+ *   移上去那一瞬弹回官方底（闪断）。故把 button 写进选择器，常态即 (0,3,1)，
+ *   稳压官方那两条；hover / 展开态另补一档更亮的玻璃做反馈。
+ * ⚠️ 官方 hover 只改 background-color、不碰 box-shadow（与输入卡不同），
+ *   所以材质侧不需要悬停变体。 */
+:is([data-theme="hana-claude-clay"]) button[class*="_trigger_"] {
+    background-color: rgba(255, 255, 255, 0.42);
+    -webkit-backdrop-filter: blur(18px) saturate(135%);
+    backdrop-filter: blur(18px) saturate(135%);
+}
+:is([data-theme="hana-claude-clay"]) button[class*="_trigger_"]:hover:not(:disabled),
+:is([data-theme="hana-claude-clay"]) button[class*="_trigger_"][data-open]:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.52);
+}
+:is([data-theme="hana-claude-clay"]) div[class*="_popup_"]:has([role="listbox"]),
+:is([data-theme="hana-claude-clay"]) div[class*="_popup_"][class*="_menuPopup_"],
+/* 推理浮窗（思考深度菜单）：与上面两个弹层同一条规则、同一组值。
+ * 它是 div._surface_14173._sourceMotion_1bdee._thinkingPopup_decbe，自己只吃
+ * --bg-card（0.76 白，不模糊），所以看着是实白；用户要求「和切模型的底一样」。
+ * 特异性（0,2,1）压过官方面 ._surface_14173._surface_14173 的（0,2,0）。 */
+:is([data-theme="hana-claude-clay"]) div[class*="_thinkingPopup_"] {
+    background-color: rgba(255, 255, 255, 0.60);
+    -webkit-backdrop-filter: blur(30px) saturate(140%);
+    backdrop-filter: blur(30px) saturate(140%);
+}
+
+/* 设置 → 供应商里的「模型 / 供应商」下拉（_mdw-* = model dropdown widget）
+ * ---------------------------------------------------------------------------
+ * 它是**另一个**下拉组件（不是 SelectWidget）：真机扫描设置面板八个 tab，只有
+ * 「供应商」页这两个还是实验白（mdw-trigger 0.76 白 + mdw-popup 0.76 白，无模糊）。
+ * 结构跟 SelectWidget 同构，取值也一样：trigger 0.42、弹层 0.55。
+ *
+ * 锚点：button[class*="_mdw-trigger_"] / div[class*="_mdw-popup_"]。`_mdw-` 整族
+ *   前缀全构建只出现在 SettingsModalShell 模块（mdw-arrow / mdw-option / mdw-popup /
+ *   mdw-trigger / mdw-value），不会误伤。
+ *
+ * ⚠️ 官方 hover / 展开态把背景换成 `var(--overlay-subtle)`（本主题 = 1.6% 墨，几乎透明）。
+ *   我们的常态 (0,3,1) 已经把官方 hover (0,3,0) 压住了，所以必须另写一条更亮的玻璃
+ *   当反馈，否则鼠标移上去毫无反应。展开态属性是 `[data-open=true]`（注意带值）。
+ * ⚠️ mdw-popup 是 trigger 内部 `position:absolute` 的子元素（不是 portal），
+ *   不算独立的浮层，模糊照样作用于它背后的面板内容。 */
+:is([data-theme="hana-claude-clay"]) button[class*="_mdw-trigger_"] {
+    background-color: rgba(255, 255, 255, 0.42);
+    -webkit-backdrop-filter: blur(18px) saturate(135%);
+    backdrop-filter: blur(18px) saturate(135%);
+}
+:is([data-theme="hana-claude-clay"]) button[class*="_mdw-trigger_"]:hover:not(:disabled),
+:is([data-theme="hana-claude-clay"]) button[class*="_mdw-trigger_"][data-open="true"]:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.52);
+}
+:is([data-theme="hana-claude-clay"]) div[class*="_mdw-popup_"] {
+    background-color: rgba(255, 255, 255, 0.60);
+    -webkit-backdrop-filter: blur(30px) saturate(140%);
+    backdrop-filter: blur(30px) saturate(140%);
+}
+
+/* 通用下拉菜单（排序 / 筛选 / 右键菜单）：div.context-menu
+ * ---------------------------------------------------------------------------
+ * 用户报（2026-10-21，截图两张）：右侧「文件」抽屉里「时间」排序菜单与漏斗「排序与显示」
+ * 菜单还是实心白。它们是**全局共享**的 context menu 组件，不是 SelectWidget：
+ *   div._popup_f7e95.context-menu._sourceMotion_1bdee._surface_14173  role="menu"
+ * `context-menu` 是**明文类**（不是构建哈希），全构建只拿来做 `position:relative`
+ * 和 `-webkit-app-region` 两件事，真正的面在 `_surface_<hash>`。
+ *
+ * 改它 = 全应用的菜单一起玻璃化（排序 / 筛选 / 文件与消息的右键菜单 / 子菜单）。
+ * 取值与 SelectWidget 弹层同一档（0.60 + blur 30）：两者在屏上是同一类东西，
+ * 只差一个挂在表单控件上、一个挂在任意坐标上。
+ *
+ * ⚠️ 特异性：官方 `._surface_<hash>._surface_<hash>{ background: var(--bg-card) }` 是 (0,2,0)
+ * 并且排在主题 CSS **之后**；`.context-menu` 单用只有 (0,1,0)，加了 [data-theme] 也才 (0,2,0)
+ * —— 同分就输。故选择器里写上元素名 `div`，抬到 (0,2,1)。这是本文件里第二次
+ * 因为这条双写规则而栽的坑（第一次是 SelectWidget 的弹层）。 */
+:is([data-theme="hana-claude-clay"]) div.context-menu {
+    background-color: rgba(255, 255, 255, 0.60);
+    -webkit-backdrop-filter: blur(30px) saturate(140%);
+    backdrop-filter: blur(30px) saturate(140%);
+}
+
+/* 用户气泡：改成侧栏同款的面（2026-10-21，用户「把聊天气泡的样式改成侧栏同款样式」）
+ * ---------------------------------------------------------------------------
+ * 侧栏那套面（真机读数）= rgba(255,255,255,0.42) 白纱
+ *   + 1px 纯黑 8% 边线 + 1px 描边环 + **半强度**顶光。
+ *   填充归本文件，边线与环归材质源 src/material-deepseek/bold.css §6.3
+ *   （与 §6.1 折叠块 2026-10-20「按左侧栏那套处理」是同一条模板）。
+ *
+ * 上一版气泡吃的是主题强调色 10% 的薄蓝（2026-10-20 为修「偏灰」定的）——
+ *   那是「用色相换辨识度」的解法，与侧栏的玻璃白纱不是一个语系：
+ *   侧栏读作半透明的面，气泡读作一块发蓝的实心块。本次统一到侧栏这档。
+ *
+ * ⚠️ 旧结论要按新条件重读：2026-10-20 试过「白纱 .55 → 边界消失」，那时气泡
+ *   **没有边线**，边界全靠底色差撑。现在边线由材质侧 1px 黑 8% + 描边环给，
+ *   白纱只负责「面身」、不再承担划线职责 —— 这是本次敢回到白纱的前提。
+ *
+ * ⚠️ 为什么是 0.42：与侧栏、输入卡完全同值（真机读数：三处都是
+ *   rgba(255,255,255,0.42)）。三处读作同一层玻璃，要调就一起调，别单独给气泡一档。
+ *
+ * ⚠️ 气泡**内部**的附件卡 / skills 徽章不碰：只改气泡本身的底。 */
+:is([data-theme="hana-claude-clay"]) .chat-area [data-user-bubble] {
+    background-color: rgba(255, 255, 255, 0.42);
+}
+
+/* 设置模态：让卡内的取景框壁纸透出来（2026-10-20，用户「让市场和设置透出壁纸」）
+ * ---------------------------------------------------------------------------
+ * 卡里的壁纸一直在（取景框 ::before，与全屏壁纸同几何），但被内层面板
+ * `.settings-panel` 一层不透明的 `background-color: var(--bg)` 整张盖住了。
+ * 换成 0.15 的白纱：壁纸可见，字也站得住。
+ *
+ * ⚠️ 为什么是 0.15 而不是面板那档 0.42：这个模态坐在壁纸**最白**的那一段上
+ *   （中央白团），0.42 白纱盖下去与不透明板在视觉上分不出（卡面 mean 245，
+ *   与设置的 242 齐平）；要让它读成「透出壁纸」，白纱必须比面板更薄。
+ *   真机对照 0.42 / 0.20 / 0.08 / 0 四档，0.15 上下是“能看出壁纸、又不抢正文”的分界。
+ *
+ * 锚点用**明文类名 .settings-panel**（上游 styles.css 里就是明文，跨构建稳定；
+ * 真机同时存在 id=settingsPanel，两者同处一层）。
+ * ⚠️ 不碰卡外层 `_card_<hash>` 的底：它在壁纸 ::before 之下，改了也看不见
+ *   （伪元素 z-index:-1 仍画在元素自身背景之上，同工单 35 那个机制）。 */
+:is([data-theme="hana-claude-clay"]) .settings-panel {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* 折叠块右侧那道色差（2026-10-20，用户报「思考的右侧有色差」，月满庭也撞过）
+ * ---------------------------------------------------------------------------
+ * 现象：思考块（classic 版式 _processFoldSurface_）右边一条竖带比左边白，像被切了一刀。
+ *
+ * 根因（逐层量出来的，真机读数）：
+ *   ._processFoldSurface_    { width:100% }                     → 790
+ *     ._message._processFoldMessage_  { max-width:92% }         → 727  ← 头行那层墨只铺到这里
+ *     ._processFoldCollapse_ (100%) > ._message { max-width:92% } → 727  ← 正文那层墨同理
+ *  墨色 tint 挂在**行**上（头行 rgba(21,36,67,.016)、正文行 .0097），而行被
+ *  ._message_ 的 92% 上限卡在 727；面板本体是 790 —— 右侧 63px 没被 tint，直接透出壁纸。
+ *  上游自己碰到过这个：它给 _processFoldPanel_ 写了
+ *  `._processFoldPanel_ ._message_ { max-width: 100% }`，只是没管 _processFoldCollapse_ 这条路径。
+ *
+ * 修法：在面板面内部把这两层行放开到满宽（与上游那条同一个思路），
+ *  tint 就铺满整块面，色差消失。只动直系两层，不碰里面的气泡。
+ *  ⚠️ 不用 [class*="_message_"] 做后代选择器：那会把里面每个气泡壳一起放开。 */
+:is([data-theme="hana-claude-clay"]) .chat-area [class*="processFoldSurface"] > [class*="_message_"],
+:is([data-theme="hana-claude-clay"])
+    .chat-area [class*="processFoldSurface"] > [class*="processFoldCollapse"] > [class*="_message_"] {
+    max-width: 100%;
+}
+
+/* ── 思考框（折叠块）的底：换成侧栏那层玻璃（2026-10-24，用户要求）──────────────
+   现场：折叠块的可见面（serene 版 `_surface_2653a` / classic 版 `_processFoldSurface_`）
+   background-color 是 transparent，只有 1px 描边 + 顶光，所以读作「一圈线里飘着内容」。
+   侧栏 aside[data-titlebar-mode] 是 rgba(255,255,255,0.42)，这里给它同一层。
+   填充归本文件，描边仍归材质源 §6.1。
+   ⚠️ 不收 `processFoldSurface [class*="surface"]` 那条：那是折叠块内部的工具气泡，
+   它们自己已有 --tool-bg，再叠一层会发白。 */
+:is([data-theme="hana-claude-clay"]) .chat-area [class*="processFoldSurface"],
+:is([data-theme="hana-claude-clay"]) .chat-area [class*="foldMessage"] [class*="surface"] {
+    background-color: rgba(255, 255, 255, 0.42);
+}
+
+/* ── 市场 ·「确认安装」审查对话框：毛玻璃（2026-10-23，用户报「背景的字太透了」）───────
+   现场（真机 CDP 读数 1920x1032，市场里点安装弹出）：
+     div._dialog_77b6a [role="dialog"]            bg = rgba(255,255,255,0.76)  bf = none
+      └ div._container_7cf03 _overlayContent_579dc   transparent
+         └ div._popup_ba84f  (fixed, z 9999)          全屏
+   它背后就是市场卡片列表。0.76 白只「提亮」不「遮挡」—— 卡片的标题、描述、蓝色
+   「安装」按钮原样穿进面板，与面板自己的「描述 / 安装来源 / 能力」逐行叠字。
+
+   锚点：[class*="_overlayContent_"] 全构建只属于 InstallReviewDialog 一个组件
+   （逐个 css/js 核过），比 [role="dialog"] 精确 —— 设置弹窗 / 市场模态 / 项目名弹窗
+   各有自己的 _dialog_* 前缀，用 role 会一起命中。
+   特异性：(0,2,1) 压官方 ._dialog_<hash> 的 (0,1,0)，且组件 CSS 排在主题之后也不怕。
+
+   数值：填充 0.80 + blur 26px，与两个深色主题逐值一致（2026-10-23 用户要求「三个主题数值统一」）。
+   浅色降到 0.80 实际上看不出差别（实测每降 0.02 填充，面板平均亮度只动 1.9/255），
+   统一的价值在于以后调只改一个数。saturate 保留 140% —— 它与「厚度」无关，是给背后
+   那片蓝白留气；深色那边用 125% 是因为 140% 会把冷绿拉艳。
+   真机四档同框对照（.scratch/crop/glass-compare.png）：
+     baseline 0.76/无模糊   背后 "Hana Downloader" 与「安装」按钮逐字可读
+     0.78 + blur18         能辨出字形轮廓，仍偏薄
+     0.82 + blur24         只剩柔光，字不可读
+     0.88 + blur30         接近死白，玻璃感消失 */
+:is([data-theme="hana-claude-clay"]) [class*="_overlayContent_"] > [role="dialog"] {
+    background-color: rgba(255, 255, 255, 0.80);
+    -webkit-backdrop-filter: blur(26px) saturate(140%);
+    backdrop-filter: blur(26px) saturate(140%);
+}
+
+/* ── 通用确认框（alertdialog）：毛玻璃（2026-10-23，用户报「切换模型弹窗字有点看不清」）───
+   现场（真机 CDP，月满庭/浅色都实测过）：
+     div._popup_ba84f [role="alertdialog"]                全屏 fixed，填充 transparent
+      └ div._container_7cf03 _container-animated_705b6
+           _dialog_ecdc0                                  ← 真正可见的面
+           bg = rgba(255,255,255,0.76)  bf = none  radius 33.14  420x210
+   背后就是聊天正文（截图里是一大片公式与段落），只压了 24% 的白，
+   正文逐行穿过面板，与面板自己的说明叠在一起。
+
+   锚点：[role="alertdialog"] 是 base-ui 的 AlertDialog 类型，全构建只有
+     preview-session-tabs 里 e==="alert-dialog" 这一处产出它，对应 Us.confirm(...)：
+     模型切换、以及其他所有「问一下再做」的确认框都是它。
+   ⚠️ 面板是它的**直接子元素**，外层全屏 transparent 不能自己加底——
+   填在 [role="alertdialog"] 上会糊满整屏。故用 `> [class*="_dialog_"]`。
+   特异性 (0,3,0) 压官方 ._dialog_<hash> 的 (0,1,0)。
+
+   数值与三个主题的「确认安装」对话框一致（0.80 + blur 26px）：两个弹窗同源同底色，
+   不同档位会在同一会话里来回切时看出厚度。 */
+:is([data-theme="hana-claude-clay"]) [role="alertdialog"] > [class*="_dialog_"] {
+    background-color: rgba(255, 255, 255, 0.80);
+    -webkit-backdrop-filter: blur(26px) saturate(140%);
+    backdrop-filter: blur(26px) saturate(140%);
+}
+
+/* hana-thinking-star */
+/* 思考态：呼吸星芒（2026-10-25 接入，只在本主题生效）
+ * ---------------------------------------------------------------------------
+ * 用户 2026-10-25 原话：「我想要的是 Claude 的机器人在思考，不是鲸鱼的尾巴」，
+ * 随后在三种候选里选定「呼吸星芒」。这里整段替换掉原先的鲸鱼实现
+ * （原实现从 2026-10-20 起按 data-hana-think 档位切 sway / wag / twist 四套轮廓，
+ *  证据与倍数推导都记在 git 历史与本文件旧版注释里）。
+ *
+ * 挂点不变：span[data-thinking-bloom]（Hana 的花形思考动画）。
+ *   · 内部 svg 藏掉（那颗像素花，有一帧像鲸鱼尾）；
+ *   · 只用 ::after 画一颗十道不等长的星芒（Claude 标记的骨架：六道长、四道短，
+ *     末端圆），取 --accent 上色；
+ *   · 动作只有呼吸：scale .92 ⇄ 1.06（再乘 1.15 的基准放大，见下）+ 透明度 .78 ⇄ 1，
+ *     2.2s ease-in-out，不旋转、不跳帧。
+ *
+ * 基准放大 1.15 的理由：SVG 的墨迹只占 viewBox 的 32/40 = 0.8，直接铺满 20px 盒子
+ * 会显得比旁边的字小一圈；1/0.8 = 1.25 又太满，取 1.15 让墨迹约 18.4px。
+ *
+ * ⚠️ mask 必须写**简写**（url + 位置/尺寸 + no-repeat）：同一份 data URI 写成
+ *   `mask-image` 长属性时 Chromium 会把整条声明丢掉（计算值 none，不报错）——
+ *   这条坑是 2026-10-20 在鲸鱼那版上真机踩出来的，照抄。
+ * ⚠️ 只藏 svg、不动 span 的 display 与宽高：那 20px 的 inline-grid 决定行内占位。
+ * ⚠️ data-hana-think 属性仍会被 src/panel-frame-claude/bg.js 写到 <html> 上，
+ *   本文件已不消费它；留着不碍事，将来要恢复按档位换动作可以直接接回来。 */
+:is([data-theme="hana-claude-clay"]) [data-thinking-bloom] > svg {
+    display: none;
+}
+
+:is([data-theme="hana-claude-clay"]) [data-thinking-bloom] {
+    position: relative;
+}
+
+:is([data-theme="hana-claude-clay"]) [data-thinking-bloom]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: var(--accent);
+    mask: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2040%2040'%20fill='none'%20stroke='white'%20stroke-linecap='round'%3E%3Cline%20x1='20'%20y1='20'%20x2='20'%20y2='4'%20stroke-width='3.0'/%3E%3Cline%20x1='20'%20y1='20'%20x2='33.9'%20y2='12'%20stroke-width='3.0'/%3E%3Cline%20x1='20'%20y1='20'%20x2='33.9'%20y2='28'%20stroke-width='3.0'/%3E%3Cline%20x1='20'%20y1='20'%20x2='20'%20y2='36'%20stroke-width='3.0'/%3E%3Cline%20x1='20'%20y1='20'%20x2='6.1'%20y2='28'%20stroke-width='3.0'/%3E%3Cline%20x1='20'%20y1='20'%20x2='6.1'%20y2='12'%20stroke-width='3.0'/%3E%3Cline%20x1='20'%20y1='20'%20x2='30.5'%20y2='6.5'%20stroke-width='2.2'/%3E%3Cline%20x1='20'%20y1='20'%20x2='30.5'%20y2='33.5'%20stroke-width='2.2'/%3E%3Cline%20x1='20'%20y1='20'%20x2='9.5'%20y2='33.5'%20stroke-width='2.2'/%3E%3Cline%20x1='20'%20y1='20'%20x2='9.5'%20y2='6.5'%20stroke-width='2.2'/%3E%3C/svg%3E") center / contain no-repeat;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2040%2040'%20fill='none'%20stroke='white'%20stroke-linecap='round'%3E%3Cline%20x1='20'%20y1='20'%20x2='20'%20y2='4'%20stroke-width='3.0'/%3E%3Cline%20x1='20'%20y1='20'%20x2='33.9'%20y2='12'%20stroke-width='3.0'/%3E%3Cline%20x1='20'%20y1='20'%20x2='33.9'%20y2='28'%20stroke-width='3.0'/%3E%3Cline%20x1='20'%20y1='20'%20x2='20'%20y2='36'%20stroke-width='3.0'/%3E%3Cline%20x1='20'%20y1='20'%20x2='6.1'%20y2='28'%20stroke-width='3.0'/%3E%3Cline%20x1='20'%20y1='20'%20x2='6.1'%20y2='12'%20stroke-width='3.0'/%3E%3Cline%20x1='20'%20y1='20'%20x2='30.5'%20y2='6.5'%20stroke-width='2.2'/%3E%3Cline%20x1='20'%20y1='20'%20x2='30.5'%20y2='33.5'%20stroke-width='2.2'/%3E%3Cline%20x1='20'%20y1='20'%20x2='9.5'%20y2='33.5'%20stroke-width='2.2'/%3E%3Cline%20x1='20'%20y1='20'%20x2='9.5'%20y2='6.5'%20stroke-width='2.2'/%3E%3C/svg%3E") center / contain no-repeat;
+    transform-origin: 50% 50%;
+    will-change: transform, opacity;
+    animation: hana-claude-star-breath 2.2s ease-in-out infinite;
+}
+
+@keyframes hana-claude-star-breath {
+    0%, 100% { transform: scale(1.06); opacity: .78; }
+    50%      { transform: scale(1.22); opacity: 1; }
+}
+
+/* 系统开了「减少动态效果」：不呼吸，静态停在中间尺寸。 */
+@media (prefers-reduced-motion: reduce) {
+    :is([data-theme="hana-claude-clay"]) [data-thinking-bloom]::after {
+        animation: none;
+        transform: scale(1.15);
+        opacity: 1;
+    }
+}

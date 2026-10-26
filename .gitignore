@@ -1,0 +1,33 @@
+# 构建产物
+dist/
+*.zip
+
+# 本地临时与备份
+临时/
+patch/backups/
+*.log
+
+# 依赖
+node_modules/
+
+# 系统文件
+Thumbs.db
+.DS_Store# 第三方皮肤包（别人的作品，不随本仓库分发）
+pack-luna/
+pack-luna5/
+
+# 内部过程文档
+docs/
+
+# 本地备份目录
+ui.bak-*/
+skin-wardrobe/ui.bak-*/
+
+# 混入 patch 根的第三方结构文件
+patch/CHANGELOG.md
+patch/INSTALL.md
+patch/README.md
+patch/REPAIR.md
+patch/share.json
+patch/skin.json
+patch/VERSION

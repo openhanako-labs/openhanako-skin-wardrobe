@@ -1,0 +1,31 @@
+{
+  "manifestVersion": 2,
+  "id": "skin-wardrobe",
+  "name": "衣橱 · 皮肤库",
+  "version": "0.6.3",
+  "entry": "index.js",
+  "description": "导入、预览、应用 SKINPACK 皮肤包；衣橱区走官方用户主题 API，针线房区只调度补丁。",
+  "capabilities": [
+    "app/tools.expose-to-model",
+    "app/themes.read",
+    "app/themes.manage",
+    "app/themes.apply"
+  ],
+  "contributes": {
+    "cards": [
+      {
+        "id": "panel",
+        "title": "衣橱 · 皮肤库",
+        "description": "浏览已安装皮肤、导入皮肤包、预览与切换。",
+        "route": "/panel.html",
+        "cardForm": "flush",
+        "titlebar": "solid",
+        "face": {
+          "image": "assets/cover.svg"
+        }
+      }
+    ]
+  },
+  "icon": "assets/icon.svg",
+  "minAppVersion": "1.1.35-beta"
+}

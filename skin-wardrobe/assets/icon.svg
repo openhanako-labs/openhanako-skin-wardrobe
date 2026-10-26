@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- 衣橱 · 应用图标
+       底色铺满全画布（宿主容器自己裁圆角），米色与陪看等 App 统一。
+       粗线纯衣架 + 暗铜横杆。无渐变、无外框（渲染兼容性优先）。 -->
+  <rect width="512" height="512" fill="#F3EBDA"/>
+
+  <g fill="none" stroke="#1A1816" stroke-width="26" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="256" cy="128" r="30"/>
+    <path d="M256 158 L256 232"/>
+    <path d="M256 232 C160 232 116 296 116 352"/>
+    <path d="M256 232 C352 232 396 296 396 352"/>
+  </g>
+  <line x1="116" y1="352" x2="396" y2="352" stroke="#9C6B3F" stroke-width="26" stroke-linecap="round"/>
+</svg>
