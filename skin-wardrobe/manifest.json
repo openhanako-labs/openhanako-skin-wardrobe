@@ -2,7 +2,7 @@
   "manifestVersion": 2,
   "id": "skin-wardrobe",
   "name": "衣橱 · 皮肤库",
-  "version": "0.6.3",
+  "version": "0.6.7",
   "entry": "index.js",
   "description": "导入、预览、应用 SKINPACK 皮肤包；衣橱区走官方用户主题 API，针线房区只调度补丁。",
   "capabilities": [
@@ -21,11 +21,11 @@
         "cardForm": "flush",
         "titlebar": "solid",
         "face": {
-          "image": "assets/cover.svg"
+          "image": "assets/cover-540x720.png"
         }
       }
     ]
   },
-  "icon": "assets/icon.svg",
+  "icon": "assets/icon-512.png",
   "minAppVersion": "1.1.35-beta"
 }

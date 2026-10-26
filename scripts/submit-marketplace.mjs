@@ -54,16 +54,19 @@ apr.approvals = apr.approvals.filter((a) => a.id !== 'skin-wardrobe');
 apr.approvals.push({ kind: 'app', id: 'skin-wardrobe', tag: 'v0.6.3', sha256: SHA256, readme });
 
 console.log('3) 更新 fork 的两个文件');
-const put = (repo, path, content, sha) => {
-  const body = JSON.stringify({
-    message: 'chore: register app skin-wardrobe v0.6.3',
+const put = (repo, path, content, sha, commitMsg) => {
+  // 请求体走文件（--input），避免 base64 塞不进命令行
+  const bodyFile = process.env.TEMP + '\\gh-put-' + Date.now() + '.json';
+  writeFileSync(bodyFile, JSON.stringify({
+    message: commitMsg,
     content: Buffer.from(content).toString('base64'),
     sha,
-  });
-  gh(`gh api -X PUT repos/${repo}/contents/${path} -f message="chore: register app skin-wardrobe v0.6.3" -f content="${Buffer.from(content).toString('base64')}" -f sha="${sha}" --jq .commit.sha`);
+  }), 'utf8');
+  const out = gh(`gh api -X PUT repos/${repo}/contents/${path} --input "${bodyFile}" --jq .commit.sha`);
+  return String(out).trim();
 };
-put(FORK, 'registry.json', JSON.stringify(reg, null, 2) + '\n', fetchSha(FORK, 'registry.json'));
-put(FORK, 'approvals.json', JSON.stringify(apr, null, 2) + '\n', fetchSha(FORK, 'approvals.json'));
+put(FORK, 'registry.json', JSON.stringify(reg, null, 2) + '\n', fetchSha(FORK, 'registry.json'), 'chore: register app skin-wardrobe v0.6.3');
+put(FORK, 'approvals.json', JSON.stringify(apr, null, 2) + '\n', fetchSha(FORK, 'approvals.json'), 'chore: register app skin-wardrobe v0.6.3');
 console.log('   fork 已更新');
 
 console.log('4) 同步 fork 分支后创建 PR');
