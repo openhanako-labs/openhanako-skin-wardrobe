@@ -123,11 +123,11 @@ if (action === 'list') {
 
 if (action === 'remove') {
   if (!id) { console.error('缺少 --id'); process.exit(2); }
-  let ok = 0;
+  let ok = 0, absent = 0;
   for (const t of targets) {
     const text = readFileSync(t.path, 'utf8');
     const e = findEntry(text, id);
-    if (!e) { console.log(`${t.label}: 无 ${id}`); continue; }
+    if (!e) { console.log(`${t.label}: 无 ${id}`); absent++; continue; }
     const r = removalRange(text, e);
     const after = text.slice(0, r.start) + text.slice(r.end);
     const nBefore = scanEntries(text).length;
@@ -138,7 +138,9 @@ if (action === 'remove') {
     console.log(`${t.label}: 移除 ${id}（${nBefore} -> ${nAfter}）${APPLY ? ' 已写入' : ' [干跑]'}`);
     if (APPLY) { writeFileSync(t.path, after, 'utf8'); ok++; }
   }
-  process.exit(APPLY && ok !== targets.length ? 1 : 0);
+  // 幂等：目标本来就不在 = 停用已完成，不算失败。
+  // 只有「真条目在场但删除失败」才报非零，让上层中断。
+  process.exit(APPLY && ok + absent !== targets.length ? 1 : 0);
 }
 
 if (action === 'add') {
@@ -166,7 +168,6 @@ if (action === 'add') {
     if (nAfter !== entries.length + 1) { console.log(`${t.label}: 计数异常 ${entries.length} -> ${nAfter}，放弃`); continue; }
     const gate = syntaxOk(after);
     if (!gate.ok) { console.log(`${t.label}: 插入后语法不合格，拒绝写入\n${gate.err}`); continue; }
-    // 新条目必须真的落在注册表对象里：它的结束位置要早于原 themes 对象的闭合
     console.log(`${t.label}: 插入 ${id}（${entries.length} -> ${nAfter}）${APPLY ? ' 已写入' : ' [干跑]'}`);
     if (APPLY) writeFileSync(t.path, after, 'utf8');
   }

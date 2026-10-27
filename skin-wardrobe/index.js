@@ -57,7 +57,49 @@ export default defineApp(async (sdk) => {
   };
   const writePending = (list) => writeFileSync(pendingPath, JSON.stringify(list, null, 2), 'utf8');
 
+  /* ── 宿主注册表真值 ──
+     「装没装」必须问宿主，不能问待办账本：账本只记「请求过」，
+     宿主注册表才记「装着」。定位法与 patch/scripts/registry-ops.mjs 相同：
+     扫三处文件里带 cssPath 的主题条目。读不到（结构变了/文件缺失）返回 null，
+     前端退回账本显示。bundle 有十几 MB，挂 5 秒缓存，不每次 /skins 都整读。 */
+  let hostIdsCache = { at: 0, ids: null };
+  function readHostThemeIds() {
+    if (Date.now() - hostIdsCache.at < 5000) return hostIdsCache.ids;
+    hostIdsCache = { at: Date.now(), ids: null };
+    try {
+      const HANA = join(process.env.USERPROFILE || process.env.HOME || '', '.hanako');
+      const target = JSON.parse(readFileSync(join(HANA, 'artifacts', 'desktop-target.json'), 'utf8')).current;
+      const rd = target.renderer.versionDir;
+      const sd = target.server.versionDir;
+      const texts = [];
+      const themeJs = join(rd, 'lib', 'theme.js');
+      if (existsSync(themeJs)) texts.push(readFileSync(themeJs, 'utf8'));
+      const assetsDir = join(rd, 'assets');
+      if (existsSync(assetsDir)) {
+        for (const n of readdirSync(assetsDir)) {
+          if (!n.endsWith('.js')) continue;
+          try {
+            const t = readFileSync(join(assetsDir, n), 'utf8');
+            if (t.includes('cssPath:') && t.includes('themes/')) { texts.push(t); break; }
+          } catch { /* 读不了就跳 */ }
+        }
+      }
+      const serverBundle = join(sd, 'bundle', 'index.js');
+      if (existsSync(serverBundle)) texts.push(readFileSync(serverBundle, 'utf8'));
+      const re = /(?:"([a-zA-Z0-9_.-]+)"|([a-zA-Z][a-zA-Z0-9_-]*))\s*:\s*\{\s*cssPath\s*:/g;
+      const ids = new Set();
+      for (const t of texts) {
+        re.lastIndex = 0;
+        let m;
+        while ((m = re.exec(t)) !== null) ids.add(m[1] || m[2]);
+      }
+      hostIdsCache.ids = ids;
+    } catch { /* 保持 null，前端走退路 */ }
+    return hostIdsCache.ids;
+  }
+
   const listSkins = () => {
+    const hostIds = readHostThemeIds();
     const out = [];
     for (const name of readdirSync(skinsDir)) {
       const dir = join(skinsDir, name);
@@ -78,6 +120,8 @@ export default defineApp(async (sdk) => {
           hasBackground: !!(t.background && (t.background.asset || t.background.dataUri)),
           material: t.material ? t.material.material || t.material.tier : null,
           frame: t.frame ? t.frame.kind : null,
+          // 宿主真值：这个皮肤的主题现在装没装。null = 查不到宿主，前端退回账本。
+          hostInstalled: hostIds ? hostIds.has('hana-' + (pack.packId || name)) : null,
           // 封面 data URI 直接随列表下发（不走 /shot 端点：零请求、零认证问题）
           hasShot: !!(t.shot || pack.shot),
           shotData: t.shot || pack.shot || null,

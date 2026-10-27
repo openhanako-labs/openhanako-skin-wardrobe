@@ -3,6 +3,9 @@
  *
  * 核心判据：对同一主题「删掉再加回来」，三处文件必须**逐字节还原**。
  * 能还原 = 增删是精确的、对称的、没留下多余逗号或空白。
+ *
+ * 测试主题按优先级从注册表现状里挑：优先取 hana-*（衣橱装的），
+ * 否则取最后一个内置主题。注册表里没有 hana-luna 时不再空跑报错。
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -69,13 +72,16 @@ const check = (name, ok, detail = '') => {
   else { fail++; console.log('  FAIL ' + name + (detail ? '  -> ' + detail : '')); }
 };
 
-const ID = 'hana-luna';
+// 从第一处注册表现状挑测试主题：优先 hana-*，否则最后一个
+const firstText = readFileSync(TARGETS[0].path, 'utf8');
+const firstEntries = scanEntries(firstText);
+const ID = (firstEntries.find((e) => e.id.startsWith('hana-')) || firstEntries[firstEntries.length - 1]).id;
 
 for (const t of TARGETS) {
   console.log('\n=== ' + t.label + ' ===');
   const original = readFileSync(t.path, 'utf8');
   const entries = scanEntries(original);
-  console.log('  条目数: ' + entries.length);
+  console.log('  条目数: ' + entries.length + '  测试主题: ' + ID);
 
   const e = entries.find((x) => x.id === ID);
   if (!e) { check('找到 ' + ID, false); continue; }
@@ -93,9 +99,10 @@ for (const t of TARGETS) {
 
   // 2. 加回来（用原条目文本，保证逐字节对称）
   const entryText = original.slice(e.keyStart, e.valEnd);
-  // 删除范围可能含前导逗号，加回时补上同样的分隔符
+  // 删除范围可能含前导逗号，加回时补上同样的分隔符 + 原有空白
   const leadingComma = original[r.start] === ',';
-  const restore = leadingComma ? ',' + entryText : entryText + ',';
+  const ws = original.slice(r.start + 1, e.keyStart); // 被删的前导逗号与条目名之间的空白
+  const restore = leadingComma ? ',' + ws + entryText : entryText + ',';
   const restoredText = leadingComma
     ? removedText.slice(0, r.start) + restore + removedText.slice(r.start)
     : removedText.slice(0, r.start) + restore + removedText.slice(r.start);

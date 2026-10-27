@@ -137,8 +137,13 @@ function layerDots(s) {
   ).join(' &nbsp;');
 }
 
-/* ── 卡片状态：该由「现在是什么状态」决定，不是「有没有待办」── */
+/* ── 卡片状态：优先问宿主注册表（真相），查不到才退回待办账本（猜测）── */
 function skinState(s) {
+  // 宿主说装着就是装着（regardless 有没有过期的 disable 待办），
+  // 说没装就是没装 —— 只有宿主不可读（hostInstalled == null）时才用账本猜。
+  if (s.hostInstalled === true) return { kind: 'on', label: '停用' };
+  if (s.hostInstalled === false) return { kind: 'off', label: '启用' };
+
   const recs = state.pending
     .filter((p) => p.packId === s.packId)
     .slice()
@@ -220,7 +225,8 @@ function card(s) {
   const opBtn = document.createElement('button');
   opBtn.className = 'btn ' + (st.kind === 'on' ? 'btn-quiet' : 'btn-primary');
   opBtn.textContent = st.label;
-  opBtn.disabled = st.kind === 'pending' || state.inflight.has(s.packId);
+  // 宿主真值优先：只要不是从账本猜出来的 pending，都可点。
+  opBtn.disabled = (st.kind === 'pending' && s.hostInstalled == null) || state.inflight.has(s.packId);
   opBtn.title = st.kind === 'on' ? '从宿主移除这个主题' : '提交启用请求，等 agent 执行';
   opBtn.addEventListener('click', () => requestOp(s, st.kind === 'on' ? 'disable' : 'enable', opBtn));
   actions.appendChild(opBtn);
@@ -269,7 +275,6 @@ function render() {
   renderGroups();
   const list = visibleSkins();
   el.wall.innerHTML = '';
-
   if (!list.length) {
     const empty = document.createElement('div');
     empty.className = 'wall-empty';

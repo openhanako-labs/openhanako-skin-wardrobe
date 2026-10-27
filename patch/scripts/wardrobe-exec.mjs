@@ -179,7 +179,9 @@ function backupRegistries() {
   return dir;
 }
 
-/* ── 主流程 ── */
+/* ── 主流程 ──
+   每条待办单独 try：一条崩（如包损坏）不拖累其他条目，
+   且账本按条落盘 —— 上次半途崩掉、全部待办重做的坑不再踩。 */
 const pending = readPending();
 const open = pending.filter((x) => !x.done);
 
@@ -194,56 +196,73 @@ if (APPLY) backupRegistries();
 
 for (const item of open) {
   console.log(`[${item.id}] ${item.op}  ${item.packId || ''}`);
-  const packDir = join(SKINS, item.packId || '');
-  const skinFile = join(packDir, 'skin.json');
+  try {
+    const packDir = join(SKINS, item.packId || '');
+    const skinFile = join(packDir, 'skin.json');
 
-  if (item.op === 'enable') {
-    if (!existsSync(skinFile)) { console.log('   跳过：包里找不到 ' + skinFile); continue; }
-    const pack = JSON.parse(readFileSync(skinFile, 'utf8'));
-    const themeId = 'hana-' + pack.packId;
-    const cssOut = join(THEMES_DIR, themeId + '.css');
+    if (item.op === 'enable') {
+      if (!existsSync(skinFile)) {
+        // 包已从衣橱删掉：这条启用永远做不成，落账跳过，别让它永挂待办
+        console.log('   跳过：包里找不到 ' + skinFile + '（包已移除？落账）');
+        if (APPLY) {
+          item.done = true;
+          item.doneAt = new Date().toISOString();
+          item.result = 'skipped: skin.json 不存在';
+        }
+        continue;
+      }
+      const pack = JSON.parse(readFileSync(skinFile, 'utf8'));
+      const themeId = 'hana-' + pack.packId;
+      const cssOut = join(THEMES_DIR, themeId + '.css');
 
-    const css = buildCss(pack);
-    console.log(`   生成 CSS ${themeId}.css（${(css.length / 1024).toFixed(0)} KB）`);
-    console.log(`   注册表插入 ${themeId}`);
+      const css = buildCss(pack);
+      console.log(`   生成 CSS ${themeId}.css（${(css.length / 1024).toFixed(0)} KB）`);
+      console.log(`   注册表插入 ${themeId}`);
 
-    if (APPLY) {
-      writeFileSync(cssOut, css, 'utf8');
-      // i18n 用包里的名字：宿主找不到 key 时会直接显示原文，
-      // 自用场景下「Luna 龙娘 · 玫瑰月影」比一串 key 好得多。
-      const displayName = (pack.names && (pack.names.zh || pack.names.en)) || pack.packId;
-      const spec = JSON.stringify({
-        cssPath: `themes/${themeId}.css`,
-        backgroundColor: (pack.theme.colors || {})['--bg'] || '#141313',
-        appearance: pack.theme.appearance || 'dark',
-        i18nName: displayName,
-        i18nMode: displayName + ' · 模式',
-      });
-      const r = registryOps(['add', '--id', themeId, '--spec', spec, '--apply']);
-      console.log('   ' + r.trim().split('\n').join('\n   '));
-      item.done = true;
-      item.doneAt = new Date().toISOString();
-      item.result = 'enabled ' + themeId;
+      if (APPLY) {
+        writeFileSync(cssOut, css, 'utf8');
+        // i18n 用包里的名字：宿主找不到 key 时会直接显示原文，
+        // 自用场景下「Luna 龙娘 · 玫瑰月影」比一串 key 好得多。
+        const displayName = (pack.names && (pack.names.zh || pack.names.en)) || pack.packId;
+        const spec = JSON.stringify({
+          cssPath: `themes/${themeId}.css`,
+          backgroundColor: (pack.theme.colors || {})['--bg'] || '#141313',
+          appearance: pack.theme.appearance || 'dark',
+          i18nName: displayName,
+          i18nMode: displayName + ' · 模式',
+        });
+        const r = registryOps(['add', '--id', themeId, '--spec', spec, '--apply']);
+        console.log('   ' + r.trim().split('\n').join('\n   '));
+        item.done = true;
+        item.doneAt = new Date().toISOString();
+        item.result = 'enabled ' + themeId;
+      }
+    } else if (item.op === 'disable') {
+      const themeId = item.themeId || ('hana-' + item.packId);
+      const cssOut = join(THEMES_DIR, themeId + '.css');
+      console.log(`   注册表移除 ${themeId}`);
+      if (APPLY) {
+        const r = registryOps(['remove', '--id', themeId, '--apply']);
+        console.log('   ' + r.trim().split('\n').join('\n   '));
+        if (existsSync(cssOut)) { writeFileSync(cssOut + '.disabled', readFileSync(cssOut)); }
+        item.done = true;
+        item.doneAt = new Date().toISOString();
+        item.result = 'disabled ' + themeId;
+      }
+    } else {
+      console.log('   未知 op：' + item.op);
     }
-  } else if (item.op === 'disable') {
-    const themeId = item.themeId || ('hana-' + item.packId);
-    const cssOut = join(THEMES_DIR, themeId + '.css');
-    console.log(`   注册表移除 ${themeId}`);
-    if (APPLY) {
-      const r = registryOps(['remove', '--id', themeId, '--apply']);
-      console.log('   ' + r.trim().split('\n').join('\n   '));
-      if (existsSync(cssOut)) { writeFileSync(cssOut + '.disabled', readFileSync(cssOut)); }
-      item.done = true;
-      item.doneAt = new Date().toISOString();
-      item.result = 'disabled ' + themeId;
-    }
+  } catch (e) {
+    console.log(`   失败：${e.message}（跳过，下轮重试）`);
   }
   console.log('');
 }
 
 if (APPLY) {
+  const doneCount = pending.filter((x) => x.done).length;
   writePending(pending);
-  console.log('待办已全部标记完成。');
+  console.log(`账本已写：${doneCount}/${pending.length} 条完成。`);
+  if (pending.some((x) => !x.done)) console.log('仍有未完成条目（见上方失败原因）。');
   console.log('需要重启 Hana 主题才会出现在设置里。');
 } else {
   console.log('（干跑结束，未改动任何文件）');
