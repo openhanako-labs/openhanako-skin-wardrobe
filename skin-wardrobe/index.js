@@ -47,13 +47,30 @@ export default defineApp(async (sdk) => {
     ].filter(Boolean).find((p) => existsSync(p)) || null;
   }
 
-  function runExecutor() {
+  async function resolveNode() {
+    if (process.env.HANA_SKIN_WARDROBE_NODE) return process.env.HANA_SKIN_WARDROBE_NODE;
+    try {
+      if (sdk.process && typeof sdk.process.resolveExecutable === 'function') {
+        const info = await sdk.process.resolveExecutable({ candidates: ['node'] });
+        if (info && info.path) return info.path;
+      }
+    } catch { /* 未授权 / 无此 API，回落到 PATH */ }
+    return 'node';
+  }
+
+  async function runExecutor() {
     const script = findExecutor();
     if (!script) {
       return { ok: false, output: '找不到衣橱执行器：assets/exec/wardrobe-exec.mjs 或 ../patch/scripts/wardrobe-exec.mjs 都不在。' };
     }
+    // App 进程（及其子进程）继承 --permission；子进程必须自己再声明需要的 fs 范围。
+    // 没开启权限模型时不能传 --allow-fs-*（会报 ERR_MISSING_OPTION）。
+    const perm = process.permission
+      ? ['--allow-fs-read=*', '--allow-fs-write=*', '--allow-child-process']
+      : [];
+    const node = await resolveNode();
     try {
-      const out = execFileSync(process.execPath, [script, '--apply'], {
+      const out = execFileSync(node, [...perm, script, '--apply'], {
         encoding: 'utf8',
         maxBuffer: 32 * 1024 * 1024,
         windowsHide: true,
@@ -251,8 +268,8 @@ export default defineApp(async (sdk) => {
     });
 
     // 执行待办：读队列 -> 跑内置执行器 -> 标记完成（执行器自己写 pending.json）
-    app.post('/execute', (c) => {
-      const r = runExecutor();
+    app.post('/execute', async (c) => {
+      const r = await runExecutor();
       return c.json({ ok: r.ok, output: r.output });
     });
 
@@ -309,7 +326,7 @@ export default defineApp(async (sdk) => {
     description: '执行衣橱待办：读 pending 队列 → 运行内置补丁执行器写宿主注册表 → 标记完成。需要 app/process.spawn 已授权。',
     parameters: { type: 'object', properties: {} },
     execute: async () => {
-      const r = runExecutor();
+      const r = await runExecutor();
       return { content: [{ type: 'text', text: r.output }] };
     },
   });

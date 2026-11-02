@@ -2,7 +2,7 @@
   "manifestVersion": 2,
   "id": "skin-wardrobe",
   "name": "衣橱 · 皮肤库",
-  "version": "0.6.9",
+  "version": "0.6.10",
   "entry": "index.js",
   "description": "导入、预览、应用 SKINPACK 皮肤包；内置待办执行器，启用即写宿主注册表（重启 Hana 生效）。",
   "capabilities": [

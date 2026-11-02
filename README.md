@@ -42,6 +42,8 @@ App (Node child process)                内置执行器 (spawned node)
 > `app/process.spawn`，安装时需用户授权；获准后才能运行内置执行器。执行器是独立 node
 > 进程，负责字符串级手术（不重序列化压缩 bundle），写盘前过 `node --check` 语法闸。
 > 仓库开发布局下自动回落到 `../patch/scripts/wardrobe-exec.mjs`，无需改路径。
+> 注意：子进程会继承 `--permission`，且 fs 授权不会自动传给孙进程——所以执行器、
+> `registry-ops`、`node --check` 每一层都显式带 `--allow-fs-read/write`。
 
 ## 致谢 / Credits
 

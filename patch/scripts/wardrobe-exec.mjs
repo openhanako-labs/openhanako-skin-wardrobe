@@ -164,7 +164,10 @@ function buildCss(pack) {
 /* ── 注册表操作：委托给 registry-ops.mjs ── */
 function registryOps(args) {
   if (!REGISTRY_OPS) throw new Error('找不到 registry-ops.mjs（repo 或 app 包布局都未命中）');
-  const out = execFileSync(process.execPath, [REGISTRY_OPS, ...args], { encoding: 'utf8' });
+  const perm = process.permission
+    ? ['--allow-fs-read=*', '--allow-fs-write=*', '--allow-child-process']
+    : [];
+  const out = execFileSync(process.execPath, [...perm, REGISTRY_OPS, ...args], { encoding: 'utf8' });
   return out;
 }
 

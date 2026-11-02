@@ -47,7 +47,8 @@ function syntaxOk(text) {
   const tmp = join(tmpdir(), 'reg-' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.mjs');
   try {
     writeFileSync(tmp, text, 'utf8');
-    const r = spawnSync(process.execPath, ['--check', tmp], { encoding: 'utf8' });
+    const perm = process.permission ? ['--allow-fs-read=*'] : [];
+    const r = spawnSync(process.execPath, [...perm, '--check', tmp], { encoding: 'utf8' });
     return { ok: r.status === 0, err: (r.stderr || '').split('\n').slice(0, 5).join('\n') };
   } catch (e) {
     return { ok: false, err: e.message };
