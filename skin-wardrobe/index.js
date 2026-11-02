@@ -20,8 +20,11 @@
  */
 import { defineApp } from './sdk/app-contract/server-client.js';
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync, rmSync, statSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+const APP_ROOT = dirname(fileURLToPath(import.meta.url));
 
 export const name = 'skin-wardrobe';
 
@@ -31,6 +34,36 @@ export default defineApp(async (sdk) => {
   const pendingPath = join(dataDir, 'pending.json');
 
   mkdirSync(skinsDir, { recursive: true });
+
+  /* ── 执行器：把待办队列真正写进宿主 ──
+     App 进程受 Node Permission Model 限制，默认不能 spawn；manifest 声明
+     app/process.spawn 并获用户授权后，才能运行随包内置的 assets/exec/wardrobe-exec.mjs。
+     执行器是独立 node 进程，不受 App 的 fs 沙箱约束，负责写 themes/*.css 与三处注册表。 */
+  function findExecutor() {
+    return [
+      join(APP_ROOT, 'assets', 'exec', 'wardrobe-exec.mjs'),
+      process.env.HANA_SKIN_WARDROBE_EXEC,
+      join(APP_ROOT, '..', 'patch', 'scripts', 'wardrobe-exec.mjs'),
+    ].filter(Boolean).find((p) => existsSync(p)) || null;
+  }
+
+  function runExecutor() {
+    const script = findExecutor();
+    if (!script) {
+      return { ok: false, output: '找不到衣橱执行器：assets/exec/wardrobe-exec.mjs 或 ../patch/scripts/wardrobe-exec.mjs 都不在。' };
+    }
+    try {
+      const out = execFileSync(process.execPath, [script, '--apply'], {
+        encoding: 'utf8',
+        maxBuffer: 32 * 1024 * 1024,
+        windowsHide: true,
+      });
+      return { ok: true, output: out };
+    } catch (e) {
+      const out = [e.stdout, e.stderr, e.message].filter(Boolean).join('\n').trim();
+      return { ok: false, output: out || '执行器退出异常' };
+    }
+  }
 
   /* ── 预装内置主题（幂等：已入库则跳过）── */
   try {
@@ -217,6 +250,12 @@ export default defineApp(async (sdk) => {
       return c.json({ ok: true, total: list.length });
     });
 
+    // 执行待办：读队列 -> 跑内置执行器 -> 标记完成（执行器自己写 pending.json）
+    app.post('/execute', (c) => {
+      const r = runExecutor();
+      return c.json({ ok: r.ok, output: r.output });
+    });
+
     app.get('/state', (c) => {
       // 只读：宿主版本 + 有多少皮肤包已入库
       let host = null;
@@ -262,6 +301,16 @@ export default defineApp(async (sdk) => {
       hit.doneAt = new Date().toISOString();
       writePending(list);
       return { content: [{ type: 'text', text: '已标记完成：' + id }] };
+    },
+  });
+
+  await sdk.tools.register({
+    name: 'wardrobe_execute',
+    description: '执行衣橱待办：读 pending 队列 → 运行内置补丁执行器写宿主注册表 → 标记完成。需要 app/process.spawn 已授权。',
+    parameters: { type: 'object', properties: {} },
+    execute: async () => {
+      const r = runExecutor();
+      return { content: [{ type: 'text', text: r.output }] };
     },
   });
 

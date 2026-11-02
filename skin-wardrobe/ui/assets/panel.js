@@ -36,6 +36,7 @@ const el = {
   wall: document.getElementById('wall'),
   counts: document.getElementById('counts'),
   pending: document.getElementById('pending'),
+  execute: document.getElementById('execute'),
 };
 
 const state = {
@@ -300,7 +301,7 @@ function render() {
 
   const open = state.pending.filter((p) => !p.done);
   if (open.length) {
-    el.pending.textContent = `${open.length} 条待办：对 agent 说「执行衣橱待办」`;
+    el.pending.textContent = `${open.length} 条待办 · 点「执行待办」写入宿主`;
     el.pending.classList.add('has-pending');
   } else if (state.pending.length) {
     el.pending.textContent = '上次操作已执行 · 重启 Hana 后生效';
@@ -309,6 +310,7 @@ function render() {
     el.pending.textContent = '';
     el.pending.classList.remove('has-pending');
   }
+  if (el.execute) el.execute.hidden = !open.length;
 }
 
 /* ── 动作 ── */
@@ -333,18 +335,35 @@ async function requestOp(s, op, btn) {
     const themeId = 'hana-' + s.packId;
     await api('POST', '/pending', { op, packId: s.packId, themeId });
     state.pending = (await api('GET', '/pending')).pending || [];
-    setStatus(
-      op === 'enable'
-        ? `已提交「启用 ${displayName(s)}」· 对 agent 说「执行衣橱待办」`
-        : `已提交「停用 ${displayName(s)}」· 对 agent 说「执行衣橱待办」`
-    );
     render();
+    await applyPending(null);
   } catch (e) {
     setStatus('提交失败：' + e.message);
     btn.disabled = false;
     btn.textContent = op === 'enable' ? '启用' : '停用';
   } finally {
     state.inflight.delete(s.packId);
+  }
+}
+
+/** 执行待办：让 App 后端跑内置执行器，把队列写进宿主。 */
+async function applyPending(btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '应用中…'; }
+  setStatus('正在写入宿主（生成 CSS + 改注册表）…');
+  try {
+    const r = await api('POST', '/execute');
+    state.pending = (await api('GET', '/pending')).pending || [];
+    if (r && r.ok) {
+      setStatus('已应用 · 重启 Hana 后生效');
+    } else {
+      setStatus('执行未完成：' + String((r && r.output) || '').slice(0, 240));
+    }
+    render();
+    return r;
+  } catch (e) {
+    setStatus('执行失败：' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '执行待办'; }
   }
 }
 
@@ -414,6 +433,8 @@ el.onlyFav.addEventListener('change', () => {
   state.onlyFav = el.onlyFav.checked;
   render();
 });
+
+if (el.execute) el.execute.addEventListener('click', () => applyPending(el.execute));
 
 /* 拖拽 */
 let dragDepth = 0;

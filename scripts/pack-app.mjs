@@ -41,6 +41,22 @@ for (const d of ['ui', 'assets', 'sdk']) {
   );
 }
 
+// 内置执行器：把 patch 执行器与模板塞进 assets/exec，
+// 让安装包自带「执行待办」能力（manifest 已声明 app/process.spawn）。
+const PATCH = join(APP, '..', 'patch');
+const execDir = join(tmp, 'assets', 'exec');
+const tplDir = join(execDir, 'templates');
+execSync(`powershell -NoProfile -Command "New-Item -ItemType Directory -Path '${execDir}' -Force | Out-Null; New-Item -ItemType Directory -Path '${tplDir}' -Force | Out-Null"`, { stdio: 'inherit' });
+for (const [src, dst] of [
+  [join(PATCH, 'scripts', 'wardrobe-exec.mjs'), join(execDir, 'wardrobe-exec.mjs')],
+  [join(PATCH, 'scripts', 'registry-ops.mjs'), join(execDir, 'registry-ops.mjs')],
+  [join(PATCH, 'src', 'material-universal', 'bold.css'), join(tplDir, 'material-bold.css')],
+  [join(PATCH, 'src', 'background-luna', 'dark.css'), join(tplDir, 'background-dark.css')],
+]) {
+  if (!existsSync(src)) throw new Error('缺少内置执行器素材: ' + src);
+  execSync(`powershell -NoProfile -Command "Copy-Item -LiteralPath '${src}' -Destination '${dst}' -Force"`, { stdio: 'inherit' });
+}
+
 // Compress-Archive 的路径会带 tmp 根名，改成从 tmp 内容直接压
 const zipTmp = join(DIST, '_pack-out.zip');
 execSync(`powershell -NoProfile -Command "Compress-Archive -Path '${tmp}\\*' -DestinationPath '${zipTmp}' -Force"`, { stdio: 'inherit' });

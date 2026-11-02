@@ -14,19 +14,38 @@
  *   node patch/scripts/wardrobe-exec.mjs --apply    真执行
  */
 import { readFileSync, writeFileSync, existsSync, copyFileSync, mkdirSync, readdirSync } from 'node:fs';
-import { join, basename } from 'node:path';
+import { join, basename, dirname } from 'node:path';
 import { homedir } from 'node:os';
 import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
+const HERE = dirname(fileURLToPath(import.meta.url));
 const HANA = join(homedir(), '.hanako');
 const APP_DATA = join(HANA, 'app-data', 'skin-wardrobe');
 const PENDING = join(APP_DATA, 'pending.json');
 const SKINS = join(APP_DATA, 'skins');
 
-const ROOT = 'W:/Games/Hanako/Work/projects/hana-skin-app';
-const TEMPLATE_BG = join(ROOT, 'patch', 'src', 'background-luna', 'dark.css');
-const REGISTRY_OPS = join(ROOT, 'patch', 'scripts', 'registry-ops.mjs');
-const BACKUP_ROOT = join(ROOT, 'patch', 'backups');
+/* 同一个脚本要能在两套布局下跑：
+ *   repo 布局  <repo>/patch/scripts/wardrobe-exec.mjs  → 模板在 ../src/...
+ *   app 包布局 <app>/assets/exec/wardrobe-exec.mjs      → 模板在 ./templates/...
+ * 不再硬编码开发机路径，拷到哪里都能用。 */
+function pickFile(candidates) {
+  for (const f of candidates) if (f && existsSync(f)) return f;
+  return null;
+}
+const TEMPLATE_BG = pickFile([
+  join(HERE, 'templates', 'background-dark.css'),
+  join(HERE, '..', 'src', 'background-luna', 'dark.css'),
+]);
+const MATERIAL_BOLD = pickFile([
+  join(HERE, 'templates', 'material-bold.css'),
+  join(HERE, '..', 'src', 'material-universal', 'bold.css'),
+]);
+const REGISTRY_OPS = pickFile([
+  join(HERE, 'registry-ops.mjs'),
+  join(HERE, '..', 'scripts', 'registry-ops.mjs'),
+]);
+const BACKUP_ROOT = join(APP_DATA, 'backups');
 
 const APPLY = process.argv.includes('--apply');
 
@@ -72,7 +91,7 @@ function buildCss(pack) {
 
   /* 2. 背景块：拿 Luna 的背景结构当模板，换图换色换主题 id */
   if (theme.background && theme.background.asset) {
-    let tpl = existsSync(TEMPLATE_BG) ? readFileSync(TEMPLATE_BG, 'utf8') : '';
+    let tpl = TEMPLATE_BG ? readFileSync(TEMPLATE_BG, 'utf8') : '';
     if (tpl) {
       // 去掉模板里的所有块注释（会带出 Luna 的说明文字）
       tpl = tpl.replace(/\/\*[\s\S]*?\*\//g, '');
@@ -106,8 +125,8 @@ function buildCss(pack) {
   }
 
   /* 3. 材质层：通用材质源用 [data-theme^="hana-"] 通配，贴进任何 hana-* 都生效 */
-  const matFile = join(ROOT, 'patch', 'src', 'material-universal', 'bold.css');
-  if (existsSync(matFile)) {
+  const matFile = MATERIAL_BOLD;
+  if (matFile) {
     let mat = readFileSync(matFile, 'utf8');
     mat = mat.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\n{3,}/g, '\n\n').trim();
     if (mat) {
@@ -144,6 +163,7 @@ function buildCss(pack) {
 
 /* ── 注册表操作：委托给 registry-ops.mjs ── */
 function registryOps(args) {
+  if (!REGISTRY_OPS) throw new Error('找不到 registry-ops.mjs（repo 或 app 包布局都未命中）');
   const out = execFileSync(process.execPath, [REGISTRY_OPS, ...args], { encoding: 'utf8' });
   return out;
 }

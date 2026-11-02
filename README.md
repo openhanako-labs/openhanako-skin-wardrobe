@@ -8,7 +8,7 @@ A skin manager for Hana — import, preview and apply SKINPACK theme packs, or c
 - **皮肤墙** — 搜索、分组、标签、收藏置顶；每张卡片带真实封面预览
 - **工作台** — 从零做皮肤：背景图（自动压缩）、四色派生配色、五套明暗预设、圆角 / 描边 / 毛玻璃滑杆、字体栈、终端 ANSI 16 色
 - **内置主题** — 安装即预装成品主题，开箱可用
-- **启停链路** — App 管数据（皮肤库存、待办队列），agent 管宿主（改注册表、贴 CSS），职责分离
+- **启停链路** — App 管库存与待办；「执行待办」由随包内置的执行器落宿主注册表（需 `app/process.spawn`），重启 Hana 生效
 
 ## SKINPACK v2 格式
 
@@ -32,13 +32,16 @@ A skin manager for Hana — import, preview and apply SKINPACK theme packs, or c
 ## 架构 / Architecture
 
 ```
-App (Node child process)          Agent (对话侧)
-├─ app-data/skins/    皮肤库存     ├─ patch/registry-ops.mjs   注册表增删
-├─ app-data/pending   待办队列 ←── ├─ patch/wardrobe-exec.mjs  执行待办
-└─ routes/*           前端 API     └─ 写宿主 themes/*.css + 注册表
+App (Node child process)                内置执行器 (spawned node)
+├─ app-data/skins/    皮肤库存          ├─ assets/exec/wardrobe-exec.mjs  读待办
+├─ app-data/pending   待办队列  ──────► ├─ assets/exec/registry-ops.mjs   三处注册表增删
+└─ routes/*           前端 /execute    └─ 写宿主 themes/*.css + 注册表
 ```
 
-宿主注册表操作采用字符串级手术（不重序列化压缩 bundle），写盘前过 `node --check` 语法闸。
+> App 进程受 Node Permission Model 限制，默认不能 spawn。本 App 在 manifest 里声明
+> `app/process.spawn`，安装时需用户授权；获准后才能运行内置执行器。执行器是独立 node
+> 进程，负责字符串级手术（不重序列化压缩 bundle），写盘前过 `node --check` 语法闸。
+> 仓库开发布局下自动回落到 `../patch/scripts/wardrobe-exec.mjs`，无需改路径。
 
 ## 致谢 / Credits
 
