@@ -156,10 +156,15 @@ if (action === 'add') {
     const entries = scanEntries(text);
     if (!entries.length) { console.log(`${t.label}: 找不到任何主题条目，跳过`); continue; }
 
+    // 键/值一律按 JS 字面量编码：值走 JSON.stringify，键只在是合法标识符时才裸写。
+    // cssPath 必须保持裸名（scanEntries 靠它定位条目），其余键名带非法字符时加引号。
+    // 防注入：名称里带 " \ 换行时只会留在字符串内部，不会改变代码结构。
+    const keyLit = (k) => (/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(k) ? k : JSON.stringify(k));
+    const valLit = (v) => JSON.stringify(v === undefined ? null : v);
     const compact = /cssPath:"/.test(text);
     const entry = compact
-      ? `,"${id}":{` + Object.entries(spec).map(([k, v]) => `${k}:"${v}"`).join(',') + '}'
-      : `, "${id}": { ` + Object.entries(spec).map(([k, v]) => `${k}: "${v}"`).join(', ') + ' }';
+      ? `,${JSON.stringify(id)}:{` + Object.entries(spec).map(([k, v]) => `${keyLit(k)}:${valLit(v)}`).join(',') + '}'
+      : `, ${JSON.stringify(id)}: { ` + Object.entries(spec).map(([k, v]) => `${keyLit(k)}: ${valLit(v)}`).join(', ') + ' }';
 
     // 插到最后一条之后（而不是对象闭合前）——不依赖对象边界
     const last = entries[entries.length - 1];

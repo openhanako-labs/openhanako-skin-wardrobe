@@ -73,24 +73,30 @@ function buildCss(pack) {
   const theme = pack.theme || {};
   const colors = theme.colors || {};
   const id = 'hana-' + pack.packId;
-  const bgHex = colors['--bg'] || '#141313';
+  const rawBg = colors['--bg'];
+  const bgHex = (typeof rawBg === 'string' && /^#[0-9a-fA-F]{6}$/.test(rawBg)) ? rawBg : '#141313';
   const rgb = hexToRgb(bgHex) || [20, 19, 19];
 
-  const name = (pack.names && (pack.names.zh || pack.names.en)) || pack.packId;
+  const rawName = (pack.names && (pack.names.zh || pack.names.en)) || pack.packId;
+  const commentName = String(rawName).replace(/\*\//g, '* /').replace(/[\r\n]+/g, ' ').slice(0, 120);
   const lines = [];
-  lines.push(`/* 衣橱导出 · ${name} · ${new Date().toISOString().slice(0, 10)} */`);
+  lines.push(`/* 衣橱导出 · ${commentName} · ${new Date().toISOString().slice(0, 10)} */`);
 
   /* 1. 配色块 */
   lines.push(`[data-theme="${id}"] {`);
   for (const [k, v] of Object.entries(colors)) {
     if (k === '--bg-rgb') continue;
+    if (!/^--[A-Za-z0-9-]+$/.test(k)) continue;
+    if (typeof v !== 'string' || !/^[^;{}\r\n]{1,200}$/.test(v)) continue;
     lines.push(`  ${k}: ${v};`);
   }
   lines.push(`  --bg-rgb: ${rgb.join(', ')};`);
   lines.push('}');
 
   /* 2. 背景块：拿 Luna 的背景结构当模板，换图换色换主题 id */
-  if (theme.background && theme.background.asset) {
+  const bgAsset = theme.background && theme.background.asset;
+  const safeBgAsset = (typeof bgAsset === 'string' && /^data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+$/.test(bgAsset)) ? bgAsset : null;
+  if (safeBgAsset) {
     let tpl = TEMPLATE_BG ? readFileSync(TEMPLATE_BG, 'utf8') : '';
     if (tpl) {
       // 去掉模板里的所有块注释（会带出 Luna 的说明文字）
@@ -102,7 +108,7 @@ function buildCss(pack) {
       tpl = tpl.replaceAll('[data-theme^="hana-"]', `[data-theme="${id}"]`);
 
       // 图片占位符
-      tpl = tpl.replaceAll('__BG_DARK_DATA_URI__', theme.background.asset);
+      tpl = tpl.replaceAll('__BG_DARK_DATA_URI__', safeBgAsset);
 
       // 底色：把模板里的 Luna 底色换成本皮肤底色
       tpl = tpl.replaceAll('20, 19, 19', rgb.join(', '));
@@ -111,10 +117,10 @@ function buildCss(pack) {
       // 透明度参数
       const pa = theme.background.panelAlpha;
       const ca = theme.background.cardAlpha;
-      if (typeof pa === 'number') {
+      if (typeof pa === 'number' && Number.isFinite(pa) && pa >= 0 && pa <= 1) {
         tpl = tpl.replaceAll(`rgba(${rgb.join(', ')}, 0.55)`, `rgba(${rgb.join(', ')}, ${pa})`);
       }
-      if (typeof ca === 'number') {
+      if (typeof ca === 'number' && Number.isFinite(ca) && ca >= 0 && ca <= 1) {
         tpl = tpl.replaceAll(`rgba(${rgb.join(', ')}, 0.45)`, `rgba(${rgb.join(', ')}, ${ca})`);
       }
 
@@ -139,9 +145,9 @@ function buildCss(pack) {
   /* 4. 材质参数覆盖：包里的值优先于通用材质默认值 */
   const mi = theme.material || {};
   const overrides = [];
-  if (typeof mi.rim === 'number') overrides.push(`--mat-rim: ${mi.rim};`);
-  if (typeof mi.blur === 'number') overrides.push(`--mat-blur: ${Math.round(mi.blur)}px;`);
-  if (mi.edge) overrides.push(`--mat-edge: ${mi.edge};`);
+  if (typeof mi.rim === 'number' && Number.isFinite(mi.rim)) overrides.push(`--mat-rim: ${mi.rim};`);
+  if (typeof mi.blur === 'number' && Number.isFinite(mi.blur)) overrides.push(`--mat-blur: ${Math.round(mi.blur)}px;`);
+  if (typeof mi.edge === 'string' && /^[^;{}\r\n]{1,200}$/.test(mi.edge)) overrides.push(`--mat-edge: ${mi.edge};`);
   if (overrides.length) {
     lines.push('');
     lines.push(`/* ── 材质参数（本皮肤）── */`);
@@ -235,6 +241,11 @@ for (const item of open) {
         continue;
       }
       const pack = JSON.parse(readFileSync(skinFile, 'utf8'));
+      if (!/^[A-Za-z0-9_.-]+$/.test(String(pack.packId || ''))) {
+        console.log('   跳过：packId 含非法字符（只允许字母数字 _ . -）');
+        if (APPLY) { item.done = true; item.doneAt = new Date().toISOString(); item.result = 'skipped: unsafe packId'; }
+        continue;
+      }
       const themeId = 'hana-' + pack.packId;
       const cssOut = join(THEMES_DIR, themeId + '.css');
 
@@ -262,6 +273,11 @@ for (const item of open) {
       }
     } else if (item.op === 'disable') {
       const themeId = item.themeId || ('hana-' + item.packId);
+      if (!/^[A-Za-z0-9_.-]+$/.test(String(themeId || ''))) {
+        console.log('   跳过：themeId 含非法字符（只允许字母数字 _ . -）');
+        if (APPLY) { item.done = true; item.doneAt = new Date().toISOString(); item.result = 'skipped: unsafe themeId'; }
+        continue;
+      }
       const cssOut = join(THEMES_DIR, themeId + '.css');
       console.log(`   注册表移除 ${themeId}`);
       if (APPLY) {
