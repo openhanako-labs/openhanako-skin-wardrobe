@@ -48,7 +48,10 @@ function scanEntries(text) {
   let m;
   while ((m = re.exec(text)) !== null) {
     const id = m[1] || m[2];
-    const openIdx = text.indexOf('{', m.index + m[0].length - 1);
+    // 匹配串自身已含那个左花括号（`name:{cssPath:`），必须从 m.index 往后定位。
+    // 从 m[0] 末尾往后找会跳到下一个条目，删除范围就会跨两条（v0.6.11 修正）。
+    const openIdx = m.index + m[0].lastIndexOf('{');
+    if (text[openIdx] !== '{') continue;
     const end = matchBrace(text, openIdx);
     if (end < 0) continue;
     out.push({ id, keyStart: m.index, valStart: openIdx, valEnd: end + 1 });
