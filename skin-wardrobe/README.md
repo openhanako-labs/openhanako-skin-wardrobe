@@ -53,6 +53,35 @@ The full contract is in `APPS.md` / `APPS_EN.md`.
 - **重启 Hana 后生效**（渲染器启动时读偏好）
 - 运行时当前主题读取：宿主根元素 `data-theme` 属性（`documentElement.getAttribute('data-theme')`），与 agent 工具 `wardrobe_apply_theme` 同链路
 
+### 主题清单：`app:skin-wardrobe/list-themes`（总线服务）
+
+- 调用：`sdk.bus.requestService('app:skin-wardrobe/list-themes')`，payload 可省略
+- 前提同上：本 App 持 `app/services.provide`，调用方持 `app/services.call`
+- 返回：
+
+  ```jsonc
+  {
+    "ok": true,
+    "current": "hana-blend-deepseek",        // 宿主当前主题 id，读不到为 null
+    "themes": [
+      {
+        "id": "hana-blend-deepseek",         // 一条一个主题 id（双套包拆成 -dark / -light）
+        "packId": "blend-deepseek",
+        "name": "DeepSeek · 深海女仆",
+        "appearance": "dark",
+        "accent": "#cd5b85",                // 画菜单够用的两个色
+        "bg": "#141313",
+        "colors": { "--bg": "#141313", "…": "…" },  // 整套配色（宿主同名字段），可选
+        "enabled": true,                    // 宿主注册表真值；读不到为 null（不是「没装」）
+        "current": false
+      }
+    ]
+  }
+  ```
+
+- 只读：不写偏好、不碰注册表、不进待办
+- 为什么要这个服务：宿主只提供「按 id 取某一张主题表」，不提供「一共有哪些」。唯一知道库存的是衣橱自己
+
 ### 主题配置导出：`GET /tokens`（HTTP 路由）
 
 - `?packId=` 按包查；`?themeId=` 按 `data-theme` 的值反查（内置主题返回 `resolved: null`）

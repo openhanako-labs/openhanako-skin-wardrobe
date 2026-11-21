@@ -19,6 +19,7 @@
  *   wardrobe_mark_done         标记某条待办已完成
  */
 import { defineApp } from './sdk/app-contract/server-client.js';
+import { buildThemeInventory } from './assets/lib/inventory.js';
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync, rmSync, statSync, appendFileSync } from 'node:fs';
 import { execFileSync, execFile } from 'node:child_process';
 import { join, dirname } from 'node:path';
@@ -79,6 +80,35 @@ export default defineApp(async (sdk) => {
     } catch (e) {
       const out = [e.stdout, e.stderr, e.message].filter(Boolean).join('\n').trim();
       return { ok: false, output: out || '执行器退出异常' };
+    }
+  }
+
+  /* ── 读宿主现状（已装主题 + 当前主题）──
+     App 进程被权限模型关在自己的目录里，读不了 ~/.hanako/artifacts；
+     执行器是独立进程，读得到。所以这一问交给它的 report 模式代读。
+     5 秒缓存：清单不差这五秒，但没必要每次都起一个子进程。 */
+  let reportCache = { at: 0, value: null };
+  async function runReport() {
+    if (Date.now() - reportCache.at < 5000) return reportCache.value;
+    const script = findExecutor();
+    if (!script) return null;
+    const perm = process.permission
+      ? ['--allow-fs-read=*', '--allow-fs-write=*', '--allow-child-process']
+      : [];
+    const node = await resolveNode();
+    try {
+      const out = execFileSync(node, [...perm, script, 'report'], {
+        encoding: 'utf8',
+        maxBuffer: 8 * 1024 * 1024,
+        windowsHide: true,
+      });
+      const line = out.trim().split('\n').filter(Boolean).pop() || '';
+      const parsed = JSON.parse(line);
+      reportCache = { at: Date.now(), value: parsed };
+      return parsed;
+    } catch (e) {
+      sdk.logger.warn('report 失败：' + ((e && e.message) || e));
+      return null;
     }
   }
 
@@ -671,6 +701,43 @@ export default defineApp(async (sdk) => {
     return r.ok
       ? { ok: true, themeId, caller: ctx && ctx.callerAppId, effectiveAfterRestart: true, output: r.output.slice(-400) }
       : { ok: false, themeId, caller: ctx && ctx.callerAppId, error: r.output.slice(-400) };
+  }, { allowCrossApp: true });
+
+  /* ── 跨 App 清单通道（app:skin-wardrobe/list-themes）──
+     契约 v1（2026-11-21）：
+     - 调用：bus.requestService('app:skin-wardrobe/list-themes')，payload 可省
+       调用方 App 需持 app/services.call；本 App 持 app/services.provide
+     - 返回: { ok, current, themes: [{ id, packId, name, appearance, accent, bg, enabled, current }] }
+     - 语义: 一条一个主题 id；双套包拆成 -dark / -light 两条；
+             enabled 取宿主注册表真值，读不到为 null（调用方别当成「没装」）；
+             accent / bg 只是画菜单够用的两个色，全量配色仍走宿主 theme.css
+     - 只读: 不写偏好、不碰注册表、不进待办
+     数据源：app-data/skin-wardrobe/skins/<packId>/skin.json + 宿主注册表 + user/preferences.json */
+  await sdk.bus.handle('list-themes', async () => {
+    try {
+      const packs = [];
+      for (const dirName of readdirSync(skinsDir)) {
+        const dir = join(skinsDir, dirName);
+        try {
+          if (!statSync(dir).isDirectory()) continue;
+          const f = join(dir, 'skin.json');
+          if (!existsSync(f)) continue;
+          const pack = JSON.parse(readFileSync(f, 'utf8'));
+          packs.push({ packId: pack.packId || dirName, pack });
+        } catch (e) {
+          // 一个包坏了不拖累整张清单
+          sdk.logger.warn('list-themes: 跳过 ' + dirName + ' ' + e.message);
+        }
+      }
+      const report = await runReport();
+      const hostThemeIds = report && report.ok && Array.isArray(report.themes) ? new Set(report.themes) : null;
+      const currentTheme = (report && report.current) || null;
+      const inv = buildThemeInventory({ packs, hostThemeIds, currentTheme });
+      try { sdk.logger.info('list-themes: ' + inv.themes.length + ' 条'); } catch { /* 日志不可用就算了 */ }
+      return { ok: true, ...inv };
+    } catch (e) {
+      return { ok: false, error: String((e && e.message) || e) };
+    }
   }, { allowCrossApp: true });
 
   /* ── 工具：给 agent 读待办 ── */

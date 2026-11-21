@@ -13,7 +13,7 @@
  *   node patch/scripts/wardrobe-exec.mjs            干跑，只报告
  *   node patch/scripts/wardrobe-exec.mjs --apply    真执行
  */
-import { readFileSync, writeFileSync, existsSync, copyFileSync, mkdirSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, copyFileSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
 import { join, basename, dirname } from 'node:path';
 import { homedir } from 'node:os';
 import { execFileSync } from 'node:child_process';
@@ -48,9 +48,39 @@ const REGISTRY_OPS = pickFile([
 const BACKUP_ROOT = join(APP_DATA, 'backups');
 
 const APPLY = process.argv.includes('--apply');
-
 const target = JSON.parse(readFileSync(join(HANA, 'artifacts', 'desktop-target.json'), 'utf8')).current;
 const THEMES_DIR = join(target.renderer.versionDir, 'themes');
+
+/* 主题要写两份。
+ *   主窗口：renderer 目录下的 themes/，直接引用文件。
+ *   App   ：/api/apps/theme.css 只去 server 安装目录里的 desktop/dist-renderer/themes
+ *           找文件，找不到就回一句「theme not found」。
+ * 过去只写了前一份，所以换皮之后主窗口变了、所有 App 都还是原色。
+ * 两处各写一份，窗口和 App 才看见同一张皮（关掉待办里那份的重复逻辑也在这）。 */
+const APP_THEMES_DIR = join(target.server.versionDir, 'desktop', 'dist-renderer', 'themes');
+
+function mirrorToApps(themeId, css) {
+  try {
+    mkdirSync(APP_THEMES_DIR, { recursive: true });
+    writeFileSync(join(APP_THEMES_DIR, themeId + '.css'), css, 'utf8');
+    console.log(`   App 侧副本 ${themeId}.css`);
+  } catch (e) {
+    // 写不进去不拖累主窗口那一份，但要说出来，不静默。
+    console.log(`   App 侧副本写入失败：${e.message}`);
+  }
+}
+
+function unmirrorFromApps(themeId) {
+  const f = join(APP_THEMES_DIR, themeId + '.css');
+  try {
+    if (!existsSync(f)) return;
+    writeFileSync(f + '.disabled', readFileSync(f));
+    rmSync(f);
+    console.log(`   App 侧副本已撤 ${themeId}.css`);
+  } catch (e) {
+    console.log(`   App 侧副本撤销失败：${e.message}`);
+  }
+}
 
 /* ── 直接应用模式：node wardrobe-exec.mjs apply --theme <id> ──
    跨 App 通道（app:skin-wardrobe/apply-theme）与 agent 工具共用。
@@ -302,6 +332,36 @@ function backupRegistries() {
   return dir;
 }
 
+/* ── 报告模式：node wardrobe-exec.mjs report ──
+   给 App 进程用。App 自己被权限模型关在自己的目录里，读不了 ~/.hanako/artifacts，
+   而执行器是独立进程，读得到。只输出一行 JSON，不写任何东西。
+   字段：
+     themes   renderer themes 目录下现有的主题 id（= 已装到宿主的，停用会改名 .disabled）
+     current  宿主偏好里当前主题 id
+     appSide  App 侧那份副本的 id（给排错看） */
+if (process.argv.includes('report')) {
+  const out = { ok: true, themes: [], appSide: [], current: null };
+  try {
+    if (existsSync(THEMES_DIR)) {
+      for (const n of readdirSync(THEMES_DIR)) if (n.endsWith('.css')) out.themes.push(n.slice(0, -4));
+    }
+  } catch (e) {
+    out.ok = false;
+    out.error = 'themes 目录读取失败：' + e.message;
+  }
+  try {
+    if (existsSync(APP_THEMES_DIR)) {
+      for (const n of readdirSync(APP_THEMES_DIR)) if (n.endsWith('.css')) out.appSide.push(n.slice(0, -4));
+    }
+  } catch { /* App 侧副本读不到不影响主结果 */ }
+  try {
+    const prefs = JSON.parse(readFileSync(join(HANA, 'user', 'preferences.json'), 'utf8'));
+    out.current = (prefs.appearance && prefs.appearance.theme) || null;
+  } catch { out.current = null; }
+  console.log(JSON.stringify(out));
+  process.exit(0);
+}
+
 /* ── 主流程 ──
    每条待办单独 try：一条崩（如包损坏）不拖累其他条目，
    且账本按条落盘 —— 上次半途崩掉、全部待办重做的坑不再踩。 */
@@ -357,6 +417,7 @@ for (const item of open) {
         console.log(`   注册表插入 ${themeId}`);
         if (APPLY) {
           writeFileSync(cssOut, css, 'utf8');
+          mirrorToApps(themeId, css);
           const spec = JSON.stringify({
             cssPath: `themes/${themeId}.css`,
             backgroundColor: bgHexOf(theme.colors),
@@ -384,6 +445,7 @@ for (const item of open) {
           console.log(`   注册表插入 ${themeId}`);
           if (APPLY) {
             writeFileSync(cssOut, css, 'utf8');
+            mirrorToApps(themeId, css);
             const bgHex6 = bgHexOf(v.colors);
             const spec = JSON.stringify({
               cssPath: `themes/${themeId}.css`,
@@ -431,6 +493,7 @@ for (const item of open) {
           const r = registryOps(['remove', '--id', id, '--apply']);
           console.log('   ' + r.trim().split('\n').join('\n   '));
           if (existsSync(cssOut)) { writeFileSync(cssOut + '.disabled', readFileSync(cssOut)); }
+          unmirrorFromApps(id);
         }
       }
       if (APPLY) {

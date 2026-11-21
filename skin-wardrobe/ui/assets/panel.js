@@ -88,6 +88,24 @@ if (uiThemeBtn) {
   });
 }
 
+/* ── 跟随宿主主题 ──
+   颜色来自宿主下发的那张 CSS（panel.html 的 head 脚本先把首帧挂上了）。
+   宿主动态换主题时，把 <link> 的地址换掉就行；手动选了 light/dark 时，
+   body[data-ui] 那套覆盖依旧盖在上面，这里不影响。 */
+function applyHostThemeUrl(snapshot) {
+  const link = document.getElementById('host-theme');
+  if (!link || !snapshot) return;
+  const ap = snapshot.appearance === 'light' || snapshot.appearance === 'dark' ? snapshot.appearance : '';
+  const palette = ap && snapshot.palettes && snapshot.palettes[ap] ? snapshot.palettes[ap].cssUrl : '';
+  const url = palette || snapshot.cssUrl;
+  if (!url) return;
+  if (link.getAttribute('href') !== url) link.setAttribute('href', url);
+}
+try {
+  hana.ready?.();
+  hana.theme?.subscribe?.(applyHostThemeUrl);
+} catch { /* 没有主题通道就只用首帧那张表 */ }
+
 const state = {
   skins: [],
   pending: [],

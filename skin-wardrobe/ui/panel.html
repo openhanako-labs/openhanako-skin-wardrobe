@@ -4,6 +4,32 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>衣橱 · 皮肤库</title>
+  <script>
+    /* 宿主把当前主题经 iframe URL 下发：hana-css（当前主题完整 CSS）与 auto 模式下的
+       hana-palette-{light,dark}-css。挂上它，--bg/--text/--border/--accent 这些宿主变量
+       才真的存在；不挂的话 panel.css 里那些 var(--bg, #141313) 永远走兜底，
+       于是不管宿主换什么主题，这块界面都是同一块黑。 */
+    (function () {
+      try {
+        var p = new URLSearchParams(location.search);
+        var href = p.get("hana-css");
+        var appearance = p.get("hana-theme-appearance");
+        if (appearance) {
+          var themed = p.get("hana-palette-" + appearance + "-css");
+          if (themed) href = themed;
+        }
+        if (!href) return;
+        var link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = href;
+        link.id = "host-theme";
+        link.setAttribute("data-host-theme", "1");
+        document.head.insertBefore(link, document.head.firstChild);
+      } catch (e) {
+        /* 主题不可用不影响功能 */
+      }
+    })();
+  </script>
   <link rel="stylesheet" href="./assets/panel.css">
 </head>
 <body>
